@@ -415,21 +415,20 @@
 
 .et-scroll {
   overflow: auto;
-  max-height: min(70vh, 640px);
+  max-height: min(72vh, 720px);
 }
 
 .et-matrix {
-  min-width: max-content;
-  background:
-    linear-gradient(180deg, #fafafa 0%, #fff 48px);
+  min-width: 720px;
+  width: 100%;
 }
 
-.et-hour-head,
-.et-day-row {
+.et-day-head,
+.et-body {
   display: grid;
 }
 
-.et-hour-head {
+.et-day-head {
   position: sticky;
   top: 0;
   z-index: 3;
@@ -447,96 +446,97 @@
   background: #f0f0f0;
 }
 
-.et-hour-track {
-  display: flex;
-}
-
-.et-hour-cell {
-  flex: 0 0 auto;
-  padding: 0.7rem 0;
+.et-day-head-cell {
+  display: grid;
+  align-content: center;
+  gap: 0.1rem;
+  padding: 0.65rem 0.3rem;
   text-align: center;
-  color: #444;
-  font-size: 0.82rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
   border-right: 1px solid #d5d5d5;
-  box-sizing: border-box;
   background: #f7f7f7;
 }
 
-.et-hour-cell:nth-child(odd) {
-  background: #f2f2f2;
+.et-day-head-cell:last-child {
+  border-right: none;
 }
 
-.et-day-row {
-  border-bottom: 1px solid #d0d0d0;
-  background: #fff;
-}
-
-.et-day-row:nth-child(even) {
-  background: #fcfcfc;
-}
-
-.et-day-row:last-child {
-  border-bottom: none;
-}
-
-.et-day-row.is-today,
-.et-day-row.is-anchor {
-  background: rgba(232, 58, 44, 0.06);
-}
-
-.et-day-row.is-weekend .et-day-label strong {
-  color: var(--accent);
-}
-
-.et-day-label {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  display: grid;
-  align-content: center;
-  gap: 0.12rem;
-  padding: 0.45rem 0.3rem;
-  text-align: center;
-  border-right: 2px solid #cfcfcf;
-  background: inherit;
-}
-
-.et-day-label strong {
+.et-day-head-cell strong {
   color: #333;
   font-size: 0.95rem;
   font-weight: 800;
 }
 
-.et-day-row.is-today .et-day-label strong,
-.et-day-row.is-anchor .et-day-label strong {
-  color: var(--accent);
-}
-
-.et-day-label span {
+.et-day-head-cell span {
   color: #7a7a7a;
   font-size: 0.7rem;
   font-weight: 600;
 }
 
-.et-day-track {
+.et-day-head-cell.is-today,
+.et-day-head-cell.is-anchor,
+.et-day-col.is-today,
+.et-day-col.is-anchor {
+  background: rgba(232, 58, 44, 0.06);
+}
+
+.et-day-head-cell.is-today strong,
+.et-day-head-cell.is-anchor strong,
+.et-day-head-cell.is-weekend strong {
+  color: var(--accent);
+}
+
+.et-time-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  border-right: 2px solid #cfcfcf;
+  background: #fafafa;
+}
+
+.et-time-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.35rem;
+  color: #555;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid #d8d8d8;
+  box-sizing: border-box;
+}
+
+.et-time-label:last-child {
+  border-bottom: none;
+}
+
+.et-day-col {
   position: relative;
   display: flex;
+  flex-direction: column;
   cursor: cell;
+  border-right: 1px solid #d5d5d5;
   background-image: repeating-linear-gradient(
-    to right,
+    to bottom,
     transparent 0,
-    transparent calc(80px - 1px),
-    #d8d8d8 calc(80px - 1px),
-    #d8d8d8 80px
+    transparent calc(56px - 1px),
+    #d8d8d8 calc(56px - 1px),
+    #d8d8d8 56px
   );
+}
+
+.et-day-col:last-child {
+  border-right: none;
+}
+
+.et-day-col:hover {
+  background-color: rgba(232, 58, 44, 0.03);
 }
 
 .et-hour-slot {
   flex: 0 0 auto;
   box-sizing: border-box;
-  border-right: 1px solid #d8d8d8;
+  border-bottom: 1px solid #d8d8d8;
   background: transparent;
 }
 
@@ -544,23 +544,22 @@
   background: rgba(23, 24, 26, 0.015);
 }
 
-.et-day-track:hover .et-hour-slot {
-  background: rgba(232, 58, 44, 0.03);
+.et-hour-slot:last-child {
+  border-bottom: none;
 }
 
 .et-block {
   position: absolute;
-  top: 7px;
-  bottom: 7px;
+  left: 4px;
+  right: 4px;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.14rem;
+  gap: 0.12rem;
   overflow: hidden;
-  margin-left: 2px;
-  padding: 0.25rem 0.4rem;
+  padding: 0.25rem 0.35rem;
   border: none;
   border-radius: 6px;
   color: #fff;
@@ -569,13 +568,13 @@
 }
 
 .et-block strong {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.15;
 }
 
 .et-block span {
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   line-height: 1.1;
   opacity: 0.95;
   font-variant-numeric: tabular-nums;

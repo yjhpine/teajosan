@@ -21,9 +21,9 @@ type Props = {
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 const START_HOUR = 8
 const END_HOUR = 23
-const HOUR_WIDTH = 80
-const ROW_HEIGHT = 78
-const LABEL_WIDTH = 64
+const HOUR_HEIGHT = 56
+const COL_MIN_WIDTH = 88
+const GUTTER_WIDTH = 52
 
 const BLOCK_COLORS = [
   '#E85A4F',
@@ -49,7 +49,7 @@ function minutesToTime(total: number): string {
 }
 
 function hourLabel(hour: number): string {
-  return `${String(hour).padStart(2, '0')}`
+  return String(hour).padStart(2, '0')
 }
 
 function colorForId(id: string): string {
@@ -65,11 +65,11 @@ function blockStyle(startTime: string, endTime: string, color: string) {
   const dayEnd = END_HOUR * 60
   const start = Math.max(dayStart, Math.min(dayEnd, timeToMinutes(startTime)))
   const end = Math.max(start + 60, Math.min(dayEnd, timeToMinutes(endTime)))
-  const left = ((start - dayStart) / 60) * HOUR_WIDTH
-  const width = ((end - start) / 60) * HOUR_WIDTH
+  const top = ((start - dayStart) / 60) * HOUR_HEIGHT
+  const height = ((end - start) / 60) * HOUR_HEIGHT
   return {
-    left: `${left}px`,
-    width: `${Math.max(width - 4, HOUR_WIDTH - 8)}px`,
+    top: `${top + 2}px`,
+    height: `${Math.max(height - 4, HOUR_HEIGHT - 8)}px`,
     background: color,
   }
 }
@@ -85,19 +85,19 @@ export function WeekTimetable({
   const weekEnd = addDays(weekStart, 6)
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
-  const trackWidth = hours.length * HOUR_WIDTH
+  const trackHeight = hours.length * HOUR_HEIGHT
 
   function eventsFor(day: Date) {
     const key = format(day, 'yyyy-MM-dd')
     return rehearsals.filter((item) => item.date === key)
   }
 
-  function handleRowClick(day: Date, event: MouseEvent<HTMLDivElement>) {
+  function handleColClick(day: Date, event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement
     if (target.closest('.et-block')) return
     const rect = event.currentTarget.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const minutesFromStart = Math.floor((x / HOUR_WIDTH) * 60)
+    const y = event.clientY - rect.top
+    const minutesFromStart = Math.floor((y / HOUR_HEIGHT) * 60)
     const snapped = Math.floor(minutesFromStart / 60) * 60
     const startTime = minutesToTime(START_HOUR * 60 + snapped)
     onCreate(day, startTime)
@@ -112,7 +112,7 @@ export function WeekTimetable({
             {format(weekStart, 'M/d', { locale: ko })} –{' '}
             {format(weekEnd, 'M/d', { locale: ko })}
           </h2>
-          <p className="et-hint">요일마다 한 줄 · 1시간 칸 · 빈 칸 클릭 후 팀명 입력</p>
+          <p className="et-hint">시간은 위→아래 · 요일은 열 · 빈 칸 클릭 후 팀명 입력</p>
         </div>
         <div className="et-actions">
           <button type="button" className="et-btn-ghost" onClick={onBackToMonth}>
@@ -131,60 +131,69 @@ export function WeekTimetable({
 
       <div className="et-card">
         <div className="et-scroll">
-          <div
-            className="et-matrix"
-            style={{ width: LABEL_WIDTH + trackWidth }}
-          >
+          <div className="et-matrix">
             <div
-              className="et-hour-head"
-              style={{ gridTemplateColumns: `${LABEL_WIDTH}px ${trackWidth}px` }}
+              className="et-day-head"
+              style={{ gridTemplateColumns: `${GUTTER_WIDTH}px repeat(7, minmax(${COL_MIN_WIDTH}px, 1fr))` }}
             >
               <div className="et-corner">
-                <span>요일</span>
+                <span>시간</span>
               </div>
-              <div className="et-hour-track" style={{ width: trackWidth }}>
+              {days.map((day, index) => (
+                <div
+                  key={`head-${day.toISOString()}`}
+                  className={[
+                    'et-day-head-cell',
+                    isToday(day) ? 'is-today' : '',
+                    isSameDay(day, anchorDate) ? 'is-anchor' : '',
+                    index >= 5 ? 'is-weekend' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <strong>{WEEKDAYS[index]}</strong>
+                  <span>{format(day, 'M/d')}</span>
+                </div>
+              ))}
+            </div>
+
+            <div
+              className="et-body"
+              style={{ gridTemplateColumns: `${GUTTER_WIDTH}px repeat(7, minmax(${COL_MIN_WIDTH}px, 1fr))` }}
+            >
+              <div className="et-time-gutter" style={{ height: trackHeight }}>
                 {hours.map((hour) => (
                   <div
                     key={hour}
-                    className="et-hour-cell"
-                    style={{ width: HOUR_WIDTH }}
+                    className="et-time-label"
+                    style={{ height: HOUR_HEIGHT }}
                   >
                     {hourLabel(hour)}
                   </div>
                 ))}
               </div>
-            </div>
 
-            {days.map((day, index) => {
-              const dayEvents = eventsFor(day)
-              const weekend = index >= 5
-              return (
-                <div
-                  key={day.toISOString()}
-                  className={[
-                    'et-day-row',
-                    isToday(day) ? 'is-today' : '',
-                    isSameDay(day, anchorDate) ? 'is-anchor' : '',
-                    weekend ? 'is-weekend' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  style={{ gridTemplateColumns: `${LABEL_WIDTH}px ${trackWidth}px` }}
-                >
-                  <div className="et-day-label">
-                    <strong>{WEEKDAYS[index]}</strong>
-                    <span>{format(day, 'M/d')}</span>
-                  </div>
+              {days.map((day, index) => {
+                const dayEvents = eventsFor(day)
+                return (
                   <div
-                    className="et-day-track"
-                    style={{ width: trackWidth, height: ROW_HEIGHT }}
-                    onClick={(event) => handleRowClick(day, event)}
+                    key={day.toISOString()}
+                    className={[
+                      'et-day-col',
+                      isToday(day) ? 'is-today' : '',
+                      isSameDay(day, anchorDate) ? 'is-anchor' : '',
+                      index >= 5 ? 'is-weekend' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    style={{ height: trackHeight }}
+                    onClick={(event) => handleColClick(day, event)}
                   >
                     {hours.map((hour) => (
                       <div
                         key={hour}
                         className="et-hour-slot"
-                        style={{ width: HOUR_WIDTH, height: ROW_HEIGHT }}
+                        style={{ height: HOUR_HEIGHT }}
                         aria-hidden="true"
                       />
                     ))}
@@ -210,9 +219,9 @@ export function WeekTimetable({
                       </button>
                     ))}
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
