@@ -21,18 +21,19 @@ type Props = {
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 const START_HOUR = 8
 const END_HOUR = 23
-const HOUR_WIDTH = 72
-const ROW_HEIGHT = 72
+const HOUR_WIDTH = 80
+const ROW_HEIGHT = 78
+const LABEL_WIDTH = 64
 
 const BLOCK_COLORS = [
-  '#F0817B',
-  '#4DB6AC',
-  '#64B5F6',
-  '#FF8A65',
-  '#E0B23A',
-  '#AED581',
-  '#BA68C8',
-  '#90A4AE',
+  '#E85A4F',
+  '#2F9E94',
+  '#3D8FD1',
+  '#E07A45',
+  '#C9A227',
+  '#7BAF4B',
+  '#9B5FB8',
+  '#6B7C8A',
 ]
 
 function timeToMinutes(value: string): number {
@@ -48,9 +49,7 @@ function minutesToTime(total: number): string {
 }
 
 function hourLabel(hour: number): string {
-  if (hour === 0 || hour === 12) return '12'
-  if (hour < 12) return String(hour)
-  return String(hour - 12)
+  return `${String(hour).padStart(2, '0')}`
 }
 
 function colorForId(id: string): string {
@@ -70,7 +69,7 @@ function blockStyle(startTime: string, endTime: string, color: string) {
   const width = ((end - start) / 60) * HOUR_WIDTH
   return {
     left: `${left}px`,
-    width: `${Math.max(width, HOUR_WIDTH * 0.9)}px`,
+    width: `${Math.max(width - 4, HOUR_WIDTH - 8)}px`,
     background: color,
   }
 }
@@ -113,6 +112,7 @@ export function WeekTimetable({
             {format(weekStart, 'M/d', { locale: ko })} –{' '}
             {format(weekEnd, 'M/d', { locale: ko })}
           </h2>
+          <p className="et-hint">요일마다 한 줄 · 1시간 칸 · 빈 칸 클릭 후 팀명 입력</p>
         </div>
         <div className="et-actions">
           <button type="button" className="et-btn-ghost" onClick={onBackToMonth}>
@@ -131,9 +131,17 @@ export function WeekTimetable({
 
       <div className="et-card">
         <div className="et-scroll">
-          <div className="et-matrix" style={{ width: 56 + trackWidth }}>
-            <div className="et-hour-head">
-              <div className="et-corner" />
+          <div
+            className="et-matrix"
+            style={{ width: LABEL_WIDTH + trackWidth }}
+          >
+            <div
+              className="et-hour-head"
+              style={{ gridTemplateColumns: `${LABEL_WIDTH}px ${trackWidth}px` }}
+            >
+              <div className="et-corner">
+                <span>요일</span>
+              </div>
               <div className="et-hour-track" style={{ width: trackWidth }}>
                 {hours.map((hour) => (
                   <div
@@ -149,6 +157,7 @@ export function WeekTimetable({
 
             {days.map((day, index) => {
               const dayEvents = eventsFor(day)
+              const weekend = index >= 5
               return (
                 <div
                   key={day.toISOString()}
@@ -156,9 +165,11 @@ export function WeekTimetable({
                     'et-day-row',
                     isToday(day) ? 'is-today' : '',
                     isSameDay(day, anchorDate) ? 'is-anchor' : '',
+                    weekend ? 'is-weekend' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
+                  style={{ gridTemplateColumns: `${LABEL_WIDTH}px ${trackWidth}px` }}
                 >
                   <div className="et-day-label">
                     <strong>{WEEKDAYS[index]}</strong>
@@ -174,6 +185,7 @@ export function WeekTimetable({
                         key={hour}
                         className="et-hour-slot"
                         style={{ width: HOUR_WIDTH, height: ROW_HEIGHT }}
+                        aria-hidden="true"
                       />
                     ))}
                     {dayEvents.map((event) => (
@@ -193,7 +205,7 @@ export function WeekTimetable({
                       >
                         <strong>{event.teamName || '합주'}</strong>
                         <span>
-                          {event.startTime}–{event.endTime}
+                          {event.startTime.slice(0, 5)}–{event.endTime.slice(0, 5)}
                         </span>
                       </button>
                     ))}
