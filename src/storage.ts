@@ -5,6 +5,7 @@ import {
   loadPersistedMember,
   persistMember,
 } from './lib/device'
+import { findOverlappingRehearsal } from './lib/rehearsalOverlap'
 import { supabase, supabaseConfigured } from './lib/supabase'
 import type { ActivityLog, AppData, Member, Rehearsal } from './types'
 import { memberLabel } from './types'
@@ -122,6 +123,34 @@ export function clearSession() {
 const REHEARSAL_SELECT =
   'id,date,start_time,end_time,team_name,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at'
 
+
+async function assertNoTimeOverlap(
+  input: { date: string; startTime: string; endTime: string },
+  excludeId?: string,
+) {
+  if (input.startTime >= input.endTime) {
+    throw new Error('종료 시간은 시작 시간보다 뒤여야 합니다.')
+  }
+
+  const { data, error } = await supabase
+    .from('rehearsals')
+    .select(REHEARSAL_SELECT)
+    .eq('date', input.date)
+
+  if (error) throw error
+
+  const conflict = findOverlappingRehearsal(
+    ((data ?? []) as RehearsalRow[]).map(mapRehearsal),
+    input,
+    excludeId,
+  )
+  if (conflict) {
+    throw new Error(
+      `이미 ${conflict.teamName || '합주'} (${conflict.startTime.slice(0, 5)}–${conflict.endTime.slice(0, 5)})가 있어 등록할 수 없습니다.`,
+    )
+  }
+}
+
 export async function fetchAppData(): Promise<AppData> {
   assertConfigured()
 
@@ -170,6 +199,7 @@ export async function createRehearsal(
 ): Promise<AppData> {
   assertConfigured()
   const ip = await fetchClientIp()
+  await assertNoTimeOverlap(input)
 
   const { data, error } = await supabase
     .from('rehearsals')
@@ -205,6 +235,7 @@ export async function updateRehearsal(
 ): Promise<AppData> {
   assertConfigured()
   const ip = await fetchClientIp()
+  await assertNoTimeOverlap(input, id)
 
   const { error } = await supabase
     .from('rehearsals')

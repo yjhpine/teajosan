@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { findOverlappingRehearsal } from '../lib/rehearsalOverlap'
 import type { Member, Rehearsal } from '../types'
 import { memberLabel } from '../types'
 
@@ -14,6 +15,7 @@ export type RehearsalDraft = {
 type Props = {
   open: boolean
   member: Member
+  rehearsals: Rehearsal[]
   initialDate: Date
   initialStartTime?: string
   editing: Rehearsal | null
@@ -39,6 +41,7 @@ const emptyDraft = (date: Date, startTime = '19:00'): RehearsalDraft => ({
 export function RehearsalModal({
   open,
   member,
+  rehearsals,
   initialDate,
   initialStartTime = '19:00',
   editing,
@@ -74,6 +77,17 @@ export function RehearsalModal({
     if (!draft.date || !draft.startTime || !draft.endTime) return
     if (!draft.teamName.trim()) {
       setLocalError('팀명을 입력해 주세요.')
+      return
+    }
+    if (draft.startTime >= draft.endTime) {
+      setLocalError('종료 시간은 시작 시간보다 뒤여야 합니다.')
+      return
+    }
+    const conflict = findOverlappingRehearsal(rehearsals, draft, editing?.id)
+    if (conflict) {
+      setLocalError(
+        `이미 ${conflict.teamName || '합주'} (${conflict.startTime.slice(0, 5)}–${conflict.endTime.slice(0, 5)})가 있어 등록할 수 없습니다.`,
+      )
       return
     }
     onSave({ ...draft, teamName: draft.teamName.trim() })

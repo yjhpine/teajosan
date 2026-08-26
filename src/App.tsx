@@ -200,6 +200,7 @@ function App() {
       <RehearsalModal
         open={modalOpen}
         member={member}
+        rehearsals={data.rehearsals}
         initialDate={selectedDate}
         initialStartTime={createStartTime}
         editing={editing}
