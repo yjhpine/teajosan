@@ -21,7 +21,8 @@ type Props = {
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 const START_HOUR = 8
 const END_HOUR = 23
-const HOUR_HEIGHT = 64
+const HOUR_WIDTH = 72
+const ROW_HEIGHT = 72
 
 const BLOCK_COLORS = [
   '#F0817B',
@@ -64,12 +65,12 @@ function blockStyle(startTime: string, endTime: string, color: string) {
   const dayStart = START_HOUR * 60
   const dayEnd = END_HOUR * 60
   const start = Math.max(dayStart, Math.min(dayEnd, timeToMinutes(startTime)))
-  const end = Math.max(start + 30, Math.min(dayEnd, timeToMinutes(endTime)))
-  const top = ((start - dayStart) / 60) * HOUR_HEIGHT
-  const height = ((end - start) / 60) * HOUR_HEIGHT
+  const end = Math.max(start + 60, Math.min(dayEnd, timeToMinutes(endTime)))
+  const left = ((start - dayStart) / 60) * HOUR_WIDTH
+  const width = ((end - start) / 60) * HOUR_WIDTH
   return {
-    top: `${top}px`,
-    height: `${Math.max(height, 24)}px`,
+    left: `${left}px`,
+    width: `${Math.max(width, HOUR_WIDTH * 0.9)}px`,
     background: color,
   }
 }
@@ -85,19 +86,20 @@ export function WeekTimetable({
   const weekEnd = addDays(weekStart, 6)
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
+  const trackWidth = hours.length * HOUR_WIDTH
 
   function eventsFor(day: Date) {
     const key = format(day, 'yyyy-MM-dd')
     return rehearsals.filter((item) => item.date === key)
   }
 
-  function handleColumnClick(day: Date, event: MouseEvent<HTMLDivElement>) {
+  function handleRowClick(day: Date, event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement
     if (target.closest('.et-block')) return
     const rect = event.currentTarget.getBoundingClientRect()
-    const y = event.clientY - rect.top
-    const minutesFromStart = Math.floor((y / HOUR_HEIGHT) * 60)
-    const snapped = Math.floor(minutesFromStart / 30) * 30
+    const x = event.clientX - rect.left
+    const minutesFromStart = Math.floor((x / HOUR_WIDTH) * 60)
+    const snapped = Math.floor(minutesFromStart / 60) * 60
     const startTime = minutesToTime(START_HOUR * 60 + snapped)
     onCreate(day, startTime)
   }
@@ -128,80 +130,74 @@ export function WeekTimetable({
       </header>
 
       <div className="et-card">
-        <div className="et-head">
-          <div className="et-corner" />
-          {days.map((day, index) => (
-            <div
-              key={day.toISOString()}
-              className={[
-                'et-day',
-                isToday(day) ? 'is-today' : '',
-                isSameDay(day, anchorDate) ? 'is-anchor' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {WEEKDAYS[index]}
-            </div>
-          ))}
-        </div>
-
-        <div className="et-body">
-          <div className="et-hours">
-            {hours.map((hour) => (
-              <div key={hour} className="et-hour" style={{ height: HOUR_HEIGHT }}>
-                <span>{hourLabel(hour)}</span>
+        <div className="et-scroll">
+          <div className="et-matrix" style={{ width: 56 + trackWidth }}>
+            <div className="et-hour-head">
+              <div className="et-corner" />
+              <div className="et-hour-track" style={{ width: trackWidth }}>
+                {hours.map((hour) => (
+                  <div
+                    key={hour}
+                    className="et-hour-cell"
+                    style={{ width: HOUR_WIDTH }}
+                  >
+                    {hourLabel(hour)}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className="et-grid">
-            {days.map((day) => {
+            {days.map((day, index) => {
               const dayEvents = eventsFor(day)
               return (
                 <div
                   key={day.toISOString()}
                   className={[
-                    'et-col',
+                    'et-day-row',
                     isToday(day) ? 'is-today' : '',
                     isSameDay(day, anchorDate) ? 'is-anchor' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
-                  style={{ height: (END_HOUR - START_HOUR) * HOUR_HEIGHT }}
-                  onClick={(event) => handleColumnClick(day, event)}
                 >
-                  {hours.map((hour) => (
-                    <div
-                      key={hour}
-                      className="et-slot"
-                      style={{ height: HOUR_HEIGHT }}
-                    >
-                      <div className="et-half" />
-                    </div>
-                  ))}
-
-                  {dayEvents.map((event) => (
-                    <button
-                      key={event.id}
-                      type="button"
-                      className="et-block"
-                      style={blockStyle(
-                        event.startTime,
-                        event.endTime,
-                        colorForId(event.id),
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onSelectRehearsal(event)
-                      }}
-                    >
-                      <strong>합주</strong>
-                      <span>
-                        {event.startTime}–{event.endTime}
-                      </span>
-                    </button>
-                  ))}
+                  <div className="et-day-label">
+                    <strong>{WEEKDAYS[index]}</strong>
+                    <span>{format(day, 'M/d')}</span>
+                  </div>
+                  <div
+                    className="et-day-track"
+                    style={{ width: trackWidth, height: ROW_HEIGHT }}
+                    onClick={(event) => handleRowClick(day, event)}
+                  >
+                    {hours.map((hour) => (
+                      <div
+                        key={hour}
+                        className="et-hour-slot"
+                        style={{ width: HOUR_WIDTH, height: ROW_HEIGHT }}
+                      />
+                    ))}
+                    {dayEvents.map((event) => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        className="et-block"
+                        style={blockStyle(
+                          event.startTime,
+                          event.endTime,
+                          colorForId(event.id),
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSelectRehearsal(event)
+                        }}
+                      >
+                        <strong>{event.teamName || '합주'}</strong>
+                        <span>
+                          {event.startTime}–{event.endTime}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )
             })}

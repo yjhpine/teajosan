@@ -8,6 +8,7 @@ export type RehearsalDraft = {
   date: string
   startTime: string
   endTime: string
+  teamName: string
 }
 
 type Props = {
@@ -32,6 +33,7 @@ const emptyDraft = (date: Date, startTime = '19:00'): RehearsalDraft => ({
   date: format(date, 'yyyy-MM-dd'),
   startTime,
   endTime: addTwoHours(startTime),
+  teamName: '',
 })
 
 export function RehearsalModal({
@@ -48,14 +50,17 @@ export function RehearsalModal({
   const [draft, setDraft] = useState<RehearsalDraft>(
     emptyDraft(initialDate, initialStartTime),
   )
+  const [localError, setLocalError] = useState('')
 
   useEffect(() => {
     if (!open) return
+    setLocalError('')
     if (editing) {
       setDraft({
         date: editing.date,
         startTime: editing.startTime,
         endTime: editing.endTime,
+        teamName: editing.teamName,
       })
       return
     }
@@ -67,7 +72,11 @@ export function RehearsalModal({
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!draft.date || !draft.startTime || !draft.endTime) return
-    onSave(draft)
+    if (!draft.teamName.trim()) {
+      setLocalError('팀명을 입력해 주세요.')
+      return
+    }
+    onSave({ ...draft, teamName: draft.teamName.trim() })
   }
 
   return (
@@ -92,6 +101,16 @@ export function RehearsalModal({
         </header>
 
         <form className="modal-form" onSubmit={handleSubmit}>
+          <label className="field">
+            <span>팀명</span>
+            <input
+              placeholder="예: A팀 / 드럼팀"
+              value={draft.teamName}
+              onChange={(e) => setDraft({ ...draft, teamName: e.target.value })}
+              required
+              autoFocus
+            />
+          </label>
           <label className="field">
             <span>날짜</span>
             <input
@@ -121,6 +140,8 @@ export function RehearsalModal({
               />
             </label>
           </div>
+
+          {localError ? <p className="form-error">{localError}</p> : null}
 
           <p className="modal-meta">
             작성자 · {memberLabel(member)}

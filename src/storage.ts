@@ -14,6 +14,7 @@ type RehearsalRow = {
   date: string
   start_time: string
   end_time: string
+  team_name: string | null
   created_by_cohort: string
   created_by_name: string
   created_at: string
@@ -48,6 +49,7 @@ function mapRehearsal(row: RehearsalRow): Rehearsal {
     date: row.date,
     startTime: row.start_time,
     endTime: row.end_time,
+    teamName: row.team_name ?? '',
     createdBy: {
       cohort: row.created_by_cohort,
       name: row.created_by_name,
@@ -117,15 +119,16 @@ export function clearSession() {
   clearPersistedMember()
 }
 
+const REHEARSAL_SELECT =
+  'id,date,start_time,end_time,team_name,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at'
+
 export async function fetchAppData(): Promise<AppData> {
   assertConfigured()
 
   const [rehearsalRes, logRes] = await Promise.all([
     supabase
       .from('rehearsals')
-      .select(
-        'id,date,start_time,end_time,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at',
-      )
+      .select(REHEARSAL_SELECT)
       .order('date', { ascending: true }),
     supabase
       .from('activity_logs')
@@ -182,12 +185,11 @@ export async function createRehearsal(
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
+      team_name: input.teamName,
       created_by_cohort: actor.cohort,
       created_by_name: actor.name,
     })
-    .select(
-      'id,date,start_time,end_time,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at',
-    )
+    .select(REHEARSAL_SELECT)
     .single()
 
   if (error) throw error
@@ -196,7 +198,7 @@ export async function createRehearsal(
   await insertLog({
     actor,
     action: 'create',
-    summary: `${memberLabel(actor)} · ${row.date} 합주 등록`,
+    summary: `${memberLabel(actor)} · ${row.date} ${input.teamName || '합주'} 등록`,
     rehearsalId: row.id,
     ip,
   })
@@ -218,6 +220,7 @@ export async function updateRehearsal(
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
+      team_name: input.teamName,
       updated_by_cohort: actor.cohort,
       updated_by_name: actor.name,
       updated_at: new Date().toISOString(),
@@ -229,7 +232,7 @@ export async function updateRehearsal(
   await insertLog({
     actor,
     action: 'update',
-    summary: `${memberLabel(actor)} · ${input.date} 합주 수정`,
+    summary: `${memberLabel(actor)} · ${input.date} ${input.teamName || '합주'} 수정`,
     rehearsalId: id,
     ip,
   })
