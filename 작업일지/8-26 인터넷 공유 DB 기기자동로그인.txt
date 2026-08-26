@@ -1,0 +1,17 @@
+8/26 인터넷 공유·DB·기기 자동로그인
+
+[작업 내용]
+- Supabase DB 연동 코드로 전환 (합주 일정 / 활동 로그 / 기기 세션)
+- 같은 기기(브라우저)는 localStorage로 자동 재입장, IP는 로그인·작업 로그에 기록
+- GitHub Pages 배포 워크플로 추가 (.github/workflows/deploy-pages.yml)
+- 스키마: supabase/schema.sql
+- 설정 안내: SETUP.md
+
+[남은 일 — 사용자 계정 필요]
+1. Supabase 무료 프로젝트 생성 후 schema.sql 실행
+2. Project URL + anon key 전달 (또는 .env.local / GitHub Secrets에 등록)
+3. 저장소 푸시 후 Pages 배포 URL 공유
+
+[참고]
+- 학교 Wi-Fi는 IP가 여러 명 공유라서, 자동 로그인은 IP가 아니라 기기(브라우저) 기준이 맞음
+- IP는 감사 로그용으로 DB에 남김
