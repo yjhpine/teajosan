@@ -215,7 +215,7 @@
 }
 
 .calendar-board,
-.day-detail,
+.week-timetable,
 .activity-panel {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -224,12 +224,12 @@
   box-shadow: var(--shadow);
 }
 
-.calendar-board {
+.calendar-board,
+.week-timetable {
   padding: 1.2rem;
 }
 
 .calendar-toolbar,
-.day-detail-header,
 .modal-header {
   display: flex;
   align-items: center;
@@ -238,7 +238,6 @@
 }
 
 .calendar-title,
-.day-detail h2,
 .activity-panel h2,
 .modal-header h3 {
   margin: 0;
@@ -344,11 +343,139 @@
   color: var(--muted);
 }
 
-.day-detail {
-  padding: 1.15rem 1.2rem 1.25rem;
+.week-scroll {
+  margin-top: 1rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 250, 243, 0.7);
+  animation: fade-slide 0.35s ease both;
 }
 
-.rehearsal-list,
+.week-header,
+.week-body {
+  display: grid;
+  grid-template-columns: 64px repeat(7, minmax(72px, 1fr));
+  min-width: 720px;
+}
+
+.week-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 250, 243, 0.96);
+}
+
+.hour-rail-spacer {
+  border-right: 1px solid var(--line);
+}
+
+.week-day-head {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.7rem 0.4rem;
+  text-align: center;
+  border-right: 1px solid var(--line);
+}
+
+.week-day-head:last-child {
+  border-right: none;
+}
+
+.week-day-head span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.week-day-head strong {
+  font-size: 1.05rem;
+}
+
+.week-day-head.is-today strong,
+.week-day-head.is-anchor strong {
+  display: inline-grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fffaf3;
+}
+
+.week-day-head.is-anchor strong {
+  background: var(--accent);
+}
+
+.hour-rail {
+  border-right: 1px solid var(--line);
+}
+
+.hour-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0.2rem 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(72px, 1fr));
+}
+
+.week-day-col {
+  position: relative;
+  border-right: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.week-day-col:last-child {
+  border-right: none;
+}
+
+.week-day-col.is-today,
+.week-day-col.is-anchor {
+  background: rgba(232, 58, 44, 0.04);
+}
+
+.hour-line {
+  border-bottom: 1px solid rgba(23, 24, 26, 0.08);
+  pointer-events: none;
+}
+
+.rehearsal-block {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  overflow: hidden;
+  padding: 0.35rem 0.4rem;
+  border: none;
+  border-radius: 8px;
+  background: rgba(232, 58, 44, 0.88);
+  color: #fffaf3;
+  text-align: left;
+  box-shadow: 0 8px 18px rgba(180, 35, 24, 0.18);
+}
+
+.rehearsal-block strong {
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.rehearsal-block span {
+  font-size: 0.68rem;
+  opacity: 0.92;
+}
+
 .log-list {
   list-style: none;
   margin: 1rem 0 0;
@@ -357,41 +484,6 @@
   gap: 0.65rem;
 }
 
-.rehearsal-card {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 0.9rem;
-  padding: 0.95rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--panel-solid);
-  text-align: left;
-  transition: border-color 0.18s ease, transform 0.18s ease;
-}
-
-.rehearsal-card:hover {
-  border-color: rgba(232, 58, 44, 0.4);
-  transform: translateY(-1px);
-}
-
-.rehearsal-time {
-  font-weight: 700;
-  color: var(--accent-deep);
-}
-
-.rehearsal-body strong {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.rehearsal-body p {
-  margin: 0 0 0.4rem;
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.rehearsal-by,
 .modal-meta,
 .empty-state {
   color: var(--muted);
@@ -586,19 +678,19 @@
     background: var(--accent);
   }
 
-  .rehearsal-card {
-    grid-template-columns: 1fr;
-    gap: 0.35rem;
-  }
-
   .calendar-toolbar,
-  .day-detail-header,
   .topbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .topbar-actions {
+  .topbar-actions,
+  .month-nav {
     justify-content: space-between;
+  }
+
+  .week-header,
+  .week-body {
+    min-width: 640px;
   }
 }

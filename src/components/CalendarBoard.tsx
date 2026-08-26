@@ -4,7 +4,6 @@ import {
   endOfMonth,
   endOfWeek,
   format,
-  isSameDay,
   isSameMonth,
   isToday,
   startOfMonth,
@@ -17,7 +16,6 @@ import type { Rehearsal } from '../types'
 type Props = {
   month: Date
   rehearsals: Rehearsal[]
-  selectedDate: Date | null
   onMonthChange: (month: Date) => void
   onSelectDate: (date: Date) => void
   onSelectRehearsal: (rehearsal: Rehearsal) => void
@@ -28,7 +26,6 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 export function CalendarBoard({
   month,
   rehearsals,
-  selectedDate,
   onMonthChange,
   onSelectDate,
   onSelectRehearsal,
@@ -93,7 +90,6 @@ export function CalendarBoard({
         {days.map((day) => {
           const dayEvents = eventsFor(day)
           const inMonth = isSameMonth(day, month)
-          const selected = selectedDate ? isSameDay(day, selectedDate) : false
 
           return (
             <button
@@ -103,7 +99,6 @@ export function CalendarBoard({
                 'day-cell',
                 inMonth ? '' : 'is-outside',
                 isToday(day) ? 'is-today' : '',
-                selected ? 'is-selected' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -120,7 +115,7 @@ export function CalendarBoard({
                       onSelectRehearsal(event)
                     }}
                   >
-                    {event.startTime} {event.place || '합주'}
+                    {event.startTime}–{event.endTime}
                   </span>
                 ))}
                 {dayEvents.length > 3 ? (

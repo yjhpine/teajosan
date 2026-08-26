@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { format, isSameDay, parseISO } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import { useEffect, useState } from 'react'
+import { isSameDay, parseISO } from 'date-fns'
 import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarBoard } from './components/CalendarBoard'
 import { LoginScreen } from './components/LoginScreen'
 import { RehearsalModal } from './components/RehearsalModal'
+import { WeekTimetable } from './components/WeekTimetable'
 import { supabaseConfigured } from './lib/supabase'
 import {
   clearSession,
@@ -29,9 +29,11 @@ function App() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [month, setMonth] = useState(() => new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date())
+  const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Rehearsal | null>(null)
+  const [createStartTime, setCreateStartTime] = useState('19:00')
 
   useEffect(() => {
     let cancelled = false
@@ -70,14 +72,6 @@ function App() {
     }
   }, [])
 
-  const selectedRehearsals = useMemo(() => {
-    if (!selectedDate) return []
-    const key = format(selectedDate, 'yyyy-MM-dd')
-    return data.rehearsals
-      .filter((item) => item.date === key)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-  }, [data.rehearsals, selectedDate])
-
   async function runAction(action: () => Promise<AppData>) {
     setBusy(true)
     setError('')
@@ -103,23 +97,34 @@ function App() {
     clearSession()
     setMember(null)
     setData(emptyData)
+    setViewMode('month')
   }
 
   async function handleRefresh() {
     await runAction(() => fetchAppData())
   }
 
-  function openCreate(date: Date) {
+  function openCreate(date: Date, startTime = '19:00') {
     setSelectedDate(date)
     setMonth(date)
+    setCreateStartTime(startTime)
     setEditing(null)
     setModalOpen(true)
   }
 
   function openEdit(rehearsal: Rehearsal) {
+    const date = parseISO(rehearsal.date)
     setEditing(rehearsal)
-    setSelectedDate(parseISO(rehearsal.date))
+    setSelectedDate(date)
+    setMonth(date)
+    setViewMode('week')
     setModalOpen(true)
+  }
+
+  function openWeek(date: Date) {
+    setSelectedDate(date)
+    setMonth(date)
+    setViewMode('week')
   }
 
   if (booting) {
@@ -170,68 +175,23 @@ function App() {
 
       <main className="layout">
         <div className="main-column">
-          <CalendarBoard
-            month={month}
-            rehearsals={data.rehearsals}
-            selectedDate={selectedDate}
-            onMonthChange={setMonth}
-            onSelectDate={(date) => {
-              setSelectedDate(date)
-              setMonth(date)
-            }}
-            onSelectRehearsal={openEdit}
-          />
-
-          <section className="day-detail">
-            <header className="day-detail-header">
-              <div>
-                <p className="section-kicker">선택한 날</p>
-                <h2>
-                  {selectedDate
-                    ? format(selectedDate, 'M월 d일 (EEE)', { locale: ko })
-                    : '날짜를 선택하세요'}
-                </h2>
-              </div>
-              <button
-                type="button"
-                className="btn-primary"
-                disabled={!selectedDate || busy}
-                onClick={() => selectedDate && openCreate(selectedDate)}
-              >
-                합주 잡기
-              </button>
-            </header>
-
-            {selectedRehearsals.length === 0 ? (
-              <p className="empty-state">이 날 등록된 합주가 없습니다.</p>
-            ) : (
-              <ul className="rehearsal-list">
-                {selectedRehearsals.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="rehearsal-card"
-                      onClick={() => openEdit(item)}
-                    >
-                      <div className="rehearsal-time">
-                        {item.startTime} – {item.endTime}
-                      </div>
-                      <div className="rehearsal-body">
-                        <strong>{item.place || '장소 미정'}</strong>
-                        {item.note ? <p>{item.note}</p> : null}
-                        <span className="rehearsal-by">
-                          {memberLabel(item.createdBy)}
-                          {item.updatedBy
-                            ? ` · 수정 ${memberLabel(item.updatedBy)}`
-                            : ''}
-                        </span>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {viewMode === 'month' ? (
+            <CalendarBoard
+              month={month}
+              rehearsals={data.rehearsals}
+              onMonthChange={setMonth}
+              onSelectDate={openWeek}
+              onSelectRehearsal={openEdit}
+            />
+          ) : (
+            <WeekTimetable
+              anchorDate={selectedDate}
+              rehearsals={data.rehearsals}
+              onBackToMonth={() => setViewMode('month')}
+              onCreate={openCreate}
+              onSelectRehearsal={openEdit}
+            />
+          )}
         </div>
 
         <ActivityPanel logs={data.logs} />
@@ -240,7 +200,8 @@ function App() {
       <RehearsalModal
         open={modalOpen}
         member={member}
-        initialDate={selectedDate ?? new Date()}
+        initialDate={selectedDate}
+        initialStartTime={createStartTime}
         editing={editing}
         busy={busy}
         onClose={() => {
@@ -255,11 +216,11 @@ function App() {
                 : createRehearsal(member, draft),
             )
             if (!ok) return
-            if (!editing) {
-              setSelectedDate(parseISO(draft.date))
-              if (!selectedDate || !isSameDay(selectedDate, parseISO(draft.date))) {
-                setMonth(parseISO(draft.date))
-              }
+            const nextDate = parseISO(draft.date)
+            setSelectedDate(nextDate)
+            setMonth(nextDate)
+            if (!editing && (!selectedDate || !isSameDay(selectedDate, nextDate))) {
+              setViewMode('week')
             }
             setModalOpen(false)
             setEditing(null)
