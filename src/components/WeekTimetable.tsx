@@ -1,6 +1,6 @@
 import {
+  addDays,
   eachDayOfInterval,
-  endOfWeek,
   format,
   isSameDay,
   isToday,
@@ -9,7 +9,6 @@ import {
 import { ko } from 'date-fns/locale'
 import type { MouseEvent } from 'react'
 import type { Rehearsal } from '../types'
-import { memberLabel } from '../types'
 
 type Props = {
   anchorDate: Date
@@ -19,10 +18,21 @@ type Props = {
   onSelectRehearsal: (rehearsal: Rehearsal) => void
 }
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
 const START_HOUR = 8
 const END_HOUR = 23
-const HOUR_HEIGHT = 56
+const HOUR_HEIGHT = 64
+
+const BLOCK_COLORS = [
+  '#F0817B',
+  '#4DB6AC',
+  '#64B5F6',
+  '#FF8A65',
+  '#E0B23A',
+  '#AED581',
+  '#BA68C8',
+  '#90A4AE',
+]
 
 function timeToMinutes(value: string): number {
   const [h, m] = value.split(':').map(Number)
@@ -36,14 +46,32 @@ function minutesToTime(total: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
-function blockStyle(startTime: string, endTime: string) {
+function hourLabel(hour: number): string {
+  if (hour === 0 || hour === 12) return '12'
+  if (hour < 12) return String(hour)
+  return String(hour - 12)
+}
+
+function colorForId(id: string): string {
+  let hash = 0
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash + id.charCodeAt(i) * (i + 1)) % BLOCK_COLORS.length
+  }
+  return BLOCK_COLORS[hash]
+}
+
+function blockStyle(startTime: string, endTime: string, color: string) {
   const dayStart = START_HOUR * 60
   const dayEnd = END_HOUR * 60
   const start = Math.max(dayStart, Math.min(dayEnd, timeToMinutes(startTime)))
   const end = Math.max(start + 30, Math.min(dayEnd, timeToMinutes(endTime)))
   const top = ((start - dayStart) / 60) * HOUR_HEIGHT
   const height = ((end - start) / 60) * HOUR_HEIGHT
-  return { top: `${top}px`, height: `${Math.max(height, 28)}px` }
+  return {
+    top: `${top}px`,
+    height: `${Math.max(height, 24)}px`,
+    background: color,
+  }
 }
 
 export function WeekTimetable({
@@ -53,8 +81,8 @@ export function WeekTimetable({
   onCreate,
   onSelectRehearsal,
 }: Props) {
-  const weekStart = startOfWeek(anchorDate, { weekStartsOn: 0 })
-  const weekEnd = endOfWeek(anchorDate, { weekStartsOn: 0 })
+  const weekStart = startOfWeek(anchorDate, { weekStartsOn: 1 })
+  const weekEnd = addDays(weekStart, 6)
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
 
@@ -65,7 +93,7 @@ export function WeekTimetable({
 
   function handleColumnClick(day: Date, event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement
-    if (target.closest('.rehearsal-block')) return
+    if (target.closest('.et-block')) return
     const rect = event.currentTarget.getBoundingClientRect()
     const y = event.clientY - rect.top
     const minutesFromStart = Math.floor((y / HOUR_HEIGHT) * 60)
@@ -75,66 +103,66 @@ export function WeekTimetable({
   }
 
   return (
-    <section className="week-timetable">
-      <header className="calendar-toolbar">
+    <section className="et-timetable">
+      <header className="et-toolbar">
         <div>
-          <p className="section-kicker">Weekly</p>
-          <h2 className="calendar-title">
+          <p className="et-kicker">합주 시간표</p>
+          <h2 className="et-title">
             {format(weekStart, 'M/d', { locale: ko })} –{' '}
             {format(weekEnd, 'M/d', { locale: ko })}
           </h2>
         </div>
-        <div className="month-nav">
-          <button type="button" className="btn-ghost" onClick={onBackToMonth}>
-            월간으로
+        <div className="et-actions">
+          <button type="button" className="et-btn-ghost" onClick={onBackToMonth}>
+            월간
           </button>
           <button
             type="button"
-            className="btn-primary"
+            className="et-btn-add"
+            aria-label="합주 잡기"
             onClick={() => onCreate(anchorDate, '19:00')}
           >
-            합주 잡기
+            +
           </button>
         </div>
       </header>
 
-      <div className="week-scroll">
-        <div className="week-header">
-          <div className="hour-rail-spacer" />
+      <div className="et-card">
+        <div className="et-head">
+          <div className="et-corner" />
           {days.map((day, index) => (
             <div
               key={day.toISOString()}
               className={[
-                'week-day-head',
+                'et-day',
                 isToday(day) ? 'is-today' : '',
                 isSameDay(day, anchorDate) ? 'is-anchor' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
             >
-              <span>{WEEKDAYS[index]}</span>
-              <strong>{format(day, 'd')}</strong>
+              {WEEKDAYS[index]}
             </div>
           ))}
         </div>
 
-        <div className="week-body">
-          <div className="hour-rail">
+        <div className="et-body">
+          <div className="et-hours">
             {hours.map((hour) => (
-              <div key={hour} className="hour-label" style={{ height: HOUR_HEIGHT }}>
-                {String(hour).padStart(2, '0')}:00
+              <div key={hour} className="et-hour" style={{ height: HOUR_HEIGHT }}>
+                <span>{hourLabel(hour)}</span>
               </div>
             ))}
           </div>
 
-          <div className="week-grid">
+          <div className="et-grid">
             {days.map((day) => {
               const dayEvents = eventsFor(day)
               return (
                 <div
                   key={day.toISOString()}
                   className={[
-                    'week-day-col',
+                    'et-col',
                     isToday(day) ? 'is-today' : '',
                     isSameDay(day, anchorDate) ? 'is-anchor' : '',
                   ]
@@ -146,25 +174,32 @@ export function WeekTimetable({
                   {hours.map((hour) => (
                     <div
                       key={hour}
-                      className="hour-line"
+                      className="et-slot"
                       style={{ height: HOUR_HEIGHT }}
-                    />
+                    >
+                      <div className="et-half" />
+                    </div>
                   ))}
+
                   {dayEvents.map((event) => (
                     <button
                       key={event.id}
                       type="button"
-                      className="rehearsal-block"
-                      style={blockStyle(event.startTime, event.endTime)}
+                      className="et-block"
+                      style={blockStyle(
+                        event.startTime,
+                        event.endTime,
+                        colorForId(event.id),
+                      )}
                       onClick={(e) => {
                         e.stopPropagation()
                         onSelectRehearsal(event)
                       }}
                     >
-                      <strong>
+                      <strong>합주</strong>
+                      <span>
                         {event.startTime}–{event.endTime}
-                      </strong>
-                      <span>{memberLabel(event.createdBy)}</span>
+                      </span>
                     </button>
                   ))}
                 </div>
