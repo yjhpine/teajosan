@@ -1,0 +1,21 @@
+8/26 주간시간표 전환 및 장소메모 제거
+
+[UI]
+- 월간 날짜 클릭 시 해당 주(일~토) 에브리타임형 시간표로 전환
+- 주간 툴바: 월간으로 / 합주 잡기
+- 빈 칸 클릭으로 해당 시각 등록, 블록 클릭으로 수정
+- 선택한 날 상세 UI 제거
+
+[장소/메모 제거]
+- RehearsalModal, types, storage, 월간 칩에서 place/note 제거
+- supabase/schema.sql 및 migrations/20260826_drop_rehearsal_place_note.sql 반영
+
+[검증]
+- 빌드 통과
+- 웹 UI에서 주간 전환/모달(날짜·시작·종료만) 확인
+- place/note 없이 insert 가능 확인 (원격 컬럼은 아직 존재, default '' 동작)
+
+[남은 원격 작업]
+- SQL Editor에서 실행 필요:
+  alter table rehearsals drop column if exists place;
+  alter table rehearsals drop column if exists note;

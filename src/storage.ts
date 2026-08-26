@@ -14,8 +14,6 @@ type RehearsalRow = {
   date: string
   start_time: string
   end_time: string
-  place: string
-  note: string
   created_by_cohort: string
   created_by_name: string
   created_at: string
@@ -50,8 +48,6 @@ function mapRehearsal(row: RehearsalRow): Rehearsal {
     date: row.date,
     startTime: row.start_time,
     endTime: row.end_time,
-    place: row.place ?? '',
-    note: row.note ?? '',
     createdBy: {
       cohort: row.created_by_cohort,
       name: row.created_by_name,
@@ -125,7 +121,12 @@ export async function fetchAppData(): Promise<AppData> {
   assertConfigured()
 
   const [rehearsalRes, logRes] = await Promise.all([
-    supabase.from('rehearsals').select('*').order('date', { ascending: true }),
+    supabase
+      .from('rehearsals')
+      .select(
+        'id,date,start_time,end_time,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at',
+      )
+      .order('date', { ascending: true }),
     supabase
       .from('activity_logs')
       .select('*')
@@ -181,12 +182,12 @@ export async function createRehearsal(
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
-      place: input.place,
-      note: input.note,
       created_by_cohort: actor.cohort,
       created_by_name: actor.name,
     })
-    .select('*')
+    .select(
+      'id,date,start_time,end_time,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at',
+    )
     .single()
 
   if (error) throw error
@@ -217,8 +218,6 @@ export async function updateRehearsal(
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
-      place: input.place,
-      note: input.note,
       updated_by_cohort: actor.cohort,
       updated_by_name: actor.name,
       updated_at: new Date().toISOString(),

@@ -8,8 +8,6 @@ export type Rehearsal = {
   date: string
   startTime: string
   endTime: string
-  place: string
-  note: string
   createdBy: Member
   createdAt: string
   updatedBy?: Member

@@ -4,44 +4,50 @@ import { ko } from 'date-fns/locale'
 import type { Member, Rehearsal } from '../types'
 import { memberLabel } from '../types'
 
-type Draft = {
+export type RehearsalDraft = {
   date: string
   startTime: string
   endTime: string
-  place: string
-  note: string
 }
 
 type Props = {
   open: boolean
   member: Member
   initialDate: Date
+  initialStartTime?: string
   editing: Rehearsal | null
   busy?: boolean
   onClose: () => void
-  onSave: (draft: Draft) => void
+  onSave: (draft: RehearsalDraft) => void
   onDelete?: () => void
 }
 
-const emptyDraft = (date: Date): Draft => ({
+function addTwoHours(startTime: string): string {
+  const [h, m] = startTime.split(':').map(Number)
+  const next = Math.min(23, h + 2)
+  return `${String(next).padStart(2, '0')}:${String(m || 0).padStart(2, '0')}`
+}
+
+const emptyDraft = (date: Date, startTime = '19:00'): RehearsalDraft => ({
   date: format(date, 'yyyy-MM-dd'),
-  startTime: '19:00',
-  endTime: '21:00',
-  place: '',
-  note: '',
+  startTime,
+  endTime: addTwoHours(startTime),
 })
 
 export function RehearsalModal({
   open,
   member,
   initialDate,
+  initialStartTime = '19:00',
   editing,
   busy = false,
   onClose,
   onSave,
   onDelete,
 }: Props) {
-  const [draft, setDraft] = useState<Draft>(emptyDraft(initialDate))
+  const [draft, setDraft] = useState<RehearsalDraft>(
+    emptyDraft(initialDate, initialStartTime),
+  )
 
   useEffect(() => {
     if (!open) return
@@ -50,13 +56,11 @@ export function RehearsalModal({
         date: editing.date,
         startTime: editing.startTime,
         endTime: editing.endTime,
-        place: editing.place,
-        note: editing.note,
       })
       return
     }
-    setDraft(emptyDraft(initialDate))
-  }, [open, editing, initialDate])
+    setDraft(emptyDraft(initialDate, initialStartTime))
+  }, [open, editing, initialDate, initialStartTime])
 
   if (!open) return null
 
@@ -117,23 +121,6 @@ export function RehearsalModal({
               />
             </label>
           </div>
-          <label className="field">
-            <span>장소</span>
-            <input
-              placeholder="예: 음악실 / 강당"
-              value={draft.place}
-              onChange={(e) => setDraft({ ...draft, place: e.target.value })}
-            />
-          </label>
-          <label className="field">
-            <span>메모</span>
-            <textarea
-              rows={3}
-              placeholder="곡 목록, 준비물 등"
-              value={draft.note}
-              onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-            />
-          </label>
 
           <p className="modal-meta">
             작성자 · {memberLabel(member)}
