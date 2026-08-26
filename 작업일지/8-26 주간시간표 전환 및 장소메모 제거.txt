@@ -16,6 +16,5 @@
 - place/note 없이 insert 가능 확인 (원격 컬럼은 아직 존재, default '' 동작)
 
 [남은 원격 작업]
-- SQL Editor에서 실행 필요:
-  alter table rehearsals drop column if exists place;
-  alter table rehearsals drop column if exists note;
+- 완료: place/note 컬럼 드롭 확인 (select place → 42703)
+- place/note 없이 insert 정상 (HTTP 201, 응답에 place/note 없음)
