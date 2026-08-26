@@ -19,6 +19,7 @@ create table if not exists rehearsals (
   date date not null,
   start_time text not null,
   end_time text not null,
+  team_name text not null default '',
   created_by_cohort text not null,
   created_by_name text not null,
   created_at timestamptz not null default now(),

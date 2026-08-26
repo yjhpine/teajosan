@@ -115,7 +115,7 @@ export function CalendarBoard({
                       onSelectRehearsal(event)
                     }}
                   >
-                    {event.startTime}–{event.endTime}
+                    {event.teamName || event.startTime}
                   </span>
                 ))}
                 {dayEvents.length > 3 ? (

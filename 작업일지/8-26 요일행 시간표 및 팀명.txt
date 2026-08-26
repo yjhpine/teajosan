@@ -1,0 +1,10 @@
+8/26 요일행 시간표 + 팀명 컬럼
+
+[UI]
+- 주간 시간표: 요일마다 한 줄(가로), 위쪽 1시간 단위 칸
+- 합주 블록에 팀명 + 시간 표시
+- 등록 모달에 팀명 필수 입력 추가 (장소/메모 없음)
+
+[DB]
+- rehearsals.team_name 컬럼 추가 마이그레이션 파일 작성
+- 원격 적용: alter table rehearsals add column if not exists team_name text not null default '';
