@@ -1,0 +1,5 @@
+8-26 활동로그 등록삭제만 표시
+
+- 활동 로그 UI: 로그인/로그아웃/수정 숨김, 합주 등록·삭제만 표시
+- 로그인 시 activity_logs insert 중단
+- fetch 시 action in (create, delete)만 조회

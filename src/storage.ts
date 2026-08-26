@@ -133,6 +133,7 @@ export async function fetchAppData(): Promise<AppData> {
     supabase
       .from('activity_logs')
       .select('*')
+      .in('action', ['create', 'delete'])
       .order('at', { ascending: false })
       .limit(100),
   ])
@@ -151,15 +152,6 @@ export async function loginMember(member: Member): Promise<AppData> {
   persistMember(member)
   const ip = await fetchClientIp()
   await upsertDevice(member, ip)
-
-  const ipNote = ip ? ` · IP ${ip}` : ''
-  await insertLog({
-    actor: member,
-    action: 'login',
-    summary: `${memberLabel(member)} 로그인${ipNote}`,
-    ip,
-  })
-
   return fetchAppData()
 }
 

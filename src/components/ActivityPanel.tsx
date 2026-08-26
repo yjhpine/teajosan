@@ -6,31 +6,33 @@ type Props = {
   logs: ActivityLog[]
 }
 
-const ACTION_LABEL: Record<ActivityLog['action'], string> = {
-  login: '로그인',
+const ACTION_LABEL: Partial<Record<ActivityLog['action'], string>> = {
   create: '등록',
-  update: '수정',
   delete: '삭제',
 }
 
+const VISIBLE_ACTIONS = new Set<ActivityLog['action']>(['create', 'delete'])
+
 export function ActivityPanel({ logs }: Props) {
+  const visible = logs.filter((log) => VISIBLE_ACTIONS.has(log.action)).slice(0, 30)
+
   return (
     <aside className="activity-panel">
       <header>
         <p className="section-kicker">Activity</p>
         <h2>활동 로그</h2>
-        <p className="panel-lead">기수·이름·IP가 DB에 남습니다.</p>
+        <p className="panel-lead">합주 등록·삭제만 표시합니다.</p>
       </header>
 
-      {logs.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="empty-state">아직 기록이 없습니다.</p>
       ) : (
         <ul className="log-list">
-          {logs.slice(0, 30).map((log) => (
+          {visible.map((log) => (
             <li key={log.id} className="log-item">
               <div className="log-top">
                 <span className={`log-badge is-${log.action}`}>
-                  {ACTION_LABEL[log.action]}
+                  {ACTION_LABEL[log.action] ?? log.action}
                 </span>
                 <time dateTime={log.at}>
                   {format(new Date(log.at), 'M/d HH:mm', { locale: ko })}
