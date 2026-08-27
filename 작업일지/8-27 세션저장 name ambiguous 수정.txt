@@ -1,0 +1,5 @@
+8-27 set_my_sessions name ambiguous 수정
+
+- 원인: RETURNS TABLE의 name 컬럼이 band_roster.name 등과 충돌
+- 수정: #variable_conflict use_column + RETURN QUERY
+- SQL Editor 실행: migrations/20260827_fix_session_name_ambiguous.sql

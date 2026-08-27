@@ -23,6 +23,7 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+#variable_conflict use_column
 declare
   v_cohort text;
   v_name text;
@@ -32,17 +33,14 @@ begin
   from public.assert_valid_session(p_token) s;
 
   select m.sessions into v_sessions
-  from members m
+  from public.members m
   where m.cohort = v_cohort and m.name = v_name;
 
   if v_sessions is null then
     raise exception '멤버를 찾을 수 없습니다.';
   end if;
 
-  cohort := v_cohort;
-  name := v_name;
-  sessions := v_sessions;
-  return next;
+  return query select v_cohort, v_name, v_sessions;
 end;
 $$;
 
@@ -55,6 +53,7 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+#variable_conflict use_column
 declare
   v_cohort text;
   v_name text;
@@ -75,7 +74,7 @@ begin
   -- 중복 제거
   select array(select distinct unnest(p_sessions) order by 1) into v_sessions;
 
-  update members m
+  update public.members m
   set sessions = v_sessions
   where m.cohort = v_cohort and m.name = v_name;
 
@@ -83,14 +82,11 @@ begin
     raise exception '멤버를 찾을 수 없습니다.';
   end if;
 
-  insert into band_roster (name)
+  insert into public.band_roster as r (name)
   values (v_name)
   on conflict (name) do nothing;
 
-  cohort := v_cohort;
-  name := v_name;
-  sessions := v_sessions;
-  return next;
+  return query select v_cohort, v_name, v_sessions;
 end;
 $$;
 
