@@ -56,7 +56,7 @@ select
       and tablename = 'members'
   ) as members_in_realtime,
   to_regclass('public.song_requests') is not null as has_song_requests_table,
-  to_regprocedure('public.create_song_request(uuid,text,text[],text[])') is not null as has_create_song_request,
+  to_regprocedure('public.create_song_request(uuid,text,text[],text[],text)') is not null as has_create_song_request,
   to_regprocedure('public.claim_song_request_slot(uuid,uuid,text)') is not null as has_claim_song_request_slot,
   to_regprocedure('public.promote_song_request(uuid,uuid)') is not null as has_promote_song_request,
   exists (
@@ -71,7 +71,6 @@ select
     select 1 from information_schema.columns
     where table_schema = 'public' and table_name = 'song_requests' and column_name = 'youtube_url'
   ) as song_requests_has_youtube_url,
-  to_regprocedure('public.create_song_request(uuid,text,text[],text[],text)') is not null as has_create_song_request_youtube,
   exists (
     select 1
     from pg_publication_tables
