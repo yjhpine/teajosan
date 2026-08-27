@@ -227,7 +227,7 @@ export function SongRequestBoard({
           {localError ? <p className="form-error">{localError}</p> : null}
 
           <button type="button" className="btn-primary" disabled={busy} onClick={() => void handleCreate()}>
-            {busy ? '올리는 중…' : '신청 올리기'}
+            {busy ? '등록 중…' : '등록'}
           </button>
         </div>
       ) : (
