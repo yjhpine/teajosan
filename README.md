@@ -1,32 +1,26 @@
-# React + TypeScript + Vite
+# 태조산 합주 캘린더
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+학교 밴드 합주 일정·곡 리스트·멤버 세션을 공유하는 웹 앱입니다.
 
-Currently, two official plugins are available:
+- **로그인**: 이름 + PIN (가입 시 기수·세션 등록)
+- **일정**: 주간/월간 합주 캘린더 (본인 합주만 수정·삭제)
+- **곡 리스트**: 세션별 멤버 배정 (전원 수정, 등록자만 삭제)
+- **배포**: GitHub Pages (`main` push 시 자동)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 시작하기
 
-## React Compiler
+자세한 DB·환경 설정은 **[SETUP.md](SETUP.md)** 를 보세요.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+cp .env.local.example .env.local   # 또는 SETUP 안내대로 생성
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## 스크립트
+
+| 명령 | 설명 |
+|------|------|
+| `npm run dev` | 로컬 개발 |
+| `npm run build` | 프로덕션 빌드 |
+| `node scripts/verify-security.mjs` | RPC/RLS 스모크 테스트 (`.env.local` 필요) |

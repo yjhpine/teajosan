@@ -1,0 +1,24 @@
+8/27 DB적용확인 곡권한 문서정리
+
+## 정책
+- 곡 수정: 로그인 멤버 전원
+- 곡 삭제: 등록자(created_by)만
+- UI: 본인 곡만 삭제 버튼
+
+## DB
+- migrations에 착지: member_cascade_delete, signup_cohort_name_check, song_owner_delete
+- ops/verify_applied.sql — 적용 여부 확인
+- 파괴적 SQL → supabase/ops/ 이동
+
+## 프론트
+- SongListBoard: isSameMember로 삭제 버튼 제한
+- scripts/verify-security.mjs: 타인 update 허용 / delete 거부 검증
+
+## 문서
+- SETUP.md, README.md, schema.sql 주석 갱신
+
+## Supabase에서 실행할 SQL (미적용분)
+1. migrations/20260827_member_cascade_delete.sql
+2. migrations/20260827_signup_cohort_name_check.sql
+3. migrations/20260827_song_owner_delete.sql
+4. ops/verify_applied.sql 로 확인

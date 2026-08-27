@@ -4,6 +4,7 @@
  * 사전: Supabase SQL Editor에서 migrations/20260827_security_hardening.sql 실행
  *       + admin_set_member_pin('99', '테스트', 'test1234') 로 테스트 멤버 등록
  *       + migrations/20260827_signup_name_login.sql (이름+PIN login)
+ *       + migrations/20260827_song_list.sql + song_owner_delete.sql
  */
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
@@ -59,6 +60,8 @@ async function rest(method, path, body) {
 const testDeviceId = `verify-${Date.now()}`
 let sessionToken = null
 let rehearsalId = null
+let songId = null
+let otherToken = null
 
 // 1. RPC login exists
 const loginBad = await supabase.rpc('login', {
@@ -152,6 +155,68 @@ if (sessionToken) {
     })
   }
 
+  // Song ownership: A creates, B can update, B cannot delete
+  const createSong = await supabase.rpc('create_song', {
+    p_session_token: sessionToken,
+    p_title: `verify-song-${Date.now()}`,
+  })
+  if (createSong.error) {
+    fail('create_song RPC', `${createSong.error.message} (run song_list.sql)`)
+  } else {
+    pass('create_song RPC')
+    songId = createSong.data
+  }
+
+  const otherDevice = `${testDeviceId}-b`
+  const signupB = await supabase.rpc('signup', {
+    p_cohort: '98',
+    p_name: `검증B${Date.now().toString().slice(-6)}`,
+    p_pin: 'test1234',
+    p_sessions: ['vocal'],
+    p_device_id: otherDevice,
+    p_client_ip: '127.0.0.2',
+  })
+  if (signupB.error) {
+    fail('signup second member for song ACL', signupB.error.message)
+  } else {
+    pass('signup second member for song ACL')
+    otherToken = signupB.data
+  }
+
+  if (songId && otherToken) {
+    const updateByB = await supabase.rpc('update_song', {
+      p_session_token: otherToken,
+      p_id: songId,
+      p_vocal: '검증보컬',
+    })
+    if (updateByB.error) {
+      fail('update_song allows any logged-in member', updateByB.error.message)
+    } else {
+      pass('update_song allows any logged-in member')
+    }
+
+    const deleteByB = await supabase.rpc('delete_song', {
+      p_session_token: otherToken,
+      p_id: songId,
+    })
+    if (deleteByB.error && /본인|삭제/i.test(deleteByB.error.message)) {
+      pass('delete_song rejects non-owner')
+    } else {
+      fail(
+        'delete_song rejects non-owner',
+        deleteByB.error?.message ?? 'unexpected success — run song_owner_delete.sql',
+      )
+    }
+
+    await supabase.rpc('delete_song', {
+      p_session_token: sessionToken,
+      p_id: songId,
+    })
+  }
+
+  if (otherToken) {
+    await supabase.rpc('logout', { p_token: otherToken })
+  }
   await supabase.rpc('logout', { p_token: sessionToken })
 }
 
