@@ -1860,12 +1860,12 @@
 }
 
 .song-thumb--cover {
-  flex: 0 0 4.25rem;
+  flex: 0 0 6.25rem;
   box-sizing: border-box;
-  width: 4.25rem;
-  height: 4.25rem;
-  min-width: 4.25rem;
-  max-width: 4.25rem;
+  width: 6.25rem;
+  height: 6.25rem;
+  min-width: 6.25rem;
+  max-width: 6.25rem;
   aspect-ratio: 1 / 1;
   align-self: center;
   border-radius: 8px;
@@ -1890,14 +1890,14 @@
 }
 
 .song-title-fallback--cover {
-  flex: 0 0 4.25rem;
+  flex: 0 0 6.25rem;
   box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 4.25rem;
-  height: 4.25rem;
-  min-width: 4.25rem;
-  max-width: 4.25rem;
+  width: 6.25rem;
+  height: 6.25rem;
+  min-width: 6.25rem;
+  max-width: 6.25rem;
   aspect-ratio: 1 / 1;
   align-self: center;
   margin: 0;
@@ -1921,11 +1921,11 @@
 
 .song-request-cover.song-thumb--cover,
 .song-request-cover.song-title-fallback--cover {
-  flex: 0 0 4.25rem;
-  width: 4.25rem !important;
-  height: 4.25rem;
-  min-width: 4.25rem;
-  max-width: 4.25rem;
+  flex: 0 0 6.25rem;
+  width: 6.25rem !important;
+  height: 6.25rem;
+  min-width: 6.25rem;
+  max-width: 6.25rem;
   aspect-ratio: 1 / 1;
   align-self: center;
 }
@@ -2215,11 +2215,11 @@
 
   .song-request-cover.song-thumb--cover,
   .song-request-cover.song-title-fallback--cover {
-    flex: 0 0 4rem;
-    width: 4rem !important;
-    height: 4rem;
-    min-width: 4rem;
-    max-width: 4rem;
+    flex: 0 0 6.25rem;
+    width: 6.25rem !important;
+    height: 6.25rem;
+    min-width: 6.25rem;
+    max-width: 6.25rem;
     aspect-ratio: 1 / 1;
     align-self: center;
   }
