@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { isSameMember, type InstrumentSession, type MemberProfile, type Session, type Song, type SongDraft } from '../types'
+import { type InstrumentSession, type MemberProfile, type Session, type Song, type SongDraft } from '../types'
 
 type SessionKey = keyof Omit<SongDraft, 'title'>
 
@@ -196,7 +196,6 @@ function SongMobileCard({
   draftTitles,
   rosters,
   busy,
-  canDelete,
   onDraftChange,
   onCommitTitle,
   onUpdate,
@@ -209,7 +208,6 @@ function SongMobileCard({
   draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
-  canDelete: boolean
   onDraftChange: (id: string, title: string) => void
   onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
@@ -227,19 +225,17 @@ function SongMobileCard({
           onDraftChange={onDraftChange}
           onCommit={onCommitTitle}
         />
-        {canDelete ? (
-          <button
-            type="button"
-            className="btn-ghost song-delete song-delete--inline"
-            disabled={busy}
-            onClick={() => {
-              if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
-              void onDelete(song.id)
-            }}
-          >
-            삭제
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="btn-ghost song-delete song-delete--inline"
+          disabled={busy}
+          onClick={() => {
+            if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
+            void onDelete(song.id)
+          }}
+        >
+          삭제
+        </button>
       </div>
 
       <div className="song-mobile-sessions">
@@ -264,7 +260,6 @@ function SongMobileList({
   draftTitles,
   rosters,
   busy,
-  session,
   onDraftChange,
   onCommitTitle,
   onUpdate,
@@ -275,7 +270,6 @@ function SongMobileList({
   draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
-  session: Session
   onDraftChange: (id: string, title: string) => void
   onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
@@ -297,7 +291,6 @@ function SongMobileList({
           draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
-          canDelete={isSameMember(session, song.createdBy)}
           onDraftChange={onDraftChange}
           onCommitTitle={onCommitTitle}
           onUpdate={onUpdate}
@@ -310,7 +303,7 @@ function SongMobileList({
 }
 
 export function SongListBoard({
-  session,
+  session: _session,
   songs,
   profiles,
   busy = false,
@@ -465,19 +458,17 @@ export function SongListBoard({
                     />
                   </td>
                   <td className="song-col--actions">
-                    {isSameMember(session, song.createdBy) ? (
-                      <button
-                        type="button"
-                        className="btn-ghost song-delete"
-                        disabled={busy}
-                        onClick={() => {
-                          if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
-                          void onDelete(song.id)
-                        }}
-                      >
-                        삭제
-                      </button>
-                    ) : null}
+                    <button
+                      type="button"
+                      className="btn-ghost song-delete"
+                      disabled={busy}
+                      onClick={() => {
+                        if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
+                        void onDelete(song.id)
+                      }}
+                    >
+                      삭제
+                    </button>
                   </td>
                 </tr>
               ))
@@ -492,7 +483,6 @@ export function SongListBoard({
           draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
-          session={session}
           onDraftChange={handleDraftChange}
           onCommitTitle={commitTitle}
           onUpdate={onUpdate}
