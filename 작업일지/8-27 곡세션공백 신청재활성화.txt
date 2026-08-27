@@ -1,0 +1,15 @@
+작업: 곡 리스트 세션 공백 → 신청글 재모집 활성화
+
+변경 내용:
+- update_song: 연결된 신청에 세션 동기화, 미완성이면 promoted_at 해제
+- promote: 기존 promoted_song_id면 곡 UPDATE (재완성)
+- claim: 재모집 중 곡 리스트 세션도 함께 갱신
+- 안내 문구 보완
+
+필수 SQL:
+- supabase/migrations/20260827_song_blank_reactivate_request.sql
+
+파일:
+- supabase/migrations/20260827_song_blank_reactivate_request.sql
+- supabase/ops/verify_applied.sql
+- src/components/SongRequestBoard.tsx
