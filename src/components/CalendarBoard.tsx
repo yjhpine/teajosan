@@ -132,7 +132,7 @@ export function CalendarBoard({
               <span className="day-number">{format(day, 'd')}</span>
               <div className="day-events">
                 {dayEvents.slice(0, 3).map((event) =>
-                  variant === 'mobile' ? (
+                  variant === 'mobile' && !onSelectRehearsal ? (
                     <span key={event.id} className="event-chip event-chip--readonly">
                       {event.teamName || event.startTime}
                     </span>

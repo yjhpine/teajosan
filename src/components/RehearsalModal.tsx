@@ -181,7 +181,7 @@ export function RehearsalModal({
             {editing && onDelete ? (
               <button
                 type="button"
-                className="btn-danger"
+                className={['btn-danger', mobile ? 'btn-danger--mobile' : ''].filter(Boolean).join(' ')}
                 onClick={onDelete}
                 disabled={busy}
               >

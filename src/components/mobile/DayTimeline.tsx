@@ -20,6 +20,7 @@ type Props = {
   date: Date
   rehearsals: Rehearsal[]
   onDateChange: (date: Date) => void
+  onSelectRehearsal: (rehearsal: Rehearsal) => void
 }
 
 const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']
@@ -30,7 +31,12 @@ function slotTimeLabel(hour: number): string {
   return `${String(hour).padStart(2, '0')}:00`
 }
 
-export function DayTimeline({ date, rehearsals, onDateChange }: Props) {
+export function DayTimeline({
+  date,
+  rehearsals,
+  onDateChange,
+  onSelectRehearsal,
+}: Props) {
   const weekStart = startOfWeek(date, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) })
   const hours = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
@@ -67,7 +73,7 @@ export function DayTimeline({ date, rehearsals, onDateChange }: Props) {
         })}
       </div>
 
-      <p className="dt-hint">합주 추가는 아래 + 버튼만 사용하세요</p>
+      <p className="dt-hint">+ 버튼으로 추가 · 합주 블록 터치로 수정·삭제</p>
 
       <div className="dt-card">
         <div className="dt-scroll">
@@ -92,15 +98,17 @@ export function DayTimeline({ date, rehearsals, onDateChange }: Props) {
                 />
               ))}
               {dayEvents.map((event) => (
-                <div
+                <button
                   key={event.id}
-                  className="dt-block dt-block--readonly"
+                  type="button"
+                  className="dt-block dt-block--interactive"
                   style={blockStyleVertical(
                     event.startTime,
                     event.endTime,
                     colorForId(event.id),
                     HOUR_HEIGHT,
                   )}
+                  onClick={() => onSelectRehearsal(event)}
                 >
                   <strong>
                     {event.teamName || '합주'} / {memberLabel(event.createdBy)}
@@ -108,7 +116,7 @@ export function DayTimeline({ date, rehearsals, onDateChange }: Props) {
                   <span>
                     {event.startTime.slice(0, 5)}–{event.endTime.slice(0, 5)}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>

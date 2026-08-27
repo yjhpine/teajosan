@@ -168,6 +168,11 @@
   font-weight: 700;
 }
 
+.btn-danger--mobile {
+  min-width: 5.5rem;
+  background: rgba(232, 58, 44, 0.16);
+}
+
 .topbar {
   position: relative;
   z-index: 1;
@@ -894,6 +899,16 @@
 
 .dt-block--readonly {
   pointer-events: none;
+}
+
+.dt-block--interactive {
+  cursor: pointer;
+  border: none;
+  text-align: left;
+}
+
+.dt-block--interactive:active {
+  transform: scale(0.98);
 }
 
 .mobile-header {

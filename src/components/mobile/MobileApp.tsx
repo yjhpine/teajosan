@@ -3,7 +3,7 @@ import { ko } from 'date-fns/locale'
 import { useState } from 'react'
 import { ActivityPanel } from '../ActivityPanel'
 import { CalendarBoard } from '../CalendarBoard'
-import type { AppData, Member } from '../../types'
+import type { AppData, Member, Rehearsal } from '../../types'
 import { DayTimeline } from './DayTimeline'
 import { MobileHeader } from './MobileHeader'
 import { MobileTabBar } from './MobileTabBar'
@@ -25,6 +25,7 @@ type Props = {
   onRefresh: () => void
   onLogout: () => void
   onCreate: (date: Date, startTime?: string) => void
+  onSelectRehearsal: (rehearsal: Rehearsal) => void
 }
 
 export function MobileApp({
@@ -41,6 +42,7 @@ export function MobileApp({
   onRefresh,
   onLogout,
   onCreate,
+  onSelectRehearsal,
 }: Props) {
   const [tab, setTab] = useState<MobileTab>('schedule')
   const isMonthHome = tab === 'schedule' && scheduleView === 'month'
@@ -62,7 +64,7 @@ export function MobileApp({
     tab === 'log'
       ? '합주 등록·삭제 기록'
       : scheduleView === 'day'
-        ? '+ 버튼으로만 합주를 추가할 수 있습니다'
+        ? '+ 버튼으로 추가 · 블록 터치로 수정·삭제'
         : undefined
 
   return (
@@ -101,12 +103,14 @@ export function MobileApp({
               variant="mobile"
               onMonthChange={onMonthChange}
               onSelectDate={openDay}
+              onSelectRehearsal={onSelectRehearsal}
             />
           ) : (
             <DayTimeline
               date={selectedDate}
               rehearsals={data.rehearsals}
               onDateChange={onSelectDate}
+              onSelectRehearsal={onSelectRehearsal}
             />
           )
         ) : (
