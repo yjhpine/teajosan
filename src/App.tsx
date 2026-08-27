@@ -23,8 +23,10 @@ import {
   getMyProfile,
   loadSession,
   loginMember,
+  reorderSongs,
   resumeSession,
   setMySessions,
+  changeMyPin,
   signupMember,
   subscribeAppDataChanges,
   updateRehearsal,
@@ -137,15 +139,20 @@ function App() {
       debounceTimer = setTimeout(() => {
         void (async () => {
           try {
-            const [nextData, nextSongs, nextProfiles] = await Promise.all([
+            const [nextData, nextSongs, nextProfiles, nextProfile] = await Promise.all([
               fetchAppData(),
               fetchSongs(),
               fetchMemberProfiles(),
+              getMyProfile(member),
             ])
             if (!cancelled) {
               setData(nextData)
               setSongs(nextSongs)
               setProfiles(nextProfiles)
+              setProfile(nextProfile)
+              setMember((prev) =>
+                prev ? { ...prev, sessions: nextProfile.sessions } : prev,
+              )
             }
           } catch (err) {
             console.error(err)
@@ -258,6 +265,11 @@ function App() {
     }
   }
 
+  async function handleChangePin(oldPin: string, newPin: string) {
+    if (!member) return
+    await changeMyPin(member, oldPin, newPin)
+  }
+
   async function handleLogout() {
     await clearSession()
     setMember(null)
@@ -352,6 +364,7 @@ function App() {
         void runSongAction(() => updateSong(member, id, draft))
       }
       onDelete={(id) => void runSongAction(() => deleteSong(member, id))}
+      onReorder={(ids) => void runSongAction(() => reorderSongs(member, ids))}
     />
   )
 
@@ -430,7 +443,9 @@ function App() {
           onCreateSong={() => void runSongAction(() => createSong(member))}
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
+          onReorderSongs={(ids) => void runSongAction(() => reorderSongs(member, ids))}
           onSaveSessions={handleSaveSessions}
+          onChangePin={handleChangePin}
         />
         {modal}
       </>
@@ -487,7 +502,12 @@ function App() {
         <main className="layout layout--songs">{songBoard}</main>
       ) : page === 'profile' ? (
         <main className="layout layout--songs">
-          <ProfilePage profile={profile} busy={busy} onSave={handleSaveSessions} />
+          <ProfilePage
+            profile={profile}
+            busy={busy}
+            onSave={handleSaveSessions}
+            onChangePin={handleChangePin}
+          />
         </main>
       ) : (
         <main className="layout">

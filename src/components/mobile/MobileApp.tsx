@@ -46,7 +46,9 @@ type Props = {
   onCreateSong: () => void
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onDeleteSong: (id: string) => void
+  onReorderSongs: (ids: string[]) => void
   onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
+  onChangePin: (oldPin: string, newPin: string) => void | Promise<void>
 }
 
 export function MobileApp({
@@ -72,7 +74,9 @@ export function MobileApp({
   onCreateSong,
   onUpdateSong,
   onDeleteSong,
+  onReorderSongs,
   onSaveSessions,
+  onChangePin,
 }: Props) {
   const [tab, setTab] = useState<MobileTab>(
     page === 'songs' ? 'songs' : page === 'profile' ? 'profile' : 'schedule',
@@ -177,9 +181,15 @@ export function MobileApp({
             onCreate={onCreateSong}
             onUpdate={onUpdateSong}
             onDelete={onDeleteSong}
+            onReorder={onReorderSongs}
           />
         ) : tab === 'profile' ? (
-          <ProfilePage profile={profile} busy={busy} onSave={onSaveSessions} />
+          <ProfilePage
+            profile={profile}
+            busy={busy}
+            onSave={onSaveSessions}
+            onChangePin={onChangePin}
+          />
         ) : (
           <ActivityPanel logs={data.logs} variant="mobile" />
         )}

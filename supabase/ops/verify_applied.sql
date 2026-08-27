@@ -41,4 +41,17 @@ select
   ) as delete_song_owner_guard,
   exists (
     select 1 from pg_trigger where tgname = 'member_deleted_clear_songs'
-  ) as member_delete_clears_songs;
+  ) as member_delete_clears_songs,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'login_attempts' and column_name = 'attempt_key'
+  ) as login_attempts_has_attempt_key,
+  to_regprocedure('public.change_my_pin(uuid,text,text)') is not null as has_change_my_pin,
+  to_regprocedure('public.reorder_songs(uuid,uuid[])') is not null as has_reorder_songs,
+  exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'members'
+  ) as members_in_realtime;
