@@ -1,8 +1,8 @@
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
-import { ActivityPanel } from '../ActivityPanel'
 import { CalendarBoard } from '../CalendarBoard'
+import { PerformanceBoard } from '../PerformanceBoard'
 import { ProfilePage } from '../ProfilePage'
 import { SongListBoard } from '../SongListBoard'
 import { SongRequestBoard } from '../SongRequestBoard'
@@ -11,6 +11,7 @@ import type {
   InstrumentSession,
   Member,
   MemberProfile,
+  Performance,
   Rehearsal,
   Session,
   Song,
@@ -23,8 +24,16 @@ import { MobileHeader } from './MobileHeader'
 import { MobileTabBar } from './MobileTabBar'
 
 type ScheduleView = 'month' | 'day'
-type MobileTab = 'schedule' | 'songs' | 'requests' | 'profile' | 'log'
-type AppPage = 'calendar' | 'songs' | 'requests' | 'profile'
+type MobileTab = 'schedule' | 'songs' | 'requests' | 'performances' | 'profile'
+type AppPage = 'calendar' | 'songs' | 'requests' | 'performances' | 'profile'
+
+type PerformanceDraft = {
+  title: string
+  date: string
+  place: string
+  note: string
+  songIds: string[]
+}
 
 type Props = {
   member: Member
@@ -32,6 +41,7 @@ type Props = {
   data: AppData
   songs: Song[]
   songRequests: SongRequest[]
+  performances: Performance[]
   profiles: MemberProfile[]
   busy: boolean
   error: string
@@ -58,6 +68,9 @@ type Props = {
   ) => void
   onClaimRequest: (id: string, slot: SongRequestSlot) => void
   onDeleteRequest: (id: string) => void
+  onCreatePerformance: (draft: PerformanceDraft) => void
+  onUpdatePerformance: (id: string, draft: PerformanceDraft) => void
+  onDeletePerformance: (id: string) => void
   onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
   onChangePin: (oldPin: string, newPin: string) => void | Promise<void>
 }
@@ -68,6 +81,7 @@ export function MobileApp({
   data,
   songs,
   songRequests,
+  performances,
   profiles,
   busy,
   error,
@@ -89,6 +103,9 @@ export function MobileApp({
   onCreateRequest,
   onClaimRequest,
   onDeleteRequest,
+  onCreatePerformance,
+  onUpdatePerformance,
+  onDeletePerformance,
   onSaveSessions,
   onChangePin,
 }: Props) {
@@ -97,23 +114,34 @@ export function MobileApp({
       ? 'songs'
       : page === 'requests'
         ? 'requests'
-        : page === 'profile'
-          ? 'profile'
-          : 'schedule',
+        : page === 'performances'
+          ? 'performances'
+          : page === 'profile'
+            ? 'profile'
+            : 'schedule',
   )
   const isMonthHome = tab === 'schedule' && scheduleView === 'month'
 
   useEffect(() => {
     if (page === 'songs') setTab('songs')
     else if (page === 'requests') setTab('requests')
+    else if (page === 'performances') setTab('performances')
     else if (page === 'profile') setTab('profile')
-    else if (tab === 'songs' || tab === 'requests' || tab === 'profile') setTab('schedule')
+    else if (
+      tab === 'songs' ||
+      tab === 'requests' ||
+      tab === 'performances' ||
+      tab === 'profile'
+    ) {
+      setTab('schedule')
+    }
   }, [page])
 
   function handleTabChange(next: MobileTab) {
     setTab(next)
     if (next === 'songs') onPageChange('songs')
     else if (next === 'requests') onPageChange('requests')
+    else if (next === 'performances') onPageChange('performances')
     else if (next === 'profile') onPageChange('profile')
     else if (next === 'schedule') onPageChange('calendar')
   }
@@ -126,8 +154,8 @@ export function MobileApp({
   }
 
   const headerTitle =
-    tab === 'log'
-      ? '활동 로그'
+    tab === 'performances'
+      ? '공연'
       : tab === 'songs'
         ? '곡 리스트'
         : tab === 'requests'
@@ -139,8 +167,8 @@ export function MobileApp({
               : ''
 
   const headerSubtitle =
-    tab === 'log'
-      ? '합주 등록·삭제 기록'
+    tab === 'performances'
+      ? '공연 일정 · 세트리스트'
       : tab === 'songs'
         ? '가수/곡 · 세션 멤버'
         : tab === 'requests'
@@ -174,7 +202,7 @@ export function MobileApp({
         className={[
           'mobile-main',
           isMonthHome ? 'mobile-main--month' : '',
-          tab === 'log' ? 'mobile-main--log' : '',
+          tab === 'performances' ? 'mobile-main--performances' : '',
           tab === 'songs' ? 'mobile-main--songs' : '',
           tab === 'requests' ? 'mobile-main--requests' : '',
           tab === 'profile' ? 'mobile-main--profile' : '',
@@ -218,15 +246,23 @@ export function MobileApp({
             onClaim={onClaimRequest}
             onDelete={onDeleteRequest}
           />
-        ) : tab === 'profile' ? (
+        ) : tab === 'performances' ? (
+          <PerformanceBoard
+            session={member as Session}
+            performances={performances}
+            songs={songs}
+            busy={busy}
+            onCreate={onCreatePerformance}
+            onUpdate={onUpdatePerformance}
+            onDelete={onDeletePerformance}
+          />
+        ) : (
           <ProfilePage
             profile={profile}
             busy={busy}
             onSave={onSaveSessions}
             onChangePin={onChangePin}
           />
-        ) : (
-          <ActivityPanel logs={data.logs} variant="mobile" />
         )}
       </main>
 

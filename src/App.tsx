@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { isSameDay, parseISO } from 'date-fns'
-import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarBoard } from './components/CalendarBoard'
 import { LoginScreen } from './components/LoginScreen'
 import { MobileApp } from './components/mobile/MobileApp'
+import { PerformanceBoard } from './components/PerformanceBoard'
 import { ProfilePage } from './components/ProfilePage'
 import { RehearsalModal } from './components/RehearsalModal'
 import { SessionSetupScreen } from './components/SessionSetupScreen'
@@ -14,14 +14,17 @@ import { useMediaQuery } from './hooks/useMediaQuery'
 import { supabaseConfigured } from './lib/supabase'
 import {
   clearSession,
+  createPerformance,
   createRehearsal,
   createSongRequest,
   claimSongRequestSlot,
+  deletePerformance,
   deleteRehearsal,
   deleteSong,
   deleteSongRequest,
   fetchAppData,
   fetchMemberProfiles,
+  fetchPerformances,
   fetchSongRequests,
   fetchSongs,
   getMyProfile,
@@ -33,6 +36,7 @@ import {
   changeMyPin,
   signupMember,
   subscribeAppDataChanges,
+  updatePerformance,
   updateRehearsal,
   updateSong,
 } from './storage'
@@ -41,6 +45,7 @@ import type {
   InstrumentSession,
   Member,
   MemberProfile,
+  Performance,
   Rehearsal,
   Session,
   Song,
@@ -52,16 +57,17 @@ import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
-type AppPage = 'calendar' | 'songs' | 'requests' | 'profile'
+type AppPage = 'calendar' | 'songs' | 'requests' | 'performances' | 'profile'
 
 async function loadExtras(session: Session) {
-  const [nextSongs, nextProfiles, nextProfile, nextRequests] = await Promise.all([
+  const [nextSongs, nextProfiles, nextProfile, nextRequests, nextPerformances] = await Promise.all([
     fetchSongs(),
     fetchMemberProfiles(),
     getMyProfile(session),
     fetchSongRequests(),
+    fetchPerformances(),
   ])
-  return { nextSongs, nextProfiles, nextProfile, nextRequests }
+  return { nextSongs, nextProfiles, nextProfile, nextRequests, nextPerformances }
 }
 
 function App() {
@@ -71,6 +77,7 @@ function App() {
   const [data, setData] = useState<AppData>(emptyData)
   const [songs, setSongs] = useState<Song[]>([])
   const [songRequests, setSongRequests] = useState<SongRequest[]>([])
+  const [performances, setPerformances] = useState<Performance[]>([])
   const [profiles, setProfiles] = useState<MemberProfile[]>([])
   const [page, setPage] = useState<AppPage>('calendar')
   const [booting, setBooting] = useState(true)
@@ -119,6 +126,7 @@ function App() {
         setProfiles(extras.nextProfiles)
         setProfile(extras.nextProfile)
         setSongRequests(extras.nextRequests)
+        setPerformances(extras.nextPerformances)
         setMember({ ...saved, sessions: extras.nextProfile.sessions })
       } catch (err) {
         if (cancelled) return
@@ -147,19 +155,22 @@ function App() {
       debounceTimer = setTimeout(() => {
         void (async () => {
           try {
-            const [nextData, nextSongs, nextProfiles, nextProfile, nextRequests] = await Promise.all([
-              fetchAppData(),
-              fetchSongs(),
-              fetchMemberProfiles(),
-              getMyProfile(member),
-              fetchSongRequests(),
-            ])
+            const [nextData, nextSongs, nextProfiles, nextProfile, nextRequests, nextPerformances] =
+              await Promise.all([
+                fetchAppData(),
+                fetchSongs(),
+                fetchMemberProfiles(),
+                getMyProfile(member),
+                fetchSongRequests(),
+                fetchPerformances(),
+              ])
             if (!cancelled) {
               setData(nextData)
               setSongs(nextSongs)
               setProfiles(nextProfiles)
               setProfile(nextProfile)
               setSongRequests(nextRequests)
+              setPerformances(nextPerformances)
               setMember((prev) =>
                 prev ? { ...prev, sessions: nextProfile.sessions } : prev,
               )
@@ -240,11 +251,27 @@ function App() {
     }
   }
 
+  async function runPerformanceAction(action: () => Promise<Performance[]>) {
+    setBusy(true)
+    setError('')
+    try {
+      setPerformances(await action())
+      return true
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '공연 저장에 실패했습니다.')
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
   function applyExtras(extras: Awaited<ReturnType<typeof loadExtras>>, saved: Session) {
     setSongs(extras.nextSongs)
     setProfiles(extras.nextProfiles)
     setProfile(extras.nextProfile)
     setSongRequests(extras.nextRequests)
+    setPerformances(extras.nextPerformances)
     setMember({ ...saved, sessions: extras.nextProfile.sessions })
   }
 
@@ -307,6 +334,7 @@ function App() {
     setData(emptyData)
     setSongs([])
     setSongRequests([])
+    setPerformances([])
     setProfiles([])
     setPage('calendar')
     setViewMode('month')
@@ -452,6 +480,7 @@ function App() {
           data={data}
           songs={songs}
           songRequests={songRequests}
+          performances={performances}
           profiles={profiles}
           busy={busy}
           error={error}
@@ -479,6 +508,15 @@ function App() {
             void runRequestAction(() => claimSongRequestSlot(member, id, slot))
           }
           onDeleteRequest={(id) => void runRequestAction(() => deleteSongRequest(member, id))}
+          onCreatePerformance={(draft) =>
+            void runPerformanceAction(() => createPerformance(member, draft))
+          }
+          onUpdatePerformance={(id, draft) =>
+            void runPerformanceAction(() => updatePerformance(member, id, draft))
+          }
+          onDeletePerformance={(id) =>
+            void runPerformanceAction(() => deletePerformance(member, id))
+          }
           onSaveSessions={handleSaveSessions}
           onChangePin={handleChangePin}
         />
@@ -518,6 +556,13 @@ function App() {
               onClick={() => setPage('requests')}
             >
               곡 신청
+            </button>
+            <button
+              type="button"
+              className={['page-tab', page === 'performances' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => setPage('performances')}
+            >
+              공연
             </button>
             <button
               type="button"
@@ -568,8 +613,22 @@ function App() {
             onChangePin={handleChangePin}
           />
         </main>
+      ) : page === 'performances' ? (
+        <main className="layout layout--songs">
+          <PerformanceBoard
+            session={member}
+            performances={performances}
+            songs={songs}
+            busy={busy}
+            onCreate={(draft) => void runPerformanceAction(() => createPerformance(member, draft))}
+            onUpdate={(id, draft) =>
+              void runPerformanceAction(() => updatePerformance(member, id, draft))
+            }
+            onDelete={(id) => void runPerformanceAction(() => deletePerformance(member, id))}
+          />
+        </main>
       ) : (
-        <main className="layout">
+        <main className="layout layout--calendar-only">
           <div className="main-column">
             {viewMode === 'month' ? (
               <CalendarBoard
@@ -589,8 +648,6 @@ function App() {
               />
             )}
           </div>
-
-          <ActivityPanel logs={data.logs} />
         </main>
       )}
 

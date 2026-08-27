@@ -51,6 +51,18 @@ export type AppData = {
   logs: ActivityLog[]
 }
 
+export type Performance = {
+  id: string
+  title: string
+  date: string
+  place: string
+  note: string
+  songIds: string[]
+  createdBy: Member
+  createdAt: string
+  updatedAt?: string
+}
+
 export type Song = {
   id: string
   title: string

@@ -1328,6 +1328,10 @@
   grid-template-columns: 1fr;
 }
 
+.layout--calendar-only {
+  grid-template-columns: 1fr;
+}
+
 .song-board {
   position: relative;
   width: 100%;
@@ -2308,3 +2312,198 @@
 }
 
 
+
+.performance-board {
+  position: relative;
+  width: 100%;
+  padding: 1.25rem 1.2rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  animation: rise 0.45s ease both;
+}
+
+.performance-header h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.performance-actions {
+  display: flex;
+  margin-top: 0.85rem;
+}
+
+.performance-new {
+  width: 100%;
+}
+
+.performance-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.performance-compose-toolbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.performance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.15rem;
+}
+
+.performance-empty,
+.performance-empty-inline {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.performance-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdf9;
+  padding: 0.85rem 0.9rem;
+}
+
+.performance-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.performance-card-top h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1.15rem;
+}
+
+.performance-card-date {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.performance-card-place,
+.performance-card-note,
+.performance-card-meta {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.performance-card-actions {
+  display: flex;
+  gap: 0.2rem;
+  flex: 0 0 auto;
+}
+
+.performance-card-songs {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+
+.performance-card-songs-label,
+.performance-song-picks-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.performance-card-songs ol,
+.performance-setlist-order {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.performance-card-songs li,
+.performance-setlist-order li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
+.performance-setlist-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: rgba(232, 58, 44, 0.1);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.performance-setlist-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.performance-setlist-move {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.performance-song-picks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.performance-song-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 252, 247, 0.85);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.performance-song-pick.is-checked {
+  border-color: rgba(232, 58, 44, 0.45);
+  background: rgba(232, 58, 44, 0.08);
+}
+
+.performance-song-pick input {
+  accent-color: var(--accent);
+}
+
+.performance-setlist-edit {
+  margin-top: 0.25rem;
+}
+
+.mobile-main--performances {
+  padding: 0.75rem 0.85rem 5.5rem;
+}
+
+@media (max-width: 768px) {
+  .performance-board {
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    padding: 0.4rem 0.2rem 1rem;
+  }
+
+  .performance-song-picks-grid {
+    grid-template-columns: 1fr;
+  }
+}
