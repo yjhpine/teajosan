@@ -8,6 +8,7 @@ import { ProfilePage } from './components/ProfilePage'
 import { RehearsalModal } from './components/RehearsalModal'
 import { SessionSetupScreen } from './components/SessionSetupScreen'
 import { SongListBoard } from './components/SongListBoard'
+import { SongRequestBoard } from './components/SongRequestBoard'
 import { WeekTimetable } from './components/WeekTimetable'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { supabaseConfigured } from './lib/supabase'
@@ -47,7 +48,7 @@ import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
-type AppPage = 'calendar' | 'songs' | 'profile'
+type AppPage = 'calendar' | 'songs' | 'requests' | 'profile'
 
 async function loadExtras(session: Session) {
   const [nextSongs, nextProfiles, nextProfile] = await Promise.all([
@@ -479,6 +480,13 @@ function App() {
             </button>
             <button
               type="button"
+              className={['page-tab', page === 'requests' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => setPage('requests')}
+            >
+              곡 신청
+            </button>
+            <button
+              type="button"
               className={['page-tab', page === 'profile' ? 'is-active' : ''].filter(Boolean).join(' ')}
               onClick={() => setPage('profile')}
             >
@@ -500,6 +508,10 @@ function App() {
 
       {page === 'songs' ? (
         <main className="layout layout--songs">{songBoard}</main>
+      ) : page === 'requests' ? (
+        <main className="layout layout--songs">
+          <SongRequestBoard />
+        </main>
       ) : page === 'profile' ? (
         <main className="layout layout--songs">
           <ProfilePage

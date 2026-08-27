@@ -1063,7 +1063,7 @@
   bottom: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-top: 1px solid var(--line);
   background: rgba(255, 250, 243, 0.96);
   backdrop-filter: blur(12px);
@@ -1722,6 +1722,33 @@
   background: var(--panel);
   box-shadow: var(--shadow);
   animation: rise 0.45s ease both;
+}
+
+.song-request-board {
+  position: relative;
+  width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 1.4rem 1.3rem 1.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  animation: rise 0.45s ease both;
+}
+
+.song-request-header h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.song-request-placeholder {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.mobile-main--requests {
+  padding: 0.75rem 0.85rem 5.5rem;
 }
 
 .profile-header h2 {

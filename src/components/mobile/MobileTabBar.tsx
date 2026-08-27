@@ -1,4 +1,4 @@
-type Tab = 'schedule' | 'songs' | 'profile' | 'log'
+type Tab = 'schedule' | 'songs' | 'requests' | 'profile' | 'log'
 
 type Props = {
   active: Tab
@@ -27,6 +27,16 @@ export function MobileTabBar({ active, onChange }: Props) {
           ♪
         </span>
         <span>곡</span>
+      </button>
+      <button
+        type="button"
+        className={['mobile-tab', active === 'requests' ? 'is-active' : ''].filter(Boolean).join(' ')}
+        onClick={() => onChange('requests')}
+      >
+        <span className="mobile-tab-icon" aria-hidden="true">
+          ✎
+        </span>
+        <span>신청</span>
       </button>
       <button
         type="button"
