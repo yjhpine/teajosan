@@ -1,0 +1,7 @@
+8-27 합주/로그 Realtime 자동 동기화
+
+- 로그인 후 rehearsals, activity_logs 변경을 Supabase Realtime으로 구독
+- 변경 감지 시(및 탭 복귀/포커스 시) 조용히 fetchAppData로 화면 갱신
+- 수동 새로고침 버튼은 유지(백업용)
+- DB: supabase/migrations/20260827_enable_realtime.sql 을 SQL Editor에서 실행 필요
+  (publication supabase_realtime에 rehearsals, activity_logs 추가)

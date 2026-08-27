@@ -16,6 +16,7 @@ import {
   loadSession,
   loginMember,
   resumeSession,
+  subscribeAppDataChanges,
   updateRehearsal,
 } from './storage'
 import type { AppData, Member, Rehearsal } from './types'
@@ -83,6 +84,44 @@ function App() {
       cancelled = true
     }
   }, [])
+
+  // Realtime + 탭 복귀 시 자동 동기화 (수동 새로고침 불필요)
+  useEffect(() => {
+    if (!member || !supabaseConfigured) return
+
+    let cancelled = false
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined
+
+    const silentRefresh = () => {
+      window.clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        void (async () => {
+          try {
+            const next = await fetchAppData()
+            if (!cancelled) setData(next)
+          } catch (err) {
+            console.error(err)
+          }
+        })()
+      }, 400)
+    }
+
+    const unsubscribe = subscribeAppDataChanges(silentRefresh)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') silentRefresh()
+    }
+    window.addEventListener('focus', silentRefresh)
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(debounceTimer)
+      unsubscribe()
+      window.removeEventListener('focus', silentRefresh)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [member])
 
   async function runAction(action: () => Promise<AppData>) {
     setBusy(true)

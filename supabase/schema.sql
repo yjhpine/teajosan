@@ -86,3 +86,27 @@ create policy "public read write rehearsals"
 create policy "public read write activity_logs"
   on activity_logs for all to anon, authenticated
   using (true) with check (true);
+
+-- Realtime (다른 기기 자동 동기화)
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'rehearsals'
+  ) then
+    alter publication supabase_realtime add table public.rehearsals;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'activity_logs'
+  ) then
+    alter publication supabase_realtime add table public.activity_logs;
+  end if;
+end $$;

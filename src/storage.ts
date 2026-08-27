@@ -176,6 +176,29 @@ export async function fetchAppData(): Promise<AppData> {
   }
 }
 
+/** 다른 기기의 합주/로그 변경을 Realtime으로 감지. 구독 해제 함수를 반환 */
+export function subscribeAppDataChanges(onChange: () => void): () => void {
+  assertConfigured()
+
+  const channel = supabase
+    .channel('teajosan-app-data')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'rehearsals' },
+      () => onChange(),
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'activity_logs' },
+      () => onChange(),
+    )
+    .subscribe()
+
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}
+
 export async function loginMember(member: Member): Promise<AppData> {
   assertConfigured()
   persistMember(member)
