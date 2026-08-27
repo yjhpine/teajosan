@@ -278,6 +278,7 @@ function App() {
       open={modalOpen}
       member={member}
       rehearsals={data.rehearsals}
+      songs={songs}
       initialDate={selectedDate}
       initialStartTime={createStartTime}
       editing={editing}

@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { findOverlappingRehearsal } from '../lib/rehearsalOverlap'
-import type { Member, Rehearsal } from '../types'
+import type { Member, Rehearsal, Song } from '../types'
 import { isSameMember, memberLabel } from '../types'
 
 export type RehearsalDraft = {
@@ -16,6 +16,7 @@ type Props = {
   open: boolean
   member: Member
   rehearsals: Rehearsal[]
+  songs: Song[]
   initialDate: Date
   initialStartTime?: string
   editing: Rehearsal | null
@@ -43,6 +44,7 @@ export function RehearsalModal({
   open,
   member,
   rehearsals,
+  songs,
   initialDate,
   initialStartTime = '19:00',
   editing,
@@ -57,6 +59,15 @@ export function RehearsalModal({
   )
   const [localError, setLocalError] = useState('')
   const canManage = !editing || isSameMember(member, editing.createdBy)
+
+  const songTitles = songs
+    .map((song) => song.title.trim())
+    .filter(Boolean)
+
+  const selectOptions = [...songTitles]
+  if (draft.teamName && !selectOptions.includes(draft.teamName)) {
+    selectOptions.unshift(draft.teamName)
+  }
 
   useEffect(() => {
     if (!open) return
@@ -80,7 +91,7 @@ export function RehearsalModal({
     if (!canManage) return
     if (!draft.date || !draft.startTime || !draft.endTime) return
     if (!draft.teamName.trim()) {
-      setLocalError('팀명을 입력해 주세요.')
+      setLocalError('곡을 선택해 주세요.')
       return
     }
     if (draft.startTime >= draft.endTime) {
@@ -127,16 +138,23 @@ export function RehearsalModal({
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <label className="field">
-            <span>팀명</span>
-            <input
-              placeholder="예: A팀 / 드럼팀"
+            <span>곡</span>
+            <select
               value={draft.teamName}
               onChange={(e) => setDraft({ ...draft, teamName: e.target.value })}
               required
               autoFocus={canManage}
-              readOnly={!canManage}
-              disabled={!canManage}
-            />
+              disabled={!canManage || songTitles.length === 0}
+            >
+              <option value="">
+                {songTitles.length === 0 ? '곡 리스트에 곡을 먼저 추가하세요' : '곡 선택'}
+              </option>
+              {selectOptions.map((title) => (
+                <option key={title} value={title}>
+                  {title}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="field">
             <span>날짜</span>
@@ -207,7 +225,11 @@ export function RehearsalModal({
               <span />
             )}
             {canManage ? (
-              <button type="submit" className="btn-primary" disabled={busy}>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={busy || songTitles.length === 0}
+              >
                 {busy ? '저장 중…' : editing ? '저장' : '등록'}
               </button>
             ) : (
