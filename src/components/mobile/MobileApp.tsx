@@ -64,7 +64,7 @@ export function MobileApp({
     tab === 'log'
       ? '합주 등록·삭제 기록'
       : scheduleView === 'day'
-        ? '+ 버튼으로 추가 · 블록 터치로 수정·삭제'
+        ? '목록·블록을 눌러 수정·삭제 · +로 추가'
         : undefined
 
   return (

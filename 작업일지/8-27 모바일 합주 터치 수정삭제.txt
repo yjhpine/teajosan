@@ -1,0 +1,6 @@
+8-27 모바일 합주 터치 수정삭제 수정
+
+- 원인: 시간 칸이 터치를 가로챔 + 월간 day-cell(button) 안에 chip 중첩
+- 시간 칸 pointer-events:none, 블록 z-index 상향
+- 하루 뷰: 합주 목록 버튼 추가 (확실한 수정·삭제 진입)
+- 월간: day-cell을 div로 분리해 칩 버튼 터치 가능

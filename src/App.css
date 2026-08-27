@@ -295,6 +295,17 @@
   transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
 }
 
+.day-cell-hit {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+}
+
 .day-cell:hover {
   transform: translateY(-1px);
   border-color: rgba(232, 58, 44, 0.25);
@@ -329,6 +340,7 @@
   display: block;
   overflow: hidden;
   padding: 0.15rem 0.35rem;
+  border: none;
   border-radius: 6px;
   background: rgba(232, 58, 44, 0.14);
   color: var(--accent-deep);
@@ -336,6 +348,9 @@
   font-weight: 600;
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-align: left;
+  width: 100%;
+  touch-action: manipulation;
 }
 
 .event-more {
@@ -895,6 +910,7 @@
 
 .dt-track--readonly {
   cursor: default;
+  touch-action: pan-y;
 }
 
 .dt-block--readonly {
@@ -902,13 +918,76 @@
 }
 
 .dt-block--interactive {
+  position: absolute;
+  z-index: 8;
+  pointer-events: auto;
   cursor: pointer;
   border: none;
   text-align: left;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.25);
 }
 
 .dt-block--interactive:active {
   transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+.dt-event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dt-event-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-solid);
+  color: var(--ink);
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.dt-event-row-main {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dt-event-row-main strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.dt-event-row-main span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dt-event-row-time {
+  flex: 0 0 auto;
+  color: var(--accent-deep);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dt-empty {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  background: rgba(255, 250, 243, 0.55);
 }
 
 .mobile-header {
@@ -1193,6 +1272,7 @@
 }
 
 .dt-hour-slot {
+  pointer-events: none;
   border-bottom: 1px solid #ececec;
   box-sizing: border-box;
 }
@@ -1201,7 +1281,7 @@
   position: absolute;
   left: 6px;
   right: 6px;
-  z-index: 1;
+  z-index: 8;
   display: flex;
   flex-direction: column;
   align-items: flex-start;

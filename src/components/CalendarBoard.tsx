@@ -117,9 +117,8 @@ export function CalendarBoard({
           const inMonth = isSameMonth(day, month)
 
           return (
-            <button
+            <div
               key={day.toISOString()}
-              type="button"
               className={[
                 'day-cell',
                 inMonth ? '' : 'is-outside',
@@ -127,24 +126,28 @@ export function CalendarBoard({
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onClick={() => onSelectDate(day)}
             >
-              <span className="day-number">{format(day, 'd')}</span>
+              <button
+                type="button"
+                className="day-cell-hit"
+                onClick={() => onSelectDate(day)}
+                aria-label={`${format(day, 'M월 d일', { locale: ko })} 일정 보기`}
+              >
+                <span className="day-number">{format(day, 'd')}</span>
+              </button>
               <div className="day-events">
                 {dayEvents.slice(0, 3).map((event) =>
-                  variant === 'mobile' && !onSelectRehearsal ? (
-                    <span key={event.id} className="event-chip event-chip--readonly">
-                      {event.teamName || event.startTime}
-                    </span>
-                  ) : (
-                    <span
+                  onSelectRehearsal ? (
+                    <button
                       key={event.id}
+                      type="button"
                       className="event-chip"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onSelectRehearsal?.(event)
-                      }}
+                      onClick={() => onSelectRehearsal(event)}
                     >
+                      {event.teamName || event.startTime}
+                    </button>
+                  ) : (
+                    <span key={event.id} className="event-chip event-chip--readonly">
                       {event.teamName || event.startTime}
                     </span>
                   ),
@@ -153,7 +156,7 @@ export function CalendarBoard({
                   <span className="event-more">+{dayEvents.length - 3}</span>
                 ) : null}
               </div>
-            </button>
+            </div>
           )
         })}
       </div>
