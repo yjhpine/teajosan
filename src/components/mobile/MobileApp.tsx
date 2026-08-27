@@ -57,7 +57,6 @@ type Props = {
     youtubeUrl: string,
   ) => void
   onClaimRequest: (id: string, slot: SongRequestSlot) => void
-  onPromoteRequest: (id: string) => void
   onDeleteRequest: (id: string) => void
   onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
   onChangePin: (oldPin: string, newPin: string) => void | Promise<void>
@@ -89,7 +88,6 @@ export function MobileApp({
   onReorderSongs,
   onCreateRequest,
   onClaimRequest,
-  onPromoteRequest,
   onDeleteRequest,
   onSaveSessions,
   onChangePin,
@@ -218,7 +216,6 @@ export function MobileApp({
             busy={busy}
             onCreate={onCreateRequest}
             onClaim={onClaimRequest}
-            onPromote={onPromoteRequest}
             onDelete={onDeleteRequest}
           />
         ) : tab === 'profile' ? (

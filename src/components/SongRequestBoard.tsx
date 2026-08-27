@@ -22,7 +22,6 @@ type Props = {
     youtubeUrl: string,
   ) => void | Promise<void>
   onClaim: (id: string, slot: SongRequestSlot) => void | Promise<void>
-  onPromote: (id: string) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
 }
 
@@ -40,7 +39,6 @@ export function SongRequestBoard({
   busy = false,
   onCreate,
   onClaim,
-  onPromote,
   onDelete,
 }: Props) {
   const [composing, setComposing] = useState(false)
@@ -242,14 +240,15 @@ export function SongRequestBoard({
             {requests.length === 0 ? (
               <p className="song-request-empty">아직 신청이 없습니다. 「곡 신청하기」로 올려 보세요.</p>
             ) : (
-              requests.map((request) => (
+              [...requests]
+                .sort((a, b) => Number(isComplete(a)) - Number(isComplete(b)))
+                .map((request) => (
                 <RequestCard
                   key={request.id}
                   request={request}
                   me={session}
                   busy={busy}
                   onClaim={onClaim}
-                  onPromote={onPromote}
                   onDelete={onDelete}
                 />
               ))
@@ -266,14 +265,12 @@ function RequestCard({
   me,
   busy,
   onClaim,
-  onPromote,
   onDelete,
 }: {
   request: SongRequest
   me: Member
   busy: boolean
   onClaim: (id: string, slot: SongRequestSlot) => void | Promise<void>
-  onPromote: (id: string) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
 }) {
   const [playing, setPlaying] = useState(false)
@@ -284,7 +281,10 @@ function RequestCard({
   const videoId = parseYoutubeId(request.youtubeUrl)
 
   return (
-    <article className={['song-request-card', complete ? 'is-complete' : ''].filter(Boolean).join(' ')}>
+    <article
+      className={['song-request-card', complete ? 'is-complete' : ''].filter(Boolean).join(' ')}
+      aria-disabled={complete || undefined}
+    >
       <div className="song-request-meta-row">
         <p className="song-request-meta">
           <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
@@ -293,7 +293,7 @@ function RequestCard({
             {complete ? ' · 완성' : ''}
           </span>
         </p>
-        {mine ? (
+        {mine && !complete ? (
           <button
             type="button"
             className="btn-ghost song-delete song-delete--inline song-request-delete"
@@ -312,8 +312,11 @@ function RequestCard({
         <SongYoutubeMedia
           youtubeUrl={request.youtubeUrl}
           title={request.title}
-          playing={playing}
-          onPlay={() => setPlaying(true)}
+          playing={!complete && playing}
+          onPlay={() => {
+            if (complete) return
+            setPlaying(true)
+          }}
           onClose={() => setPlaying(false)}
           fallbackText={request.title || '신청'}
           variant="cover"
@@ -337,13 +340,15 @@ function RequestCard({
                 ]
                   .filter(Boolean)
                   .join(' ')}
-                disabled={busy || taken}
+                disabled={busy || taken || complete}
                 title={
-                  taken
-                    ? `${slot.label}: ${value}`
-                    : isMine
-                      ? '다시 누르면 신청 취소'
-                      : `${slot.label} 신청`
+                  complete
+                    ? '완성된 신청'
+                    : taken
+                      ? `${slot.label}: ${value}`
+                      : isMine
+                        ? '다시 누르면 신청 취소'
+                        : `${slot.label} 신청`
                 }
                 onClick={() => void onClaim(request.id, slot.id)}
               >
@@ -355,7 +360,7 @@ function RequestCard({
         </div>
       </div>
 
-      {playing && videoId ? (
+      {!complete && playing && videoId ? (
         <div className="song-request-player">
           <div className="song-youtube-player">
             <iframe
@@ -369,17 +374,6 @@ function RequestCard({
             닫기
           </button>
         </div>
-      ) : null}
-
-      {complete ? (
-        <button
-          type="button"
-          className="btn-primary song-request-promote"
-          disabled={busy}
-          onClick={() => void onPromote(request.id)}
-        >
-          곡 리스트로 보내기
-        </button>
       ) : null}
     </article>
   )

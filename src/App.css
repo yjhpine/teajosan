@@ -2031,7 +2031,11 @@
 }
 
 .song-request-card.is-complete {
-  border-color: rgba(232, 58, 44, 0.35);
+  opacity: 0.48;
+  pointer-events: none;
+  user-select: none;
+  border-color: var(--line);
+  filter: grayscale(0.15);
 }
 
 .song-request-promote {
