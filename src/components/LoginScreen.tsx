@@ -90,11 +90,9 @@ export function LoginScreen({ onLogin, onSignup, busy = false, error = '' }: Pro
       <section className="login-panel">
         <p className="login-kicker">School Band Calendar</p>
         <h1 className="brand-mark">태조산</h1>
-        <p className="login-lead">
-          {mode === 'login'
-            ? '이름과 PIN으로 입장하세요. 한 번 로그인하면 이 기기에서는 다시 묻지 않습니다.'
-            : '처음이라면 기수·이름·PIN·담당 세션을 등록하세요.'}
-        </p>
+        {mode === 'signup' ? (
+          <p className="login-lead">처음이라면 기수·이름·PIN·담당 세션을 등록하세요.</p>
+        ) : null}
 
         <div className="auth-tabs" role="tablist" aria-label="인증">
           <button
