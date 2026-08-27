@@ -1,0 +1,13 @@
+8/27 가입 기수·이름 중복 검사
+
+## 변경
+- signup RPC: 가입 전 기수+이름 조합 중복 검사
+- 동일 기수·이름 → "이미 가입된 기수·이름입니다. 로그인 탭에서 입장해 주세요."
+- 다른 기수·같은 이름 → "이미 다른 기수로 가입된 이름입니다." (로그인은 이름+PIN 이므로 동명이인 가입 불가)
+- INSERT unique_violation 시에도 동일 안내 (이중 방어)
+
+## Supabase 실행
+SQL Editor에서 `supabase/migrations/20260827_signup_cohort_name_check.sql` 실행
+
+## 프론트
+- 별도 변경 없음 (RPC 오류 메시지 그대로 표시)

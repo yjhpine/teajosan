@@ -137,5 +137,6 @@ create policy "anon read activity_logs"
 -- 곡 리스트: migrations/20260827_song_list.sql
 -- 멤버 세션: migrations/20260827_member_sessions.sql
 -- 가입/이름PIN 로그인: migrations/20260827_signup_name_login.sql
+-- 가입 기수·이름 중복검사: migrations/20260827_signup_cohort_name_check.sql
 -- 멤버 등록: SELECT admin_set_member_pin('12', '김태조', '1234');
 -- 멤버 PIN 시드: seed_member_pins.sql
