@@ -111,7 +111,7 @@ function SongTitleInput({
   )
 }
 
-function SongMobileRow({
+function SongMobileCard({
   song,
   draftTitles,
   rosters,
@@ -131,8 +131,8 @@ function SongMobileRow({
   onDelete: (id: string) => void | Promise<void>
 }) {
   return (
-    <div className="song-mobile-grid song-mobile-grid--body">
-      <div className="song-mobile-cell song-mobile-cell--title">
+    <article className="song-mobile-card">
+      <div className="song-mobile-title-row">
         <SongTitleInput
           song={song}
           draftTitles={draftTitles}
@@ -140,22 +140,9 @@ function SongMobileRow({
           onDraftChange={onDraftChange}
           onCommit={onCommitTitle}
         />
-      </div>
-      {SESSION_FIELDS.map((field) => (
-        <div key={field.key} className={['song-mobile-cell', field.colClass].filter(Boolean).join(' ')}>
-          <MemberSelect
-            value={song[field.key]}
-            roster={rosters[field.rosterKey]}
-            disabled={busy}
-            className={field.className}
-            onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
-          />
-        </div>
-      ))}
-      <div className="song-mobile-cell song-mobile-cell--action">
         <button
           type="button"
-          className="btn-ghost song-delete"
+          className="btn-ghost song-delete song-delete--inline"
           disabled={busy}
           onClick={() => {
             if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
@@ -165,11 +152,34 @@ function SongMobileRow({
           삭제
         </button>
       </div>
-    </div>
+
+      <div className="song-mobile-sessions">
+        <div className="song-mobile-grid song-mobile-grid--head">
+          {SESSION_FIELDS.map((field) => (
+            <div key={field.key} className={['song-mobile-cell', field.colClass].filter(Boolean).join(' ')}>
+              {field.label}
+            </div>
+          ))}
+        </div>
+        <div className="song-mobile-grid song-mobile-grid--body">
+          {SESSION_FIELDS.map((field) => (
+            <div key={field.key} className={['song-mobile-cell', field.colClass].filter(Boolean).join(' ')}>
+              <MemberSelect
+                value={song[field.key]}
+                roster={rosters[field.rosterKey]}
+                disabled={busy}
+                className={field.className}
+                onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </article>
   )
 }
 
-function SongMobileSheet({
+function SongMobileList({
   songs,
   draftTitles,
   rosters,
@@ -193,18 +203,9 @@ function SongMobileSheet({
   }
 
   return (
-    <div className="song-mobile-sheet">
-      <div className="song-mobile-grid song-mobile-grid--head">
-        <div className="song-mobile-cell song-mobile-cell--title">가수/곡</div>
-        {SESSION_FIELDS.map((field) => (
-          <div key={field.key} className={['song-mobile-cell', field.colClass].filter(Boolean).join(' ')}>
-            {field.label}
-          </div>
-        ))}
-        <div className="song-mobile-cell song-mobile-cell--action" aria-hidden="true" />
-      </div>
+    <div className="song-mobile-cards">
       {songs.map((song) => (
-        <SongMobileRow
+        <SongMobileCard
           key={song.id}
           song={song}
           draftTitles={draftTitles}
@@ -378,7 +379,7 @@ export function SongListBoard({
       </div>
 
       <div className="song-mobile-list">
-        <SongMobileSheet
+        <SongMobileList
           songs={songs}
           draftTitles={draftTitles}
           rosters={rosters}
