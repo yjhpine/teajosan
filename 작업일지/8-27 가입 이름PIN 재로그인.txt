@@ -1,0 +1,7 @@
+8-27 가입 / 이름+PIN 재로그인
+
+- 가입 탭: 기수·이름·PIN·세션 한 번에 등록 (signup RPC)
+- 로그인 탭: 이름+PIN만 (기수 불필요)
+- members.name UNIQUE, login 시그니처 변경 (breaking)
+- SQL 필수(배포 전): supabase/migrations/20260827_signup_name_login.sql
+- 기존 멤버는 이름+기존 PIN으로 재로그인

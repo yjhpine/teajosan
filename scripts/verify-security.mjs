@@ -3,6 +3,7 @@
  * 사용: node scripts/verify-security.mjs
  * 사전: Supabase SQL Editor에서 migrations/20260827_security_hardening.sql 실행
  *       + admin_set_member_pin('99', '테스트', 'test1234') 로 테스트 멤버 등록
+ *       + migrations/20260827_signup_name_login.sql (이름+PIN login)
  */
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
@@ -61,24 +62,22 @@ let rehearsalId = null
 
 // 1. RPC login exists
 const loginBad = await supabase.rpc('login', {
-  p_cohort: '99',
   p_name: '테스트',
   p_pin: 'wrong-pin',
   p_device_id: testDeviceId,
   p_client_ip: '127.0.0.1',
 })
 if (loginBad.error?.message?.includes('Could not find the function')) {
-  fail('migration applied', 'login RPC not found — run security_hardening.sql first')
+  fail('migration applied', 'login RPC not found — run signup_name_login.sql first')
   console.log('\nSummary:', results)
   process.exit(1)
-} else if (loginBad.error && /PIN|기수|이름/i.test(loginBad.error.message)) {
+} else if (loginBad.error && /PIN|이름/i.test(loginBad.error.message)) {
   pass('login RPC rejects wrong PIN')
 } else {
   fail('login RPC rejects wrong PIN', loginBad.error?.message ?? 'unexpected success')
 }
 
 const loginOk = await supabase.rpc('login', {
-  p_cohort: '99',
   p_name: '테스트',
   p_pin: 'test1234',
   p_device_id: testDeviceId,

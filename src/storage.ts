@@ -166,14 +166,14 @@ export function subscribeAppDataChanges(onChange: () => void): () => void {
   }
 }
 
-export async function loginMember(member: Member, pin: string): Promise<AppData> {
+export async function loginMember(name: string, pin: string): Promise<AppData> {
   assertConfigured()
   const deviceId = getOrCreateDeviceId()
   const clientIp = await fetchClientIp()
+  const nextName = name.trim()
 
   const { data, error } = await supabase.rpc('login', {
-    p_cohort: member.cohort,
-    p_name: member.name,
+    p_name: nextName,
     p_pin: pin,
     p_device_id: deviceId,
     p_client_ip: clientIp,
@@ -182,7 +182,46 @@ export async function loginMember(member: Member, pin: string): Promise<AppData>
   if (error) throw mapRpcError(error, '로그인에 실패했습니다.')
   if (!data) throw new Error('로그인에 실패했습니다.')
 
-  const session: Session = { ...member, token: String(data) }
+  const token = String(data)
+  const profile = await getMyProfile({ cohort: '', name: nextName, token })
+  const session: Session = {
+    cohort: profile.cohort,
+    name: profile.name,
+    token,
+    sessions: profile.sessions,
+  }
+  persistSession(session)
+  return fetchAppData()
+}
+
+export async function signupMember(
+  member: Member,
+  pin: string,
+  sessions: InstrumentSession[],
+): Promise<AppData> {
+  assertConfigured()
+  const deviceId = getOrCreateDeviceId()
+  const clientIp = await fetchClientIp()
+
+  const { data, error } = await supabase.rpc('signup', {
+    p_cohort: member.cohort,
+    p_name: member.name,
+    p_pin: pin,
+    p_sessions: sessions,
+    p_device_id: deviceId,
+    p_client_ip: clientIp,
+  })
+
+  if (error) throw mapRpcError(error, '가입에 실패했습니다.')
+  if (!data) throw new Error('가입에 실패했습니다.')
+
+  const token = String(data)
+  const session: Session = {
+    cohort: member.cohort,
+    name: member.name.trim(),
+    token,
+    sessions,
+  }
   persistSession(session)
   return fetchAppData()
 }

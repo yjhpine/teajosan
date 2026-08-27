@@ -25,6 +25,7 @@ import {
   loginMember,
   resumeSession,
   setMySessions,
+  signupMember,
   subscribeAppDataChanges,
   updateRehearsal,
   updateSong,
@@ -202,12 +203,31 @@ function App() {
     }
   }
 
-  async function handleLogin(next: Member, pin: string) {
-    const ok = await runAction(() => loginMember(next, pin))
+  async function handleLogin(name: string, pin: string) {
+    const ok = await runAction(() => loginMember(name, pin))
     if (!ok) return
     const saved = loadSession()
     if (!saved) return
     setMember(saved)
+    try {
+      const extras = await loadExtras(saved)
+      setSongs(extras.nextSongs)
+      setProfiles(extras.nextProfiles)
+      setProfile(extras.nextProfile)
+      setMember({ ...saved, sessions: extras.nextProfile.sessions })
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '프로필을 불러오지 못했습니다.')
+    }
+  }
+
+  async function handleSignup(next: Member, pin: string, sessions: InstrumentSession[]) {
+    const ok = await runAction(() => signupMember(next, pin, sessions))
+    if (!ok) return
+    const saved = loadSession()
+    if (!saved) return
+    setMember({ ...saved, sessions })
+    setProfile({ cohort: next.cohort, name: next.name, sessions })
     try {
       const extras = await loadExtras(saved)
       setSongs(extras.nextSongs)
@@ -300,7 +320,14 @@ function App() {
   }
 
   if (!member) {
-    return <LoginScreen onLogin={handleLogin} busy={busy} error={error} />
+    return (
+      <LoginScreen
+        onLogin={handleLogin}
+        onSignup={handleSignup}
+        busy={busy}
+        error={error}
+      />
+    )
   }
 
   if (!profile || profile.sessions.length === 0) {
