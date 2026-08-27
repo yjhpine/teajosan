@@ -1,8 +1,10 @@
 -- 태조산 합주 캘린더 스키마 (보안 강화: 멤버 PIN + 세션 RPC)
 -- Supabase SQL Editor에서 한 번 실행
--- 마이그레이션: migrations/20260827_security_hardening.sql 과 동일 내용 포함
+-- 마이그레이션: migrations/20260827_security_hardening.sql
+-- pgcrypto 경로 수정: migrations/20260827_fix_pgcrypto_extensions.sql
 
 create extension if not exists "pgcrypto";
+create extension if not exists pgcrypto with schema extensions;
 create extension if not exists btree_gist;
 
 create or replace function public.hhmm_to_minutes(t text)

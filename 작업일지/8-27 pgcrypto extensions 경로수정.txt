@@ -1,0 +1,6 @@
+8-27 pgcrypto extensions 경로 수정
+
+- 원인: Supabase에서 gen_salt/crypt가 extensions 스키마에 있음
+- 수정: login, admin_set_member_pin의 search_path에 extensions 추가
+- SQL Editor 실행: migrations/20260827_fix_pgcrypto_extensions.sql
+- 이후 seed_member_pins.sql 재실행

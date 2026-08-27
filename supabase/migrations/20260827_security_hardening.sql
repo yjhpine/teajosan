@@ -3,7 +3,7 @@
 --
 -- 멤버 등록 예시 (SQL Editor):
 --   INSERT INTO members (cohort, name, pin_hash)
---   VALUES ('12', '김태조', crypt('1234', gen_salt('bf')))
+--   VALUES ('12', '김태조', extensions.crypt('1234', extensions.gen_salt('bf')))
 --   ON CONFLICT (cohort, name) DO UPDATE SET pin_hash = EXCLUDED.pin_hash;
 
 -- ---------------------------------------------------------------------------
@@ -284,7 +284,7 @@ create or replace function public.login(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_cohort text := trim(p_cohort);
@@ -537,7 +537,7 @@ create or replace function public.admin_set_member_pin(
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 begin
   if char_length(coalesce(p_pin, '')) < 4 then
