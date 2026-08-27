@@ -1781,6 +1781,10 @@
   background: rgba(232, 58, 44, 0.08);
 }
 
+.song-request-pick input {
+  accent-color: var(--accent);
+}
+
 .song-request-pick.is-disabled {
   opacity: 0.45;
   cursor: not-allowed;
