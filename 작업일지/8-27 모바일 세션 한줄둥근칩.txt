@@ -1,0 +1,10 @@
+8/27 모바일 세션 한줄 둥근칩
+
+## 변경
+- 세션 칸: 두줄 박스 → 한줄 `보컬:양정환` 칩
+- 모서리 12px, 테두리 var(--line) — 주변 UI와 통일
+- 2열 그리드로 컴팩트하게
+
+## 파일
+- src/components/SongListBoard.tsx
+- src/App.css

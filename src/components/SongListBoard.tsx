@@ -128,27 +128,28 @@ function SessionSlot({
 }) {
   return (
     <div className={['song-mobile-slot', colClass].filter(Boolean).join(' ')}>
-      <div className="song-mobile-slot-label">{label}</div>
-      <div className="song-mobile-slot-value">
+      <span className="song-mobile-slot-text">
+        <span className="song-mobile-slot-label">{label}</span>
+        <span className="song-mobile-slot-sep">:</span>
         <span className={['song-mobile-slot-name', value ? '' : 'is-empty'].filter(Boolean).join(' ')}>
           {value || '—'}
         </span>
-        <select
-          className="song-mobile-slot-picker"
-          value={value}
-          disabled={disabled}
-          aria-label={label}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">—</option>
-          {roster.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-          {value && !roster.includes(value) ? <option value={value}>{value}</option> : null}
-        </select>
-      </div>
+      </span>
+      <select
+        className="song-mobile-slot-picker"
+        value={value}
+        disabled={disabled}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">—</option>
+        {roster.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+        {value && !roster.includes(value) ? <option value={value}>{value}</option> : null}
+      </select>
     </div>
   )
 }
