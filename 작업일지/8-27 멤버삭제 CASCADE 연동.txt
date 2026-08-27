@@ -1,0 +1,27 @@
+8/27 멤버삭제 CASCADE 연동
+
+## 배경
+- 기존에는 members / sessions / devices / band_roster / songs 가 이름·기수 텍스트로만 연결됨
+- members 에서 DELETE 해도 세션·기기·명단·곡 배정이 그대로 남아 수동 SQL 필요했음
+
+## 변경 (supabase/migrations/20260827_member_cascade_delete.sql)
+1. sessions, devices, band_roster 에 member_id FK 추가 (ON DELETE CASCADE)
+2. 기존 행 member_id 백필 (name/cohort 매칭)
+3. members DELETE 시 songs 의 vocal/guitar/… 텍스트 배정 자동 비우는 트리거
+4. login / signup / set_my_sessions RPC — member_id 기록하도록 수정
+
+## 멤버 제거 방법 (SQL 적용 후)
+```sql
+DELETE FROM members WHERE name = '이름';
+```
+
+## 자동 처리 범위
+- sessions, devices, band_roster → CASCADE 삭제
+- songs → 해당 이름 배정 칸만 '' 로 비움
+- rehearsals, activity_logs → 과거 기록 보존 (created_by/actor 텍스트 유지)
+
+## Supabase 실행
+SQL Editor에서 `20260827_member_cascade_delete.sql` 실행
+
+## 김희림 제거
+`20260827_delete_member_kimhuirim.sql` — members DELETE 한 줄로 단순화
