@@ -1,0 +1,10 @@
+# 8/27 곡신청 커버 너비=높이 정사각
+
+## 변경 요약
+- 현재 높이 유지, 커버 너비만 높이와 같게 (aspect-ratio 1)
+- 가로 fill(1fr / width 100%) 제거 → 정사각
+- 썸네일 mqdefault로 레터박스 완화
+
+## 수정 파일
+- src/App.css
+- src/lib/youtube.ts

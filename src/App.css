@@ -1860,10 +1860,10 @@
 }
 
 .song-thumb--cover {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
   width: auto;
   height: auto;
+  min-width: 0;
   max-width: none;
   aspect-ratio: 1 / 1;
   align-self: stretch;
@@ -1871,6 +1871,7 @@
 }
 
 .song-thumb--cover img {
+  display: block;
   width: 100%;
   height: 100%;
   aspect-ratio: auto;
@@ -1888,12 +1889,12 @@
 }
 
 .song-title-fallback--cover {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
   width: auto;
   height: auto;
+  min-width: 0;
   max-width: none;
   aspect-ratio: 1 / 1;
   align-self: stretch;
@@ -1910,8 +1911,7 @@
 }
 
 .song-request-card-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
+  display: flex;
   align-items: stretch;
   gap: 0.45rem;
   min-width: 0;
@@ -1919,24 +1919,24 @@
 
 .song-request-cover.song-thumb--cover,
 .song-request-cover.song-title-fallback--cover {
-  width: 100%;
-  height: 100%;
-  min-width: 4.5rem;
+  flex: 0 0 auto;
+  width: auto !important;
+  height: auto;
+  min-width: 0;
   max-width: none;
-  aspect-ratio: auto;
-  justify-self: stretch;
+  aspect-ratio: 1 / 1;
   align-self: stretch;
 }
 
 .song-request-card-body {
-  width: max-content;
+  flex: 1 1 auto;
+  width: auto;
   min-width: 0;
   max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.3rem;
-  justify-self: end;
 }
 
 .song-request-meta-row {
@@ -2206,19 +2206,20 @@
   }
 
   .song-request-card-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content;
+    display: flex;
     align-items: stretch;
     gap: 0.4rem;
   }
 
   .song-request-cover.song-thumb--cover,
   .song-request-cover.song-title-fallback--cover {
-    width: 100%;
-    height: 100%;
-    min-width: 5rem;
+    flex: 0 0 auto;
+    width: auto !important;
+    height: auto;
+    min-width: 0;
     max-width: none;
-    aspect-ratio: auto;
+    aspect-ratio: 1 / 1;
+    align-self: stretch;
   }
 
   .song-thumb--cover .song-thumb-play {
@@ -2226,8 +2227,9 @@
   }
 
   .song-request-card-body {
-    width: max-content;
-    max-width: min(56vw, 12.25rem);
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
     align-items: flex-end;
     gap: 0.25rem;
   }
@@ -2239,7 +2241,7 @@
   .song-request-slots {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.25rem;
-    width: 100%;
+    width: min(100%, 11rem);
     min-width: 9.5rem;
   }
 
