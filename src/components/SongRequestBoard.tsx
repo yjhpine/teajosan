@@ -262,13 +262,28 @@ function RequestCard({
         />
 
         <div className="song-request-card-body">
-          <p className="song-request-meta">
-            <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
-            <span className="song-request-meta-rest">
-              · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length}
-              {complete ? ' · 완성' : ''}
-            </span>
-          </p>
+          <div className="song-request-meta-row">
+            <p className="song-request-meta">
+              <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
+              <span className="song-request-meta-rest">
+                · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length}
+                {complete ? ' · 완성' : ''}
+              </span>
+            </p>
+            {mine ? (
+              <button
+                type="button"
+                className="btn-ghost song-delete song-delete--inline song-request-delete"
+                disabled={busy}
+                onClick={() => {
+                  if (!window.confirm(`「${request.title}」 신청을 삭제할까요?`)) return
+                  void onDelete(request.id)
+                }}
+              >
+                삭제
+              </button>
+            ) : null}
+          </div>
 
           <div className="song-request-slots">
             {visibleSlots.map((slot) => {
@@ -304,20 +319,6 @@ function RequestCard({
             })}
           </div>
         </div>
-
-        {mine ? (
-          <button
-            type="button"
-            className="btn-ghost song-delete song-delete--inline song-request-delete"
-            disabled={busy}
-            onClick={() => {
-              if (!window.confirm(`「${request.title}」 신청을 삭제할까요?`)) return
-              void onDelete(request.id)
-            }}
-          >
-            삭제
-          </button>
-        ) : null}
       </div>
 
       {playing && videoId ? (
