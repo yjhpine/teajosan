@@ -1843,6 +1843,14 @@
   width: 100%;
 }
 
+.song-request-search {
+  margin-top: 0.7rem;
+}
+
+.song-request-search input {
+  width: 100%;
+}
+
 .song-request-compose {
   display: flex;
   flex-direction: column;
