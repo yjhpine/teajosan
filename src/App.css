@@ -1352,6 +1352,14 @@
   font-size: 1.55rem;
 }
 
+.song-list-search {
+  margin: 0 0 0.85rem;
+}
+
+.song-list-search input {
+  width: 100%;
+}
+
 .song-table-wrap {
   overflow: auto;
   border: 1px solid var(--line);

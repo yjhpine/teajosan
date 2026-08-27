@@ -249,6 +249,7 @@ function SongMobileCard({
 
 function SongMobileList({
   songs,
+  emptyLabel,
   rosters,
   busy,
   playingId,
@@ -258,6 +259,7 @@ function SongMobileList({
   onMove,
 }: {
   songs: Song[]
+  emptyLabel: string
   rosters: Rosters
   busy: boolean
   playingId: string | null
@@ -267,7 +269,7 @@ function SongMobileList({
   onMove: (from: number, to: number) => void
 }) {
   if (songs.length === 0) {
-    return <p className="song-empty song-empty--mobile">아직 곡이 없습니다. 곡 신청에서 팀을 모으면 여기에 추가됩니다.</p>
+    return <p className="song-empty song-empty--mobile">{emptyLabel}</p>
   }
 
   return (
@@ -301,6 +303,7 @@ export function SongListBoard({
   onReorder,
 }: Props) {
   const [playingId, setPlayingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const rosters = useMemo<Rosters>(
     () => ({
@@ -313,13 +316,43 @@ export function SongListBoard({
     [profiles],
   )
 
+  const visibleSongs = useMemo(() => {
+    const q = searchQuery.trim().toLocaleLowerCase('ko-KR')
+    if (!q) return songs
+    return songs.filter((song) => {
+      const haystack = [
+        song.title,
+        song.vocal,
+        song.guitar1,
+        song.guitar2,
+        song.bass,
+        song.drums,
+        song.keyboard,
+      ]
+        .join(' ')
+        .toLocaleLowerCase('ko-KR')
+      return haystack.includes(q)
+    })
+  }, [songs, searchQuery])
+
   function moveSong(from: number, to: number) {
-    if (to < 0 || to >= songs.length || from === to) return
+    if (to < 0 || to >= visibleSongs.length || from === to) return
+    const fromId = visibleSongs[from]?.id
+    const toId = visibleSongs[to]?.id
+    if (!fromId || !toId) return
+    const fromIdx = songs.findIndex((song) => song.id === fromId)
+    const toIdx = songs.findIndex((song) => song.id === toId)
+    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
     const ids = songs.map((song) => song.id)
-    const [moved] = ids.splice(from, 1)
-    ids.splice(to, 0, moved)
+    const [moved] = ids.splice(fromIdx, 1)
+    ids.splice(toIdx, 0, moved)
     void onReorder(ids)
   }
+
+  const emptyLabel =
+    songs.length === 0
+      ? '아직 곡이 없습니다. 곡 신청에서 팀을 모으면 여기에 추가됩니다.'
+      : '검색 결과가 없습니다.'
 
   return (
     <section className="song-board">
@@ -329,6 +362,18 @@ export function SongListBoard({
           <h2>곡 리스트</h2>
         </div>
       </header>
+
+      <label className="field song-list-search">
+        <input
+          type="search"
+          value={searchQuery}
+          disabled={busy}
+          placeholder="곡·세션 멤버 검색"
+          aria-label="곡 리스트 검색"
+          maxLength={80}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </label>
 
       <div className="song-table-wrap">
         <table className="song-table">
@@ -345,19 +390,19 @@ export function SongListBoard({
             </tr>
           </thead>
           <tbody>
-            {songs.length === 0 ? (
+            {visibleSongs.length === 0 ? (
               <tr>
                 <td colSpan={8} className="song-empty">
-                  아직 곡이 없습니다. 곡 신청에서 팀을 모으면 여기에 추가됩니다.
+                  {emptyLabel}
                 </td>
               </tr>
             ) : (
-              songs.map((song, index) => (
+              visibleSongs.map((song, index) => (
                 <tr key={song.id}>
                   <td className="song-col--order">
                     <OrderButtons
                       index={index}
-                      total={songs.length}
+                      total={visibleSongs.length}
                       busy={busy}
                       onMove={moveSong}
                     />
@@ -446,7 +491,8 @@ export function SongListBoard({
 
       <div className="song-mobile-list">
         <SongMobileList
-          songs={songs}
+          songs={visibleSongs}
+          emptyLabel={emptyLabel}
           rosters={rosters}
           busy={busy}
           playingId={playingId}
