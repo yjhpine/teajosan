@@ -1902,7 +1902,7 @@
 
 .song-request-card-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.55rem;
   min-width: 0;
 }
@@ -1917,7 +1917,7 @@
 
 .song-request-delete {
   flex: 0 0 auto;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .song-request-player {
