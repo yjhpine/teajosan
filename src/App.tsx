@@ -8,6 +8,7 @@ import { ProfilePage } from './components/ProfilePage'
 import { RehearsalModal } from './components/RehearsalModal'
 import { SessionSetupScreen } from './components/SessionSetupScreen'
 import { SongListBoard } from './components/SongListBoard'
+import { SongRequestBoard } from './components/SongRequestBoard'
 import { WeekTimetable } from './components/WeekTimetable'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { supabaseConfigured } from './lib/supabase'
@@ -15,10 +16,14 @@ import {
   clearSession,
   createRehearsal,
   createSong,
+  createSongRequest,
+  claimSongRequestSlot,
   deleteRehearsal,
   deleteSong,
+  deleteSongRequest,
   fetchAppData,
   fetchMemberProfiles,
+  fetchSongRequests,
   fetchSongs,
   getMyProfile,
   loadSession,
@@ -41,21 +46,23 @@ import type {
   Session,
   Song,
   SongDraft,
+  SongRequest,
 } from './types'
 import { isSameMember, memberLabel } from './types'
 import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
-type AppPage = 'calendar' | 'songs' | 'profile'
+type AppPage = 'calendar' | 'songs' | 'requests' | 'profile'
 
 async function loadExtras(session: Session) {
-  const [nextSongs, nextProfiles, nextProfile] = await Promise.all([
+  const [nextSongs, nextProfiles, nextProfile, nextRequests] = await Promise.all([
     fetchSongs(),
     fetchMemberProfiles(),
     getMyProfile(session),
+    fetchSongRequests(),
   ])
-  return { nextSongs, nextProfiles, nextProfile }
+  return { nextSongs, nextProfiles, nextProfile, nextRequests }
 }
 
 function App() {
@@ -64,6 +71,7 @@ function App() {
   const [profile, setProfile] = useState<MemberProfile | null>(null)
   const [data, setData] = useState<AppData>(emptyData)
   const [songs, setSongs] = useState<Song[]>([])
+  const [songRequests, setSongRequests] = useState<SongRequest[]>([])
   const [profiles, setProfiles] = useState<MemberProfile[]>([])
   const [page, setPage] = useState<AppPage>('calendar')
   const [booting, setBooting] = useState(true)
@@ -111,6 +119,7 @@ function App() {
         setSongs(extras.nextSongs)
         setProfiles(extras.nextProfiles)
         setProfile(extras.nextProfile)
+        setSongRequests(extras.nextRequests)
         setMember({ ...saved, sessions: extras.nextProfile.sessions })
       } catch (err) {
         if (cancelled) return
@@ -139,17 +148,19 @@ function App() {
       debounceTimer = setTimeout(() => {
         void (async () => {
           try {
-            const [nextData, nextSongs, nextProfiles, nextProfile] = await Promise.all([
+            const [nextData, nextSongs, nextProfiles, nextProfile, nextRequests] = await Promise.all([
               fetchAppData(),
               fetchSongs(),
               fetchMemberProfiles(),
               getMyProfile(member),
+              fetchSongRequests(),
             ])
             if (!cancelled) {
               setData(nextData)
               setSongs(nextSongs)
               setProfiles(nextProfiles)
               setProfile(nextProfile)
+              setSongRequests(nextRequests)
               setMember((prev) =>
                 prev ? { ...prev, sessions: nextProfile.sessions } : prev,
               )
@@ -210,6 +221,30 @@ function App() {
     }
   }
 
+  async function runRequestAction(action: () => Promise<SongRequest[]>) {
+    setBusy(true)
+    setError('')
+    try {
+      const next = await action()
+      setSongRequests(next)
+      return true
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '요청에 실패했습니다.')
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function applyExtras(extras: Awaited<ReturnType<typeof loadExtras>>, saved: Session) {
+    setSongs(extras.nextSongs)
+    setProfiles(extras.nextProfiles)
+    setProfile(extras.nextProfile)
+    setSongRequests(extras.nextRequests)
+    setMember({ ...saved, sessions: extras.nextProfile.sessions })
+  }
+
   async function handleLogin(name: string, pin: string) {
     const ok = await runAction(() => loginMember(name, pin))
     if (!ok) return
@@ -217,11 +252,7 @@ function App() {
     if (!saved) return
     setMember(saved)
     try {
-      const extras = await loadExtras(saved)
-      setSongs(extras.nextSongs)
-      setProfiles(extras.nextProfiles)
-      setProfile(extras.nextProfile)
-      setMember({ ...saved, sessions: extras.nextProfile.sessions })
+      applyExtras(await loadExtras(saved), saved)
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? err.message : '프로필을 불러오지 못했습니다.')
@@ -236,11 +267,7 @@ function App() {
     setMember({ ...saved, sessions })
     setProfile({ cohort: next.cohort, name: next.name, sessions })
     try {
-      const extras = await loadExtras(saved)
-      setSongs(extras.nextSongs)
-      setProfiles(extras.nextProfiles)
-      setProfile(extras.nextProfile)
-      setMember({ ...saved, sessions: extras.nextProfile.sessions })
+      applyExtras(await loadExtras(saved), saved)
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? err.message : '프로필을 불러오지 못했습니다.')
@@ -276,6 +303,7 @@ function App() {
     setProfile(null)
     setData(emptyData)
     setSongs([])
+    setSongRequests([])
     setProfiles([])
     setPage('calendar')
     setViewMode('month')
@@ -285,11 +313,7 @@ function App() {
     if (!member) return
     await runAction(() => fetchAppData())
     try {
-      const extras = await loadExtras(member)
-      setSongs(extras.nextSongs)
-      setProfiles(extras.nextProfiles)
-      setProfile(extras.nextProfile)
-      setMember({ ...member, sessions: extras.nextProfile.sessions })
+      applyExtras(await loadExtras(member), member)
     } catch (err) {
       console.error(err)
     }
@@ -425,6 +449,7 @@ function App() {
           profile={profile}
           data={data}
           songs={songs}
+          songRequests={songRequests}
           profiles={profiles}
           busy={busy}
           error={error}
@@ -444,6 +469,13 @@ function App() {
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
           onReorderSongs={(ids) => void runSongAction(() => reorderSongs(member, ids))}
+          onCreateRequest={(title, slots) =>
+            void runRequestAction(() => createSongRequest(member, title, slots))
+          }
+          onClaimRequest={(id, slot) =>
+            void runRequestAction(() => claimSongRequestSlot(member, id, slot))
+          }
+          onDeleteRequest={(id) => void runRequestAction(() => deleteSongRequest(member, id))}
           onSaveSessions={handleSaveSessions}
           onChangePin={handleChangePin}
         />
@@ -479,6 +511,13 @@ function App() {
             </button>
             <button
               type="button"
+              className={['page-tab', page === 'requests' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => setPage('requests')}
+            >
+              곡 신청
+            </button>
+            <button
+              type="button"
               className={['page-tab', page === 'profile' ? 'is-active' : ''].filter(Boolean).join(' ')}
               onClick={() => setPage('profile')}
             >
@@ -500,6 +539,22 @@ function App() {
 
       {page === 'songs' ? (
         <main className="layout layout--songs">{songBoard}</main>
+      ) : page === 'requests' ? (
+        <main className="layout layout--songs">
+          <SongRequestBoard
+            session={member}
+            songs={songs}
+            requests={songRequests}
+            busy={busy}
+            onCreate={(title, slots) =>
+              void runRequestAction(() => createSongRequest(member, title, slots))
+            }
+            onClaim={(id, slot) =>
+              void runRequestAction(() => claimSongRequestSlot(member, id, slot))
+            }
+            onDelete={(id) => void runRequestAction(() => deleteSongRequest(member, id))}
+          />
+        </main>
       ) : page === 'profile' ? (
         <main className="layout layout--songs">
           <ProfilePage

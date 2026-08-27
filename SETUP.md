@@ -23,6 +23,7 @@
 13. `supabase/migrations/20260827_members_realtime.sql` — members Realtime
 14. `supabase/migrations/20260827_reorder_songs.sql` — 곡 순서 변경 RPC
 15. `supabase/migrations/20260827_song_delete_any_member.sql` — **곡 삭제 전원 가능**
+16. `supabase/migrations/20260827_song_requests.sql` — 곡 신청 게시판
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 
@@ -58,3 +59,4 @@ PR/main: `.github/workflows/ci.yml` 에서 `lint` + `build` (live DB verify는 C
 - 가입(기수·이름·PIN·세션) 또는 이름+PIN 로그인 → 기기(localStorage)에 세션 유지
 - 합주·곡·멤버·활동로그는 Realtime으로 자동 동기화
 - 마이페이지에서 PIN 변경, 곡 리스트 ↑↓로 순서 변경
+- 곡 신청: 곡 선택 + 내 세션 담아 올리기 → 다른 멤버가 빈 세션 클릭으로 신청

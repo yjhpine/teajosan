@@ -16,6 +16,8 @@ import type {
   Session,
   Song,
   SongDraft,
+  SongRequest,
+  SongRequestSlot,
 } from './types'
 
 type RehearsalRow = {
@@ -162,6 +164,11 @@ export function subscribeAppDataChanges(onChange: () => void): () => void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'members' },
+      () => onChange(),
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'song_requests' },
       () => onChange(),
     )
     .subscribe()
@@ -510,6 +517,90 @@ export async function reorderSongs(session: Session, ids: string[]): Promise<Son
   })
   if (error) throw mapRpcError(error, '곡 순서 변경에 실패했습니다.')
   return fetchSongs()
+}
+
+type SongRequestRow = {
+  id: string
+  title: string
+  vocal: string
+  guitar1: string
+  guitar2: string
+  bass: string
+  drums: string
+  keyboard: string
+  created_by_cohort: string
+  created_by_name: string
+  created_at: string
+  updated_at: string | null
+}
+
+function mapSongRequest(row: SongRequestRow): SongRequest {
+  return {
+    id: row.id,
+    title: row.title ?? '',
+    vocal: row.vocal ?? '',
+    guitar1: row.guitar1 ?? '',
+    guitar2: row.guitar2 ?? '',
+    bass: row.bass ?? '',
+    drums: row.drums ?? '',
+    keyboard: row.keyboard ?? '',
+    createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }
+}
+
+export async function fetchSongRequests(): Promise<SongRequest[]> {
+  assertConfigured()
+  const { data, error } = await supabase
+    .from('song_requests')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return ((data ?? []) as SongRequestRow[]).map(mapSongRequest)
+}
+
+export async function createSongRequest(
+  session: Session,
+  title: string,
+  slots: SongRequestSlot[],
+): Promise<SongRequest[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('create_song_request', {
+    p_session_token: token,
+    p_title: title,
+    p_slots: slots,
+  })
+  if (error) throw mapRpcError(error, '곡 신청에 실패했습니다.')
+  return fetchSongRequests()
+}
+
+export async function claimSongRequestSlot(
+  session: Session,
+  id: string,
+  slot: SongRequestSlot,
+): Promise<SongRequest[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('claim_song_request_slot', {
+    p_session_token: token,
+    p_id: id,
+    p_slot: slot,
+  })
+  if (error) throw mapRpcError(error, '세션 신청에 실패했습니다.')
+  return fetchSongRequests()
+}
+
+export async function deleteSongRequest(session: Session, id: string): Promise<SongRequest[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('delete_song_request', {
+    p_session_token: token,
+    p_id: id,
+  })
+  if (error) throw mapRpcError(error, '신청 삭제에 실패했습니다.')
+  return fetchSongRequests()
 }
 
 export async function addRosterMember(session: Session, name: string): Promise<string[]> {

@@ -5,6 +5,7 @@ import { ActivityPanel } from '../ActivityPanel'
 import { CalendarBoard } from '../CalendarBoard'
 import { ProfilePage } from '../ProfilePage'
 import { SongListBoard } from '../SongListBoard'
+import { SongRequestBoard } from '../SongRequestBoard'
 import type {
   AppData,
   InstrumentSession,
@@ -14,20 +15,23 @@ import type {
   Session,
   Song,
   SongDraft,
+  SongRequest,
+  SongRequestSlot,
 } from '../../types'
 import { DayTimeline } from './DayTimeline'
 import { MobileHeader } from './MobileHeader'
 import { MobileTabBar } from './MobileTabBar'
 
 type ScheduleView = 'month' | 'day'
-type MobileTab = 'schedule' | 'songs' | 'profile' | 'log'
-type AppPage = 'calendar' | 'songs' | 'profile'
+type MobileTab = 'schedule' | 'songs' | 'requests' | 'profile' | 'log'
+type AppPage = 'calendar' | 'songs' | 'requests' | 'profile'
 
 type Props = {
   member: Member
   profile: MemberProfile
   data: AppData
   songs: Song[]
+  songRequests: SongRequest[]
   profiles: MemberProfile[]
   busy: boolean
   error: string
@@ -47,6 +51,9 @@ type Props = {
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onDeleteSong: (id: string) => void
   onReorderSongs: (ids: string[]) => void
+  onCreateRequest: (title: string, slots: SongRequestSlot[]) => void
+  onClaimRequest: (id: string, slot: SongRequestSlot) => void
+  onDeleteRequest: (id: string) => void
   onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
   onChangePin: (oldPin: string, newPin: string) => void | Promise<void>
 }
@@ -56,6 +63,7 @@ export function MobileApp({
   profile,
   data,
   songs,
+  songRequests,
   profiles,
   busy,
   error,
@@ -75,23 +83,34 @@ export function MobileApp({
   onUpdateSong,
   onDeleteSong,
   onReorderSongs,
+  onCreateRequest,
+  onClaimRequest,
+  onDeleteRequest,
   onSaveSessions,
   onChangePin,
 }: Props) {
   const [tab, setTab] = useState<MobileTab>(
-    page === 'songs' ? 'songs' : page === 'profile' ? 'profile' : 'schedule',
+    page === 'songs'
+      ? 'songs'
+      : page === 'requests'
+        ? 'requests'
+        : page === 'profile'
+          ? 'profile'
+          : 'schedule',
   )
   const isMonthHome = tab === 'schedule' && scheduleView === 'month'
 
   useEffect(() => {
     if (page === 'songs') setTab('songs')
+    else if (page === 'requests') setTab('requests')
     else if (page === 'profile') setTab('profile')
-    else if (tab === 'songs' || tab === 'profile') setTab('schedule')
+    else if (tab === 'songs' || tab === 'requests' || tab === 'profile') setTab('schedule')
   }, [page])
 
   function handleTabChange(next: MobileTab) {
     setTab(next)
     if (next === 'songs') onPageChange('songs')
+    else if (next === 'requests') onPageChange('requests')
     else if (next === 'profile') onPageChange('profile')
     else if (next === 'schedule') onPageChange('calendar')
   }
@@ -108,22 +127,26 @@ export function MobileApp({
       ? '활동 로그'
       : tab === 'songs'
         ? '곡 리스트'
-        : tab === 'profile'
-          ? '마이페이지'
-          : scheduleView === 'day'
-            ? format(selectedDate, 'M월 d일 EEEE', { locale: ko })
-            : ''
+        : tab === 'requests'
+          ? '곡 신청'
+          : tab === 'profile'
+            ? '마이페이지'
+            : scheduleView === 'day'
+              ? format(selectedDate, 'M월 d일 EEEE', { locale: ko })
+              : ''
 
   const headerSubtitle =
     tab === 'log'
       ? '합주 등록·삭제 기록'
       : tab === 'songs'
         ? '가수/곡 · 세션 멤버'
-        : tab === 'profile'
-          ? '담당 세션 관리'
-          : scheduleView === 'day'
-            ? '시간표 블록을 눌러 수정·삭제 · +로 추가'
-            : undefined
+        : tab === 'requests'
+          ? '하고 싶은 곡 신청'
+          : tab === 'profile'
+            ? '담당 세션 관리'
+            : scheduleView === 'day'
+              ? '시간표 블록을 눌러 수정·삭제 · +로 추가'
+              : undefined
 
   return (
     <div className="mobile-shell">
@@ -150,6 +173,7 @@ export function MobileApp({
           isMonthHome ? 'mobile-main--month' : '',
           tab === 'log' ? 'mobile-main--log' : '',
           tab === 'songs' ? 'mobile-main--songs' : '',
+          tab === 'requests' ? 'mobile-main--requests' : '',
           tab === 'profile' ? 'mobile-main--profile' : '',
         ]
           .filter(Boolean)
@@ -182,6 +206,16 @@ export function MobileApp({
             onUpdate={onUpdateSong}
             onDelete={onDeleteSong}
             onReorder={onReorderSongs}
+          />
+        ) : tab === 'requests' ? (
+          <SongRequestBoard
+            session={member as Session}
+            songs={songs}
+            requests={songRequests}
+            busy={busy}
+            onCreate={onCreateRequest}
+            onClaim={onClaimRequest}
+            onDelete={onDeleteRequest}
           />
         ) : tab === 'profile' ? (
           <ProfilePage
