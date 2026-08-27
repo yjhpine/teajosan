@@ -1,0 +1,12 @@
+작업: 고아 완성 신청 정리 SQL 추가
+
+상황:
+- 캐시가 아님. 연동(promoted_song_id) 전에 남은 완성 신청이 DB에 잔류
+- 곡 리스트 1곡 vs 신청 탭 흐린 카드 여러 장 = 고아 데이터
+
+추가:
+- supabase/ops/cleanup_orphan_promoted_requests.sql
+  1) 같은 제목 곡↔신청 백필
+  2) 연결 없는 완성/이관 신청 삭제
+
+사용: Supabase SQL Editor에서 해당 파일 실행 후 앱 새로고침
