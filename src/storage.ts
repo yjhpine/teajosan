@@ -330,6 +330,7 @@ type SongRow = {
   bass: string
   drums: string
   keyboard: string
+  youtube_url?: string | null
   sort_order: number
   created_by_cohort: string
   created_by_name: string
@@ -347,6 +348,7 @@ function mapSong(row: SongRow): Song {
     bass: row.bass ?? '',
     drums: row.drums ?? '',
     keyboard: row.keyboard ?? '',
+    youtubeUrl: row.youtube_url ?? '',
     sortOrder: row.sort_order,
     createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
     createdAt: row.created_at,
@@ -528,6 +530,7 @@ type SongRequestRow = {
   bass: string
   drums: string
   keyboard: string
+  youtube_url?: string | null
   needed_slots: string[] | null
   created_by_cohort: string
   created_by_name: string
@@ -568,6 +571,7 @@ function mapSongRequest(row: SongRequestRow): SongRequest {
     bass: row.bass ?? '',
     drums: row.drums ?? '',
     keyboard: row.keyboard ?? '',
+    youtubeUrl: row.youtube_url ?? '',
     neededSlots: mapNeededSlots(row.needed_slots),
     createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
     createdAt: row.created_at,
@@ -590,6 +594,7 @@ export async function createSongRequest(
   title: string,
   neededSlots: SongRequestSlot[],
   mySlots: SongRequestSlot[] = [],
+  youtubeUrl = '',
 ): Promise<SongRequest[]> {
   assertConfigured()
   const token = requireSessionToken(session)
@@ -598,6 +603,7 @@ export async function createSongRequest(
     p_title: title,
     p_needed_slots: neededSlots,
     p_my_slots: mySlots,
+    p_youtube_url: youtubeUrl,
   })
   if (error) throw mapRpcError(error, '곡 신청에 실패했습니다.')
   return fetchSongRequests()

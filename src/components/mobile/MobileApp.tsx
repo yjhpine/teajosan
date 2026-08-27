@@ -54,6 +54,7 @@ type Props = {
     title: string,
     neededSlots: SongRequestSlot[],
     mySlots: SongRequestSlot[],
+    youtubeUrl: string,
   ) => void
   onClaimRequest: (id: string, slot: SongRequestSlot) => void
   onPromoteRequest: (id: string) => void

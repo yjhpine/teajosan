@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { parseYoutubeId, youtubeEmbedUrl } from '../lib/youtube'
 import { type InstrumentSession, type MemberProfile, type Session, type Song, type SongDraft } from '../types'
 
 type SessionKey = keyof Omit<SongDraft, 'title'>
@@ -48,6 +49,46 @@ function namesForSession(profiles: MemberProfile[], session: InstrumentSession):
   return profiles
     .filter((profile) => profile.sessions.includes(session))
     .map((profile) => profile.name)
+}
+
+function YoutubePlayButton({
+  song,
+  playingId,
+  onToggle,
+}: {
+  song: Song
+  playingId: string | null
+  onToggle: (id: string | null) => void
+}) {
+  const videoId = parseYoutubeId(song.youtubeUrl)
+  if (!videoId) return null
+  const open = playingId === song.id
+  return (
+    <button
+      type="button"
+      className={['btn-ghost song-youtube-play', open ? 'is-open' : ''].filter(Boolean).join(' ')}
+      aria-label={open ? '영상 닫기' : '유튜브 재생'}
+      aria-pressed={open}
+      onClick={() => onToggle(open ? null : song.id)}
+    >
+      {open ? '닫기' : '▶'}
+    </button>
+  )
+}
+
+function YoutubePlayer({ url }: { url: string }) {
+  const videoId = parseYoutubeId(url)
+  if (!videoId) return null
+  return (
+    <div className="song-youtube-player">
+      <iframe
+        title="YouTube player"
+        src={youtubeEmbedUrl(videoId)}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  )
 }
 
 function MemberSelect({
@@ -195,6 +236,8 @@ function SongMobileCard({
   draftTitles,
   rosters,
   busy,
+  playingId,
+  onTogglePlay,
   onDraftChange,
   onCommitTitle,
   onUpdate,
@@ -207,6 +250,8 @@ function SongMobileCard({
   draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
+  playingId: string | null
+  onTogglePlay: (id: string | null) => void
   onDraftChange: (id: string, title: string) => void
   onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
@@ -224,6 +269,7 @@ function SongMobileCard({
           onDraftChange={onDraftChange}
           onCommit={onCommitTitle}
         />
+        <YoutubePlayButton song={song} playingId={playingId} onToggle={onTogglePlay} />
         <button
           type="button"
           className="btn-ghost song-delete song-delete--inline"
@@ -236,6 +282,8 @@ function SongMobileCard({
           삭제
         </button>
       </div>
+
+      {playingId === song.id ? <YoutubePlayer url={song.youtubeUrl} /> : null}
 
       <div className="song-mobile-sessions">
         {SESSION_FIELDS.map((field) => (
@@ -259,6 +307,8 @@ function SongMobileList({
   draftTitles,
   rosters,
   busy,
+  playingId,
+  onTogglePlay,
   onDraftChange,
   onCommitTitle,
   onUpdate,
@@ -269,6 +319,8 @@ function SongMobileList({
   draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
+  playingId: string | null
+  onTogglePlay: (id: string | null) => void
   onDraftChange: (id: string, title: string) => void
   onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
@@ -290,6 +342,8 @@ function SongMobileList({
           draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
+          playingId={playingId}
+          onTogglePlay={onTogglePlay}
           onDraftChange={onDraftChange}
           onCommitTitle={onCommitTitle}
           onUpdate={onUpdate}
@@ -311,6 +365,7 @@ export function SongListBoard({
   onReorder,
 }: Props) {
   const [draftTitles, setDraftTitles] = useState<Record<string, string>>({})
+  const [playingId, setPlayingId] = useState<string | null>(null)
 
   const rosters = useMemo<Rosters>(
     () => ({
@@ -379,92 +434,108 @@ export function SongListBoard({
               </tr>
             ) : (
               songs.map((song, index) => (
-                <tr key={song.id}>
-                  <td className="song-col--order">
-                    <OrderButtons
-                      index={index}
-                      total={songs.length}
-                      busy={busy}
-                      onMove={moveSong}
-                    />
-                  </td>
-                  <td className="song-col--title">
-                    <SongTitleInput
-                      song={song}
-                      draftTitles={draftTitles}
-                      busy={busy}
-                      onDraftChange={handleDraftChange}
-                      onCommit={commitTitle}
-                    />
-                  </td>
-                  <td className="song-col--vocal">
-                    <MemberSelect
-                      value={song.vocal}
-                      roster={rosters.vocal}
-                      disabled={busy}
-                      className="is-vocal"
-                      onChange={(next) => void onUpdate(song.id, { vocal: next })}
-                    />
-                  </td>
-                  <td className="song-col--guitar">
-                    <div className="song-guitar-pair">
-                      <MemberSelect
-                        value={song.guitar1}
-                        roster={rosters.guitar}
-                        disabled={busy}
-                        className="is-guitar"
-                        onChange={(next) => void onUpdate(song.id, { guitar1: next })}
+                <Fragment key={song.id}>
+                  <tr>
+                    <td className="song-col--order">
+                      <OrderButtons
+                        index={index}
+                        total={songs.length}
+                        busy={busy}
+                        onMove={moveSong}
                       />
+                    </td>
+                    <td className="song-col--title">
+                      <div className="song-title-cell">
+                        <SongTitleInput
+                          song={song}
+                          draftTitles={draftTitles}
+                          busy={busy}
+                          onDraftChange={handleDraftChange}
+                          onCommit={commitTitle}
+                        />
+                        <YoutubePlayButton
+                          song={song}
+                          playingId={playingId}
+                          onToggle={setPlayingId}
+                        />
+                      </div>
+                    </td>
+                    <td className="song-col--vocal">
                       <MemberSelect
-                        value={song.guitar2}
-                        roster={rosters.guitar}
+                        value={song.vocal}
+                        roster={rosters.vocal}
                         disabled={busy}
-                        className="is-guitar"
-                        onChange={(next) => void onUpdate(song.id, { guitar2: next })}
+                        className="is-vocal"
+                        onChange={(next) => void onUpdate(song.id, { vocal: next })}
                       />
-                    </div>
-                  </td>
-                  <td className="song-col--bass">
-                    <MemberSelect
-                      value={song.bass}
-                      roster={rosters.bass}
-                      disabled={busy}
-                      className="is-bass"
-                      onChange={(next) => void onUpdate(song.id, { bass: next })}
-                    />
-                  </td>
-                  <td className="song-col--drums">
-                    <MemberSelect
-                      value={song.drums}
-                      roster={rosters.drums}
-                      disabled={busy}
-                      className="is-drums"
-                      onChange={(next) => void onUpdate(song.id, { drums: next })}
-                    />
-                  </td>
-                  <td className="song-col--keyboard">
-                    <MemberSelect
-                      value={song.keyboard}
-                      roster={rosters.keyboard}
-                      disabled={busy}
-                      className="is-keyboard"
-                      onChange={(next) => void onUpdate(song.id, { keyboard: next })}
-                    />
-                  </td>
-                  <td className="song-col--actions">
-                    <button
-                      type="button"
-                      className="btn-ghost song-delete"
-                      disabled={busy}
-                      onClick={() => {
-                        if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
-                        void onDelete(song.id)
-                      }}
-                    >
-                      삭제
-                    </button>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="song-col--guitar">
+                      <div className="song-guitar-pair">
+                        <MemberSelect
+                          value={song.guitar1}
+                          roster={rosters.guitar}
+                          disabled={busy}
+                          className="is-guitar"
+                          onChange={(next) => void onUpdate(song.id, { guitar1: next })}
+                        />
+                        <MemberSelect
+                          value={song.guitar2}
+                          roster={rosters.guitar}
+                          disabled={busy}
+                          className="is-guitar"
+                          onChange={(next) => void onUpdate(song.id, { guitar2: next })}
+                        />
+                      </div>
+                    </td>
+                    <td className="song-col--bass">
+                      <MemberSelect
+                        value={song.bass}
+                        roster={rosters.bass}
+                        disabled={busy}
+                        className="is-bass"
+                        onChange={(next) => void onUpdate(song.id, { bass: next })}
+                      />
+                    </td>
+                    <td className="song-col--drums">
+                      <MemberSelect
+                        value={song.drums}
+                        roster={rosters.drums}
+                        disabled={busy}
+                        className="is-drums"
+                        onChange={(next) => void onUpdate(song.id, { drums: next })}
+                      />
+                    </td>
+                    <td className="song-col--keyboard">
+                      <MemberSelect
+                        value={song.keyboard}
+                        roster={rosters.keyboard}
+                        disabled={busy}
+                        className="is-keyboard"
+                        onChange={(next) => void onUpdate(song.id, { keyboard: next })}
+                      />
+                    </td>
+                    <td className="song-col--actions">
+                      <button
+                        type="button"
+                        className="btn-ghost song-delete"
+                        disabled={busy}
+                        onClick={() => {
+                          if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
+                          void onDelete(song.id)
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                  {playingId === song.id ? (
+                    <tr className="song-youtube-row">
+                      <td colSpan={8}>
+                        <YoutubePlayer url={song.youtubeUrl} />
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
               ))
             )}
           </tbody>
@@ -477,6 +548,8 @@ export function SongListBoard({
           draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
+          playingId={playingId}
+          onTogglePlay={setPlayingId}
           onDraftChange={handleDraftChange}
           onCommitTitle={commitTitle}
           onUpdate={onUpdate}
