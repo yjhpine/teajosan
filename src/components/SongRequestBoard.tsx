@@ -43,6 +43,7 @@ export function SongRequestBoard({
   onPromote,
   onDelete,
 }: Props) {
+  const [composing, setComposing] = useState(false)
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [neededSlots, setNeededSlots] = useState<SongRequestSlot[]>([
     'vocal',
@@ -53,6 +54,24 @@ export function SongRequestBoard({
   const [mySlots, setMySlots] = useState<SongRequestSlot[]>([])
   const [localError, setLocalError] = useState('')
   const [previewPlaying, setPreviewPlaying] = useState(false)
+
+  function resetCompose() {
+    setYoutubeUrl('')
+    setNeededSlots(['vocal', 'guitar1', 'bass', 'drums'])
+    setMySlots([])
+    setLocalError('')
+    setPreviewPlaying(false)
+  }
+
+  function openCompose() {
+    resetCompose()
+    setComposing(true)
+  }
+
+  function closeCompose() {
+    resetCompose()
+    setComposing(false)
+  }
 
   const sortedNeeded = useMemo(
     () => SONG_REQUEST_SLOTS.filter((slot) => neededSlots.includes(slot.id)).map((slot) => slot.id),
@@ -98,129 +117,146 @@ export function SongRequestBoard({
       mySlots.filter((slot) => neededSlots.includes(slot)),
       youtubeWatchUrl(videoId),
     )
-    setYoutubeUrl('')
-    setMySlots([])
-    setPreviewPlaying(false)
+    closeCompose()
   }
 
   return (
     <section className="song-request-board">
       <header className="song-request-header">
         <p className="section-kicker">Requests</p>
-        <h2>곡 신청</h2>
+        <h2>{composing ? '새 곡 신청' : '곡 신청'}</h2>
         <p className="panel-lead">
-          유튜브 링크를 올리고 필요한 세션 칸을 만들면, 멤버들이 자리를 채워 팀을 완성합니다. 완성되면
-          곡 리스트로 옮겨집니다.
+          {composing
+            ? '유튜브 링크와 필요한 세션을 고르면 신청이 올라갑니다. 완성되면 곡 리스트로 옮겨집니다.'
+            : '올라온 신청에서 세션 칸을 채워 팀을 완성하세요. 새 곡은 「곡 신청하기」로 올립니다.'}
         </p>
       </header>
 
-      <div className="song-request-compose">
-        <label className="field">
-          <span>유튜브 링크</span>
-          <input
-            type="url"
-            value={youtubeUrl}
-            disabled={busy}
-            placeholder="https://youtu.be/… 또는 youtube.com/watch?v=…"
-            maxLength={300}
-            onChange={(e) => {
-              setYoutubeUrl(e.target.value)
-              setPreviewPlaying(false)
-              setLocalError('')
-            }}
-          />
-        </label>
+      {composing ? (
+        <div className="song-request-compose">
+          <div className="song-request-compose-toolbar">
+            <button type="button" className="btn-ghost" disabled={busy} onClick={closeCompose}>
+              ← 목록으로
+            </button>
+          </div>
 
-        {previewId ? (
-          <div className="song-request-compose-preview">
-            <SongYoutubeMedia
-              youtubeUrl={youtubeWatchUrl(previewId)}
-              title=""
-              playing={previewPlaying}
-              onPlay={() => setPreviewPlaying(true)}
-              onClose={() => setPreviewPlaying(false)}
+          <label className="field">
+            <span>유튜브 링크</span>
+            <input
+              type="url"
+              value={youtubeUrl}
+              disabled={busy}
+              placeholder="https://youtu.be/… 또는 youtube.com/watch?v=…"
+              maxLength={300}
+              onChange={(e) => {
+                setYoutubeUrl(e.target.value)
+                setPreviewPlaying(false)
+                setLocalError('')
+              }}
             />
-            <p className="song-request-preview-hint">썸네일을 누르면 바로 재생됩니다. 곡 제목은 유튜브에서 가져옵니다.</p>
-          </div>
-        ) : null}
+          </label>
 
-        <div className="song-request-slot-picks" role="group" aria-label="필요한 세션">
-          <span className="song-request-slot-picks-label">필요한 세션</span>
-          <div className="song-request-slot-picks-grid">
-            {SONG_REQUEST_SLOTS.map((slot) => {
-              const checked = neededSlots.includes(slot.id)
-              return (
-                <label
-                  key={slot.id}
-                  className={['song-request-pick', checked ? 'is-checked' : ''].filter(Boolean).join(' ')}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={busy}
-                    onChange={() => toggleNeeded(slot.id)}
-                  />
-                  <span>{slot.label}</span>
-                </label>
-              )
-            })}
+          {previewId ? (
+            <div className="song-request-compose-preview">
+              <SongYoutubeMedia
+                youtubeUrl={youtubeWatchUrl(previewId)}
+                title=""
+                playing={previewPlaying}
+                onPlay={() => setPreviewPlaying(true)}
+                onClose={() => setPreviewPlaying(false)}
+              />
+              <p className="song-request-preview-hint">
+                썸네일을 누르면 바로 재생됩니다. 곡 제목은 유튜브에서 가져옵니다.
+              </p>
+            </div>
+          ) : null}
+
+          <div className="song-request-slot-picks" role="group" aria-label="필요한 세션">
+            <span className="song-request-slot-picks-label">필요한 세션</span>
+            <div className="song-request-slot-picks-grid">
+              {SONG_REQUEST_SLOTS.map((slot) => {
+                const checked = neededSlots.includes(slot.id)
+                return (
+                  <label
+                    key={slot.id}
+                    className={['song-request-pick', checked ? 'is-checked' : ''].filter(Boolean).join(' ')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={busy}
+                      onChange={() => toggleNeeded(slot.id)}
+                    />
+                    <span>{slot.label}</span>
+                  </label>
+                )
+              })}
+            </div>
           </div>
+
+          <div className="song-request-slot-picks" role="group" aria-label="내가 할 세션">
+            <span className="song-request-slot-picks-label">내가 할 세션 (선택)</span>
+            <div className="song-request-slot-picks-grid">
+              {SONG_REQUEST_SLOTS.map((slot) => {
+                const enabled = neededSlots.includes(slot.id)
+                const checked = mySlots.includes(slot.id)
+                return (
+                  <label
+                    key={slot.id}
+                    className={[
+                      'song-request-pick',
+                      checked ? 'is-checked' : '',
+                      enabled ? '' : 'is-disabled',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={busy || !enabled}
+                      onChange={() => toggleMine(slot.id)}
+                    />
+                    <span>{slot.label}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          {localError ? <p className="form-error">{localError}</p> : null}
+
+          <button type="button" className="btn-primary" disabled={busy} onClick={() => void handleCreate()}>
+            {busy ? '올리는 중…' : '신청 올리기'}
+          </button>
         </div>
-
-        <div className="song-request-slot-picks" role="group" aria-label="내가 할 세션">
-          <span className="song-request-slot-picks-label">내가 할 세션 (선택)</span>
-          <div className="song-request-slot-picks-grid">
-            {SONG_REQUEST_SLOTS.map((slot) => {
-              const enabled = neededSlots.includes(slot.id)
-              const checked = mySlots.includes(slot.id)
-              return (
-                <label
-                  key={slot.id}
-                  className={[
-                    'song-request-pick',
-                    checked ? 'is-checked' : '',
-                    enabled ? '' : 'is-disabled',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={busy || !enabled}
-                    onChange={() => toggleMine(slot.id)}
-                  />
-                  <span>{slot.label}</span>
-                </label>
-              )
-            })}
+      ) : (
+        <>
+          <div className="song-request-actions">
+            <button type="button" className="btn-primary song-request-new" disabled={busy} onClick={openCompose}>
+              곡 신청하기
+            </button>
           </div>
-        </div>
 
-        {localError ? <p className="form-error">{localError}</p> : null}
-
-        <button type="button" className="btn-primary" disabled={busy} onClick={() => void handleCreate()}>
-          {busy ? '올리는 중…' : '신청 올리기'}
-        </button>
-      </div>
-
-      <div className="song-request-list">
-        {requests.length === 0 ? (
-          <p className="song-request-empty">아직 신청이 없습니다. 위에서 새 곡을 올려 보세요.</p>
-        ) : (
-          requests.map((request) => (
-            <RequestCard
-              key={request.id}
-              request={request}
-              me={session}
-              busy={busy}
-              onClaim={onClaim}
-              onPromote={onPromote}
-              onDelete={onDelete}
-            />
-          ))
-        )}
-      </div>
+          <div className="song-request-list">
+            {requests.length === 0 ? (
+              <p className="song-request-empty">아직 신청이 없습니다. 「곡 신청하기」로 올려 보세요.</p>
+            ) : (
+              requests.map((request) => (
+                <RequestCard
+                  key={request.id}
+                  request={request}
+                  me={session}
+                  busy={busy}
+                  onClaim={onClaim}
+                  onPromote={onPromote}
+                  onDelete={onDelete}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
     </section>
   )
 }
