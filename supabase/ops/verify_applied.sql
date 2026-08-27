@@ -54,4 +54,14 @@ select
     where pubname = 'supabase_realtime'
       and schemaname = 'public'
       and tablename = 'members'
-  ) as members_in_realtime;
+  ) as members_in_realtime,
+  to_regclass('public.song_requests') is not null as has_song_requests_table,
+  to_regprocedure('public.create_song_request(uuid,text,text[])') is not null as has_create_song_request,
+  to_regprocedure('public.claim_song_request_slot(uuid,uuid,text)') is not null as has_claim_song_request_slot,
+  exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'song_requests'
+  ) as song_requests_in_realtime;
