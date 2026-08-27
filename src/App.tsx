@@ -15,7 +15,6 @@ import { supabaseConfigured } from './lib/supabase'
 import {
   clearSession,
   createRehearsal,
-  createSong,
   createSongRequest,
   claimSongRequestSlot,
   deleteRehearsal,
@@ -402,7 +401,6 @@ function App() {
       songs={songs}
       profiles={profiles}
       busy={busy}
-      onCreate={() => void runSongAction(() => createSong(member))}
       onUpdate={(id, draft: Partial<SongDraft>) =>
         void runSongAction(() => updateSong(member, id, draft))
       }
@@ -484,7 +482,6 @@ function App() {
           onLogout={handleLogout}
           onCreate={openCreate}
           onSelectRehearsal={openEdit}
-          onCreateSong={() => void runSongAction(() => createSong(member))}
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
           onReorderSongs={(ids) => void runSongAction(() => reorderSongs(member, ids))}

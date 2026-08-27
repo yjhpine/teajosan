@@ -8,7 +8,6 @@ type Props = {
   songs: Song[]
   profiles: MemberProfile[]
   busy?: boolean
-  onCreate: () => void | Promise<void>
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
   onReorder: (ids: string[]) => void | Promise<void>
@@ -277,7 +276,7 @@ function SongMobileList({
   onMove: (from: number, to: number) => void
 }) {
   if (songs.length === 0) {
-    return <p className="song-empty song-empty--mobile">아직 곡이 없습니다. 위에서 곡을 추가하세요.</p>
+    return <p className="song-empty song-empty--mobile">아직 곡이 없습니다. 곡 신청에서 팀을 모으면 여기에 추가됩니다.</p>
   }
 
   return (
@@ -307,7 +306,6 @@ export function SongListBoard({
   songs,
   profiles,
   busy = false,
-  onCreate,
   onUpdate,
   onDelete,
   onReorder,
@@ -355,11 +353,7 @@ export function SongListBoard({
         <div>
           <p className="section-kicker">Setlist</p>
           <h2>곡 리스트</h2>
-          <p className="panel-lead">가수/곡을 적고, 해당 세션을 선택한 멤버만 고를 수 있습니다.</p>
         </div>
-        <button type="button" className="btn-primary" disabled={busy} onClick={() => void onCreate()}>
-          곡 추가
-        </button>
       </header>
 
       <div className="song-table-wrap">
@@ -380,7 +374,7 @@ export function SongListBoard({
             {songs.length === 0 ? (
               <tr>
                 <td colSpan={8} className="song-empty">
-                  아직 곡이 없습니다. 위에서 곡을 추가하세요.
+                  아직 곡이 없습니다. 곡 신청에서 팀을 모으면 여기에 추가됩니다.
                 </td>
               </tr>
             ) : (
