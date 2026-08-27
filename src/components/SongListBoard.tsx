@@ -29,8 +29,8 @@ const SESSION_FIELDS: {
   colClass: string
 }[] = [
   { key: 'vocal', label: '보컬', rosterKey: 'vocal', className: 'is-vocal', colClass: 'song-col--vocal' },
-  { key: 'guitar1', label: '기타1', rosterKey: 'guitar', className: 'is-guitar', colClass: 'song-col--guitar' },
-  { key: 'guitar2', label: '기타2', rosterKey: 'guitar', className: 'is-guitar', colClass: 'song-col--guitar' },
+  { key: 'guitar1', label: '기타 1', rosterKey: 'guitar', className: 'is-guitar', colClass: 'song-col--guitar' },
+  { key: 'guitar2', label: '기타 2', rosterKey: 'guitar', className: 'is-guitar', colClass: 'song-col--guitar' },
   { key: 'bass', label: '베이스', rosterKey: 'bass', className: 'is-bass', colClass: 'song-col--bass' },
   { key: 'drums', label: '드럼', rosterKey: 'drums', className: 'is-drums', colClass: 'song-col--drums' },
   {
@@ -141,13 +141,15 @@ function SessionSlot({
         .join(' ')}
     >
       <span className="song-mobile-slot-label">{label}</span>
-      <MemberSelect
-        value={value}
-        roster={roster}
-        disabled={disabled}
-        className={['song-mobile-slot-select', className].filter(Boolean).join(' ')}
-        onChange={onChange}
-      />
+      <span className="song-mobile-slot-value">
+        <MemberSelect
+          value={value}
+          roster={roster}
+          disabled={disabled}
+          className={['song-mobile-slot-select', className].filter(Boolean).join(' ')}
+          onChange={onChange}
+        />
+      </span>
     </label>
   )
 }

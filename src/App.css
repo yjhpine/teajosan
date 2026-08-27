@@ -1524,26 +1524,41 @@
 .song-mobile-sessions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .song-mobile-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
   min-width: 0;
-  padding: 0.35rem 0.2rem;
-  border-radius: 8px;
+  min-height: 3.6rem;
+  border: 1px solid rgba(23, 24, 26, 0.72);
+  border-radius: 2px;
+  overflow: hidden;
+  background: #fffdf9;
   text-align: center;
 }
 
 .song-mobile-slot-label {
-  font-size: 0.68rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.15rem;
+  border-bottom: 1px solid rgba(23, 24, 26, 0.72);
+  font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--ink);
+  background: #fff;
+}
+
+.song-mobile-slot-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0.15rem 0.2rem;
+  background: #fffdf9;
 }
 
 .song-mobile-slot-select {
@@ -1554,7 +1569,7 @@
   background: transparent;
   padding: 0;
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 600;
   line-height: 1.2;
   color: var(--ink);
@@ -1569,13 +1584,11 @@
 }
 
 .song-mobile-slot-select:focus {
-  outline: 2px solid rgba(232, 58, 44, 0.35);
-  outline-offset: 1px;
-  border-radius: 4px;
+  outline: none;
 }
 
-.song-mobile-slot.is-empty {
-  opacity: 0.55;
+.song-mobile-slot:focus-within {
+  box-shadow: inset 0 0 0 2px rgba(232, 58, 44, 0.35);
 }
 
 .song-mobile-slot.is-empty .song-mobile-slot-select {
@@ -1583,24 +1596,24 @@
   font-weight: 500;
 }
 
-.song-mobile-slot.song-col--vocal {
-  background: #d7ebf8;
+.song-mobile-slot.song-col--vocal .song-mobile-slot-label {
+  background: #eef7fd;
 }
 
-.song-mobile-slot.song-col--guitar {
-  background: #f6efc8;
+.song-mobile-slot.song-col--guitar .song-mobile-slot-label {
+  background: #faf6df;
 }
 
-.song-mobile-slot.song-col--bass {
-  background: #f6d9c8;
+.song-mobile-slot.song-col--bass .song-mobile-slot-label {
+  background: #fbeee6;
 }
 
-.song-mobile-slot.song-col--drums {
-  background: #d8efd5;
+.song-mobile-slot.song-col--drums .song-mobile-slot-label {
+  background: #eef8ec;
 }
 
-.song-mobile-slot.song-col--keyboard {
-  background: #dde3ea;
+.song-mobile-slot.song-col--keyboard .song-mobile-slot-label {
+  background: #f0f3f7;
 }
 
 .song-empty--mobile {
