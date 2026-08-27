@@ -31,10 +31,16 @@ export function parseYoutubeId(input: string): string | null {
   return null
 }
 
-export function youtubeEmbedUrl(id: string): string {
-  return `https://www.youtube-nocookie.com/embed/${id}?rel=0`
+export function youtubeEmbedUrl(id: string, autoplay = false): string {
+  const params = new URLSearchParams({ rel: '0', playsinline: '1' })
+  if (autoplay) params.set('autoplay', '1')
+  return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`
 }
 
 export function youtubeWatchUrl(id: string): string {
   return `https://www.youtube.com/watch?v=${id}`
+}
+
+export function youtubeThumbUrl(id: string): string {
+  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 }

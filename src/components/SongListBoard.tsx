@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
-import { parseYoutubeId, youtubeEmbedUrl } from '../lib/youtube'
+import { useMemo, useState } from 'react'
+import { parseYoutubeId, youtubeEmbedUrl, youtubeThumbUrl } from '../lib/youtube'
 import { type InstrumentSession, type MemberProfile, type Session, type Song, type SongDraft } from '../types'
 
 type SessionKey = keyof Omit<SongDraft, 'title'>
@@ -51,44 +51,55 @@ function namesForSession(profiles: MemberProfile[], session: InstrumentSession):
     .map((profile) => profile.name)
 }
 
-function YoutubePlayButton({
+function SongMedia({
   song,
-  playingId,
-  onToggle,
+  playing,
+  onPlay,
+  onClose,
 }: {
   song: Song
-  playingId: string | null
-  onToggle: (id: string | null) => void
+  playing: boolean
+  onPlay: () => void
+  onClose: () => void
 }) {
   const videoId = parseYoutubeId(song.youtubeUrl)
-  if (!videoId) return null
-  const open = playingId === song.id
-  return (
-    <button
-      type="button"
-      className={['btn-ghost song-youtube-play', open ? 'is-open' : ''].filter(Boolean).join(' ')}
-      aria-label={open ? '영상 닫기' : '유튜브 재생'}
-      aria-pressed={open}
-      onClick={() => onToggle(open ? null : song.id)}
-    >
-      {open ? '닫기' : '▶'}
-    </button>
-  )
-}
 
-function YoutubePlayer({ url }: { url: string }) {
-  const videoId = parseYoutubeId(url)
-  if (!videoId) return null
-  return (
-    <div className="song-youtube-player">
-      <iframe
-        title="YouTube player"
-        src={youtubeEmbedUrl(videoId)}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
-  )
+  if (playing && videoId) {
+    return (
+      <div className="song-media">
+        <div className="song-youtube-player">
+          <iframe
+            title={`${song.title || 'YouTube'} player`}
+            src={youtubeEmbedUrl(videoId, true)}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <button type="button" className="btn-ghost song-youtube-close" onClick={onClose}>
+          닫기
+        </button>
+      </div>
+    )
+  }
+
+  if (videoId) {
+    return (
+      <button
+        type="button"
+        className="song-thumb"
+        aria-label={`${song.title || '유튜브'} 재생`}
+        onClick={onPlay}
+      >
+        <img src={youtubeThumbUrl(videoId)} alt="" loading="lazy" />
+        <span className="song-thumb-play" aria-hidden="true">
+          ▶
+        </span>
+        {song.title ? <span className="song-thumb-title">{song.title}</span> : null}
+      </button>
+    )
+  }
+
+  return <p className="song-title-fallback">{song.title || '링크 없는 곡'}</p>
 }
 
 function MemberSelect({
@@ -119,36 +130,6 @@ function MemberSelect({
       ))}
       {value && !roster.includes(value) ? <option value={value}>{value}</option> : null}
     </select>
-  )
-}
-
-function SongTitleInput({
-  song,
-  draftTitles,
-  busy,
-  onDraftChange,
-  onCommit,
-}: {
-  song: Song
-  draftTitles: Record<string, string>
-  busy: boolean
-  onDraftChange: (id: string, title: string) => void
-  onCommit: (song: Song) => void
-}) {
-  return (
-    <input
-      className="song-title-input"
-      value={draftTitles[song.id] ?? song.title}
-      disabled={busy}
-      placeholder="가수 / 곡 제목"
-      onChange={(e) => onDraftChange(song.id, e.target.value)}
-      onBlur={() => onCommit(song)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.currentTarget.blur()
-        }
-      }}
-    />
   )
 }
 
@@ -233,13 +214,10 @@ function SongMobileCard({
   song,
   index,
   total,
-  draftTitles,
   rosters,
   busy,
   playingId,
   onTogglePlay,
-  onDraftChange,
-  onCommitTitle,
   onUpdate,
   onDelete,
   onMove,
@@ -247,29 +225,27 @@ function SongMobileCard({
   song: Song
   index: number
   total: number
-  draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
   playingId: string | null
   onTogglePlay: (id: string | null) => void
-  onDraftChange: (id: string, title: string) => void
-  onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
   onMove: (from: number, to: number) => void
 }) {
+  const playing = playingId === song.id
   return (
     <article className="song-mobile-card">
       <div className="song-mobile-title-row">
         <OrderButtons index={index} total={total} busy={busy} onMove={onMove} />
-        <SongTitleInput
-          song={song}
-          draftTitles={draftTitles}
-          busy={busy}
-          onDraftChange={onDraftChange}
-          onCommit={onCommitTitle}
-        />
-        <YoutubePlayButton song={song} playingId={playingId} onToggle={onTogglePlay} />
+        <div className="song-mobile-media">
+          <SongMedia
+            song={song}
+            playing={playing}
+            onPlay={() => onTogglePlay(song.id)}
+            onClose={() => onTogglePlay(null)}
+          />
+        </div>
         <button
           type="button"
           className="btn-ghost song-delete song-delete--inline"
@@ -282,8 +258,6 @@ function SongMobileCard({
           삭제
         </button>
       </div>
-
-      {playingId === song.id ? <YoutubePlayer url={song.youtubeUrl} /> : null}
 
       <div className="song-mobile-sessions">
         {SESSION_FIELDS.map((field) => (
@@ -304,25 +278,19 @@ function SongMobileCard({
 
 function SongMobileList({
   songs,
-  draftTitles,
   rosters,
   busy,
   playingId,
   onTogglePlay,
-  onDraftChange,
-  onCommitTitle,
   onUpdate,
   onDelete,
   onMove,
 }: {
   songs: Song[]
-  draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
   playingId: string | null
   onTogglePlay: (id: string | null) => void
-  onDraftChange: (id: string, title: string) => void
-  onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
   onMove: (from: number, to: number) => void
@@ -339,13 +307,10 @@ function SongMobileList({
           song={song}
           index={index}
           total={songs.length}
-          draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
           playingId={playingId}
           onTogglePlay={onTogglePlay}
-          onDraftChange={onDraftChange}
-          onCommitTitle={onCommitTitle}
           onUpdate={onUpdate}
           onDelete={onDelete}
           onMove={onMove}
@@ -364,7 +329,6 @@ export function SongListBoard({
   onDelete,
   onReorder,
 }: Props) {
-  const [draftTitles, setDraftTitles] = useState<Record<string, string>>({})
   const [playingId, setPlayingId] = useState<string | null>(null)
 
   const rosters = useMemo<Rosters>(
@@ -377,22 +341,6 @@ export function SongListBoard({
     }),
     [profiles],
   )
-
-  useEffect(() => {
-    const next: Record<string, string> = {}
-    for (const song of songs) next[song.id] = song.title
-    setDraftTitles(next)
-  }, [songs])
-
-  function commitTitle(song: Song) {
-    const next = (draftTitles[song.id] ?? '').trim()
-    if (next === song.title) return
-    void onUpdate(song.id, { title: next })
-  }
-
-  function handleDraftChange(id: string, title: string) {
-    setDraftTitles((prev) => ({ ...prev, [id]: title }))
-  }
 
   function moveSong(from: number, to: number) {
     if (to < 0 || to >= songs.length || from === to) return
@@ -416,7 +364,7 @@ export function SongListBoard({
           <thead>
             <tr>
               <th className="song-col--order" aria-label="순서" />
-              <th className="song-col--title">가수/곡</th>
+              <th className="song-col--title">곡</th>
               {SESSION_COLS.map((col) => (
                 <th key={col.key} className={col.className}>
                   {col.label}
@@ -434,108 +382,91 @@ export function SongListBoard({
               </tr>
             ) : (
               songs.map((song, index) => (
-                <Fragment key={song.id}>
-                  <tr>
-                    <td className="song-col--order">
-                      <OrderButtons
-                        index={index}
-                        total={songs.length}
-                        busy={busy}
-                        onMove={moveSong}
-                      />
-                    </td>
-                    <td className="song-col--title">
-                      <div className="song-title-cell">
-                        <SongTitleInput
-                          song={song}
-                          draftTitles={draftTitles}
-                          busy={busy}
-                          onDraftChange={handleDraftChange}
-                          onCommit={commitTitle}
-                        />
-                        <YoutubePlayButton
-                          song={song}
-                          playingId={playingId}
-                          onToggle={setPlayingId}
-                        />
-                      </div>
-                    </td>
-                    <td className="song-col--vocal">
+                <tr key={song.id}>
+                  <td className="song-col--order">
+                    <OrderButtons
+                      index={index}
+                      total={songs.length}
+                      busy={busy}
+                      onMove={moveSong}
+                    />
+                  </td>
+                  <td className="song-col--title">
+                    <SongMedia
+                      song={song}
+                      playing={playingId === song.id}
+                      onPlay={() => setPlayingId(song.id)}
+                      onClose={() => setPlayingId(null)}
+                    />
+                  </td>
+                  <td className="song-col--vocal">
+                    <MemberSelect
+                      value={song.vocal}
+                      roster={rosters.vocal}
+                      disabled={busy}
+                      className="is-vocal"
+                      onChange={(next) => void onUpdate(song.id, { vocal: next })}
+                    />
+                  </td>
+                  <td className="song-col--guitar">
+                    <div className="song-guitar-pair">
                       <MemberSelect
-                        value={song.vocal}
-                        roster={rosters.vocal}
+                        value={song.guitar1}
+                        roster={rosters.guitar}
                         disabled={busy}
-                        className="is-vocal"
-                        onChange={(next) => void onUpdate(song.id, { vocal: next })}
+                        className="is-guitar"
+                        onChange={(next) => void onUpdate(song.id, { guitar1: next })}
                       />
-                    </td>
-                    <td className="song-col--guitar">
-                      <div className="song-guitar-pair">
-                        <MemberSelect
-                          value={song.guitar1}
-                          roster={rosters.guitar}
-                          disabled={busy}
-                          className="is-guitar"
-                          onChange={(next) => void onUpdate(song.id, { guitar1: next })}
-                        />
-                        <MemberSelect
-                          value={song.guitar2}
-                          roster={rosters.guitar}
-                          disabled={busy}
-                          className="is-guitar"
-                          onChange={(next) => void onUpdate(song.id, { guitar2: next })}
-                        />
-                      </div>
-                    </td>
-                    <td className="song-col--bass">
                       <MemberSelect
-                        value={song.bass}
-                        roster={rosters.bass}
+                        value={song.guitar2}
+                        roster={rosters.guitar}
                         disabled={busy}
-                        className="is-bass"
-                        onChange={(next) => void onUpdate(song.id, { bass: next })}
+                        className="is-guitar"
+                        onChange={(next) => void onUpdate(song.id, { guitar2: next })}
                       />
-                    </td>
-                    <td className="song-col--drums">
-                      <MemberSelect
-                        value={song.drums}
-                        roster={rosters.drums}
-                        disabled={busy}
-                        className="is-drums"
-                        onChange={(next) => void onUpdate(song.id, { drums: next })}
-                      />
-                    </td>
-                    <td className="song-col--keyboard">
-                      <MemberSelect
-                        value={song.keyboard}
-                        roster={rosters.keyboard}
-                        disabled={busy}
-                        className="is-keyboard"
-                        onChange={(next) => void onUpdate(song.id, { keyboard: next })}
-                      />
-                    </td>
-                    <td className="song-col--actions">
-                      <button
-                        type="button"
-                        className="btn-ghost song-delete"
-                        disabled={busy}
-                        onClick={() => {
-                          if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
-                          void onDelete(song.id)
-                        }}
-                      >
-                        삭제
-                      </button>
-                    </td>
-                  </tr>
-                  {playingId === song.id ? (
-                    <tr className="song-youtube-row">
-                      <td colSpan={8}>
-                        <YoutubePlayer url={song.youtubeUrl} />
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
+                    </div>
+                  </td>
+                  <td className="song-col--bass">
+                    <MemberSelect
+                      value={song.bass}
+                      roster={rosters.bass}
+                      disabled={busy}
+                      className="is-bass"
+                      onChange={(next) => void onUpdate(song.id, { bass: next })}
+                    />
+                  </td>
+                  <td className="song-col--drums">
+                    <MemberSelect
+                      value={song.drums}
+                      roster={rosters.drums}
+                      disabled={busy}
+                      className="is-drums"
+                      onChange={(next) => void onUpdate(song.id, { drums: next })}
+                    />
+                  </td>
+                  <td className="song-col--keyboard">
+                    <MemberSelect
+                      value={song.keyboard}
+                      roster={rosters.keyboard}
+                      disabled={busy}
+                      className="is-keyboard"
+                      onChange={(next) => void onUpdate(song.id, { keyboard: next })}
+                    />
+                  </td>
+                  <td className="song-col--actions">
+                    <button
+                      type="button"
+                      className="btn-ghost song-delete"
+                      disabled={busy}
+                      onClick={() => {
+                        if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
+                        void onDelete(song.id)
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </td>
+                </tr>
               ))
             )}
           </tbody>
@@ -545,13 +476,10 @@ export function SongListBoard({
       <div className="song-mobile-list">
         <SongMobileList
           songs={songs}
-          draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
           playingId={playingId}
           onTogglePlay={setPlayingId}
-          onDraftChange={handleDraftChange}
-          onCommitTitle={commitTitle}
           onUpdate={onUpdate}
           onDelete={onDelete}
           onMove={moveSong}
