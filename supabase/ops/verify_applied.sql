@@ -96,6 +96,13 @@ select
   ) as promote_keeps_song_request,
   exists (
     select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'update_song'
+      and pg_get_functiondef(p.oid) like '%promoted_at = null%'
+  ) as update_song_reactivates_request,
+  exists (
+    select 1
     from pg_publication_tables
     where pubname = 'supabase_realtime'
       and schemaname = 'public'
