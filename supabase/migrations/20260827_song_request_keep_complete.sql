@@ -4,6 +4,9 @@
 alter table song_requests
   add column if not exists promoted_at timestamptz;
 
+alter table song_requests
+  add column if not exists promoted_song_id uuid;
+
 create or replace function public.promote_song_request(
   p_session_token uuid,
   p_id uuid
@@ -31,7 +34,7 @@ begin
 
   -- 이미 이관된 신청은 삭제하지 않고 그대로 둠
   if r.promoted_at is not null then
-    return null;
+    return r.promoted_song_id;
   end if;
 
   select coalesce(max(sort_order), 0) + 10 into v_order from songs;
@@ -49,6 +52,7 @@ begin
 
   update song_requests
   set promoted_at = now(),
+      promoted_song_id = v_song_id,
       updated_at = now()
   where id = p_id;
 

@@ -210,6 +210,8 @@ function App() {
     try {
       const next = await action()
       setSongs(next)
+      // 곡 삭제 시 이관된 신청도 같이 지워질 수 있어 목록 갱신
+      setSongRequests(await fetchSongRequests())
       return true
     } catch (err) {
       console.error(err)
