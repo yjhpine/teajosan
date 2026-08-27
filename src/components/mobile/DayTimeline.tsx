@@ -75,31 +75,7 @@ export function DayTimeline({
         })}
       </div>
 
-      <p className="dt-hint">합주 블록·아래 목록을 눌러 수정·삭제하세요</p>
-
-      {dayEvents.length > 0 ? (
-        <ul className="dt-event-list">
-          {dayEvents.map((event) => (
-            <li key={`list-${event.id}`}>
-              <button
-                type="button"
-                className="dt-event-row"
-                onClick={() => onSelectRehearsal(event)}
-              >
-                <span className="dt-event-row-main">
-                  <strong>{event.teamName || '합주'}</strong>
-                  <span>{memberLabel(event.createdBy)}</span>
-                </span>
-                <span className="dt-event-row-time">
-                  {event.startTime.slice(0, 5)}–{event.endTime.slice(0, 5)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="dt-empty">등록된 합주가 없습니다. + 버튼으로 추가하세요.</p>
-      )}
+      <p className="dt-hint">시간표 블록을 눌러 수정·삭제 · + 버튼으로 추가</p>
 
       <div className="dt-card">
         <div className="dt-scroll">
