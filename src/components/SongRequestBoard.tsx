@@ -249,6 +249,29 @@ function RequestCard({
 
   return (
     <article className={['song-request-card', complete ? 'is-complete' : ''].filter(Boolean).join(' ')}>
+      <div className="song-request-meta-row">
+        <p className="song-request-meta">
+          <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
+          <span className="song-request-meta-rest">
+            · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length}
+            {complete ? ' · 완성' : ''}
+          </span>
+        </p>
+        {mine ? (
+          <button
+            type="button"
+            className="btn-ghost song-delete song-delete--inline song-request-delete"
+            disabled={busy}
+            onClick={() => {
+              if (!window.confirm(`「${request.title}」 신청을 삭제할까요?`)) return
+              void onDelete(request.id)
+            }}
+          >
+            삭제
+          </button>
+        ) : null}
+      </div>
+
       <div className="song-request-card-row">
         <SongYoutubeMedia
           youtubeUrl={request.youtubeUrl}
@@ -261,63 +284,38 @@ function RequestCard({
           className="song-request-cover"
         />
 
-        <div className="song-request-card-body">
-          <div className="song-request-meta-row">
-            <p className="song-request-meta">
-              <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
-              <span className="song-request-meta-rest">
-                · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length}
-                {complete ? ' · 완성' : ''}
-              </span>
-            </p>
-            {mine ? (
+        <div className="song-request-slots">
+          {visibleSlots.map((slot) => {
+            const value = slotValue(request, slot.id)
+            const isMine = value === me.name
+            const taken = Boolean(value) && !isMine
+            return (
               <button
+                key={slot.id}
                 type="button"
-                className="btn-ghost song-delete song-delete--inline song-request-delete"
-                disabled={busy}
-                onClick={() => {
-                  if (!window.confirm(`「${request.title}」 신청을 삭제할까요?`)) return
-                  void onDelete(request.id)
-                }}
+                className={[
+                  'song-request-slot',
+                  `is-${slot.id}`,
+                  value ? 'is-filled' : 'is-open',
+                  isMine ? 'is-mine' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                disabled={busy || taken}
+                title={
+                  taken
+                    ? `${slot.label}: ${value}`
+                    : isMine
+                      ? '다시 누르면 신청 취소'
+                      : `${slot.label} 신청`
+                }
+                onClick={() => void onClaim(request.id, slot.id)}
               >
-                삭제
+                <span className="song-request-slot-label">{slot.label}</span>
+                <span className="song-request-slot-name">{value || '신청'}</span>
               </button>
-            ) : null}
-          </div>
-
-          <div className="song-request-slots">
-            {visibleSlots.map((slot) => {
-              const value = slotValue(request, slot.id)
-              const isMine = value === me.name
-              const taken = Boolean(value) && !isMine
-              return (
-                <button
-                  key={slot.id}
-                  type="button"
-                  className={[
-                    'song-request-slot',
-                    `is-${slot.id}`,
-                    value ? 'is-filled' : 'is-open',
-                    isMine ? 'is-mine' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  disabled={busy || taken}
-                  title={
-                    taken
-                      ? `${slot.label}: ${value}`
-                      : isMine
-                        ? '다시 누르면 신청 취소'
-                        : `${slot.label} 신청`
-                  }
-                  onClick={() => void onClaim(request.id, slot.id)}
-                >
-                  <span className="song-request-slot-label">{slot.label}</span>
-                  <span className="song-request-slot-name">{value || '신청'}</span>
-                </button>
-              )
-            })}
-          </div>
+            )
+          })}
         </div>
       </div>
 
