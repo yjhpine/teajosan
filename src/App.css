@@ -97,7 +97,8 @@
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   padding: 0.85rem 0.95rem;
   border: 1px solid var(--line);
@@ -109,7 +110,8 @@
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   border-color: rgba(232, 58, 44, 0.55);
   box-shadow: 0 0 0 3px rgba(232, 58, 44, 0.12);
 }
