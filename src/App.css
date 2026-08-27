@@ -1785,7 +1785,8 @@
 }
 
 @media (max-width: 768px) {
-  .profile-page {
+  .profile-page,
+  .song-request-board {
     width: 100%;
     border: 0;
     box-shadow: none;
