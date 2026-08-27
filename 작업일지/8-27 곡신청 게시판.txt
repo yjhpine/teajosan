@@ -1,0 +1,6 @@
+곡 신청 게시판 기능
+
+- song_requests 테이블 + create/claim/delete RPC
+- 곡 선택 후 원하는 세션 담아 신청 올리기
+- 빈 세션 클릭으로 다른 멤버 신청(본인 재클릭 취소)
+- Realtime 구독 + 데스크톱/모바일 UI

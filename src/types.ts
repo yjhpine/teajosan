@@ -76,6 +76,37 @@ export type SongDraft = {
   keyboard: string
 }
 
+export type SongRequestSlot =
+  | 'vocal'
+  | 'guitar1'
+  | 'guitar2'
+  | 'bass'
+  | 'drums'
+  | 'keyboard'
+
+export const SONG_REQUEST_SLOTS: { id: SongRequestSlot; label: string }[] = [
+  { id: 'vocal', label: '보컬' },
+  { id: 'guitar1', label: '기타1' },
+  { id: 'guitar2', label: '기타2' },
+  { id: 'bass', label: '베이스' },
+  { id: 'drums', label: '드럼' },
+  { id: 'keyboard', label: '키보드' },
+]
+
+export type SongRequest = {
+  id: string
+  title: string
+  vocal: string
+  guitar1: string
+  guitar2: string
+  bass: string
+  drums: string
+  keyboard: string
+  createdBy: Member
+  createdAt: string
+  updatedAt?: string
+}
+
 export function memberLabel(member: Member): string {
   return `${normalizeMemberField(member.cohort)}기 ${normalizeMemberField(member.name)}`
 }

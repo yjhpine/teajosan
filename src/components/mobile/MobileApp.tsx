@@ -15,6 +15,8 @@ import type {
   Session,
   Song,
   SongDraft,
+  SongRequest,
+  SongRequestSlot,
 } from '../../types'
 import { DayTimeline } from './DayTimeline'
 import { MobileHeader } from './MobileHeader'
@@ -29,6 +31,7 @@ type Props = {
   profile: MemberProfile
   data: AppData
   songs: Song[]
+  songRequests: SongRequest[]
   profiles: MemberProfile[]
   busy: boolean
   error: string
@@ -48,6 +51,9 @@ type Props = {
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onDeleteSong: (id: string) => void
   onReorderSongs: (ids: string[]) => void
+  onCreateRequest: (title: string, slots: SongRequestSlot[]) => void
+  onClaimRequest: (id: string, slot: SongRequestSlot) => void
+  onDeleteRequest: (id: string) => void
   onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
   onChangePin: (oldPin: string, newPin: string) => void | Promise<void>
 }
@@ -57,6 +63,7 @@ export function MobileApp({
   profile,
   data,
   songs,
+  songRequests,
   profiles,
   busy,
   error,
@@ -76,6 +83,9 @@ export function MobileApp({
   onUpdateSong,
   onDeleteSong,
   onReorderSongs,
+  onCreateRequest,
+  onClaimRequest,
+  onDeleteRequest,
   onSaveSessions,
   onChangePin,
 }: Props) {
@@ -198,7 +208,15 @@ export function MobileApp({
             onReorder={onReorderSongs}
           />
         ) : tab === 'requests' ? (
-          <SongRequestBoard />
+          <SongRequestBoard
+            session={member as Session}
+            songs={songs}
+            requests={songRequests}
+            busy={busy}
+            onCreate={onCreateRequest}
+            onClaim={onClaimRequest}
+            onDelete={onDeleteRequest}
+          />
         ) : tab === 'profile' ? (
           <ProfilePage
             profile={profile}
