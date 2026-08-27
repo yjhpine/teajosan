@@ -132,7 +132,7 @@ function SongCard({
 }) {
   return (
     <article className="song-card">
-      <div className="song-card-title">
+      <div className="song-card-title-row">
         <SongTitleInput
           song={song}
           draftTitles={draftTitles}
@@ -140,11 +140,22 @@ function SongCard({
           onDraftChange={onDraftChange}
           onCommit={onCommitTitle}
         />
+        <button
+          type="button"
+          className="btn-ghost song-delete song-delete--inline"
+          disabled={busy}
+          onClick={() => {
+            if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
+            void onDelete(song.id)
+          }}
+        >
+          삭제
+        </button>
       </div>
 
-      <div className="song-card-grid">
+      <div className="song-card-sessions">
         {SESSION_FIELDS.map((field) => (
-          <label key={field.key} className={['song-card-field', field.colClass].filter(Boolean).join(' ')}>
+          <label key={field.key} className={['song-card-slot', field.colClass].filter(Boolean).join(' ')}>
             <span>{field.label}</span>
             <MemberSelect
               value={song[field.key]}
@@ -155,20 +166,6 @@ function SongCard({
             />
           </label>
         ))}
-      </div>
-
-      <div className="song-card-footer">
-        <button
-          type="button"
-          className="btn-ghost song-delete"
-          disabled={busy}
-          onClick={() => {
-            if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
-            void onDelete(song.id)
-          }}
-        >
-          삭제
-        </button>
       </div>
     </article>
   )
