@@ -1501,43 +1501,33 @@
 }
 
 .song-card-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .song-card-field {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.45rem 0.5rem;
-  border-radius: 10px;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .song-card-field > span {
-  font-size: 0.72rem;
+  flex: 0 0 2.85rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  color: var(--muted);
+  color: var(--ink);
+  white-space: nowrap;
 }
 
-.song-card-field.song-col--vocal {
-  background: #d7ebf8;
-}
-
-.song-card-field.song-col--guitar {
-  background: #f6efc8;
-}
-
-.song-card-field.song-col--bass {
-  background: #f6d9c8;
-}
-
-.song-card-field.song-col--drums {
-  background: #d8efd5;
-}
-
-.song-card-field.song-col--keyboard {
-  background: #dde3ea;
+.song-card-field .song-select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.45rem;
+  font-size: 0.82rem;
 }
 
 .song-card-footer {
