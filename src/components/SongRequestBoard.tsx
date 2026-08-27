@@ -42,6 +42,7 @@ export function SongRequestBoard({
   onDelete,
 }: Props) {
   const [composing, setComposing] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [neededSlots, setNeededSlots] = useState<SongRequestSlot[]>([
     'vocal',
@@ -75,6 +76,25 @@ export function SongRequestBoard({
     () => SONG_REQUEST_SLOTS.filter((slot) => neededSlots.includes(slot.id)).map((slot) => slot.id),
     [neededSlots],
   )
+
+  const visibleRequests = useMemo(() => {
+    const q = searchQuery.trim().toLocaleLowerCase('ko-KR')
+    const filtered = q
+      ? requests.filter((request) => {
+          const haystack = [
+            request.title,
+            memberLabel(request.createdBy),
+            request.createdBy.name,
+            request.createdBy.cohort,
+            ...request.neededSlots.map((slot) => slotValue(request, slot)),
+          ]
+            .join(' ')
+            .toLocaleLowerCase('ko-KR')
+          return haystack.includes(q)
+        })
+      : requests
+    return [...filtered].sort((a, b) => Number(isComplete(a)) - Number(isComplete(b)))
+  }, [requests, searchQuery])
 
   const previewId = parseYoutubeId(youtubeUrl)
 
@@ -236,13 +256,25 @@ export function SongRequestBoard({
             </button>
           </div>
 
+          <label className="field song-request-search">
+            <input
+              type="search"
+              value={searchQuery}
+              disabled={busy}
+              placeholder="곡·등록자·세션 멤버 검색"
+              aria-label="모집곡 검색"
+              maxLength={80}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+
           <div className="song-request-list">
             {requests.length === 0 ? (
               <p className="song-request-empty">아직 신청이 없습니다. 「곡 신청하기」로 올려 보세요.</p>
+            ) : visibleRequests.length === 0 ? (
+              <p className="song-request-empty">검색 결과가 없습니다.</p>
             ) : (
-              [...requests]
-                .sort((a, b) => Number(isComplete(a)) - Number(isComplete(b)))
-                .map((request) => (
+              visibleRequests.map((request) => (
                 <RequestCard
                   key={request.id}
                   request={request}
