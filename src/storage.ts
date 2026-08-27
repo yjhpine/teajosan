@@ -12,6 +12,7 @@ import type {
   InstrumentSession,
   Member,
   MemberProfile,
+  Performance,
   Rehearsal,
   Session,
   Song,
@@ -169,6 +170,16 @@ export function subscribeAppDataChanges(onChange: () => void): () => void {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'song_requests' },
+      () => onChange(),
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'performances' },
+      () => onChange(),
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'performance_songs' },
       () => onChange(),
     )
     .subscribe()
@@ -649,6 +660,109 @@ export async function deleteSongRequest(session: Session, id: string): Promise<S
   })
   if (error) throw mapRpcError(error, '신청 삭제에 실패했습니다.')
   return fetchSongRequests()
+}
+
+type PerformanceRow = {
+  id: string
+  title: string
+  performance_date: string
+  place: string | null
+  note: string | null
+  created_by_cohort: string
+  created_by_name: string
+  created_at: string
+  updated_at: string | null
+}
+
+type PerformanceSongRow = {
+  performance_id: string
+  song_id: string
+  sort_order: number
+}
+
+export async function fetchPerformances(): Promise<Performance[]> {
+  assertConfigured()
+  const [perfRes, linkRes] = await Promise.all([
+    supabase
+      .from('performances')
+      .select('*')
+      .order('performance_date', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('performance_songs')
+      .select('performance_id,song_id,sort_order')
+      .order('sort_order', { ascending: true }),
+  ])
+  if (perfRes.error) throw perfRes.error
+  if (linkRes.error) throw linkRes.error
+
+  const songIdsByPerf = new Map<string, string[]>()
+  for (const row of (linkRes.data ?? []) as PerformanceSongRow[]) {
+    const list = songIdsByPerf.get(row.performance_id) ?? []
+    list.push(row.song_id)
+    songIdsByPerf.set(row.performance_id, list)
+  }
+
+  return ((perfRes.data ?? []) as PerformanceRow[]).map((row) => ({
+    id: row.id,
+    title: row.title ?? '',
+    date: row.performance_date,
+    place: row.place ?? '',
+    note: row.note ?? '',
+    songIds: songIdsByPerf.get(row.id) ?? [],
+    createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }))
+}
+
+export async function createPerformance(
+  session: Session,
+  draft: { title: string; date: string; place: string; note: string; songIds: string[] },
+): Promise<Performance[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('create_performance', {
+    p_session_token: token,
+    p_title: draft.title,
+    p_performance_date: draft.date,
+    p_place: draft.place,
+    p_note: draft.note,
+    p_song_ids: draft.songIds,
+  })
+  if (error) throw mapRpcError(error, '공연 등록에 실패했습니다.')
+  return fetchPerformances()
+}
+
+export async function updatePerformance(
+  session: Session,
+  id: string,
+  draft: { title: string; date: string; place: string; note: string; songIds: string[] },
+): Promise<Performance[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('update_performance', {
+    p_session_token: token,
+    p_id: id,
+    p_title: draft.title,
+    p_performance_date: draft.date,
+    p_place: draft.place,
+    p_note: draft.note,
+    p_song_ids: draft.songIds,
+  })
+  if (error) throw mapRpcError(error, '공연 수정에 실패했습니다.')
+  return fetchPerformances()
+}
+
+export async function deletePerformance(session: Session, id: string): Promise<Performance[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('delete_performance', {
+    p_session_token: token,
+    p_id: id,
+  })
+  if (error) throw mapRpcError(error, '공연 삭제에 실패했습니다.')
+  return fetchPerformances()
 }
 
 export async function addRosterMember(session: Session, name: string): Promise<string[]> {

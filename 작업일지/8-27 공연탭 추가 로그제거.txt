@@ -1,0 +1,18 @@
+작업: 로그 탭 제거 + 공연 일정/세트리스트 탭 추가
+
+변경 내용:
+- 활동 로그 패널/모바일 「로그」 탭 제거
+- 「공연」 탭 추가: 공연 등록·수정·삭제, 출연 곡(세트리스트) 선택/순서
+- DB: performances, performance_songs + create/update/delete RPC
+
+필수 SQL:
+- supabase/migrations/20260827_performances.sql
+
+파일:
+- supabase/migrations/20260827_performances.sql
+- src/components/PerformanceBoard.tsx (신규)
+- src/components/ActivityPanel.tsx (삭제)
+- src/components/mobile/MobileTabBar.tsx
+- src/components/mobile/MobileApp.tsx
+- src/App.tsx, src/storage.ts, src/types.ts, src/App.css
+- supabase/ops/verify_applied.sql
