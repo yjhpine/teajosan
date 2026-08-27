@@ -47,7 +47,6 @@ type Props = {
   onLogout: () => void
   onCreate: (date: Date, startTime?: string) => void
   onSelectRehearsal: (rehearsal: Rehearsal) => void
-  onCreateSong: () => void
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onDeleteSong: (id: string) => void
   onReorderSongs: (ids: string[]) => void
@@ -84,7 +83,6 @@ export function MobileApp({
   onLogout,
   onCreate,
   onSelectRehearsal,
-  onCreateSong,
   onUpdateSong,
   onDeleteSong,
   onReorderSongs,
@@ -208,7 +206,6 @@ export function MobileApp({
             songs={songs}
             profiles={profiles}
             busy={busy}
-            onCreate={onCreateSong}
             onUpdate={onUpdateSong}
             onDelete={onDeleteSong}
             onReorder={onReorderSongs}
