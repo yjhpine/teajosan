@@ -1,0 +1,9 @@
+8/27 모바일 곡 제목 행 롤백
+
+## 변경
+- 가수/곡 제목: 카드 상단 전체 너비 + 삭제 (이전 방식 복원)
+- 세션 배정: 아래 6칸 그리드 유지 (정렬·select 깨짐 수정본)
+
+## 파일
+- src/components/SongListBoard.tsx
+- src/App.css
