@@ -21,6 +21,29 @@ const SESSION_COLS: { key: SessionKey | 'guitar'; label: string; className: stri
   { key: 'keyboard', label: '키보드', className: 'song-col--keyboard' },
 ]
 
+const SESSION_FIELDS: {
+  key: SessionKey
+  label: string
+  rosterKey: InstrumentSession
+  className: string
+  colClass: string
+}[] = [
+  { key: 'vocal', label: '보컬', rosterKey: 'vocal', className: 'is-vocal', colClass: 'song-col--vocal' },
+  { key: 'guitar1', label: '기타1', rosterKey: 'guitar', className: 'is-guitar', colClass: 'song-col--guitar' },
+  { key: 'guitar2', label: '기타2', rosterKey: 'guitar', className: 'is-guitar', colClass: 'song-col--guitar' },
+  { key: 'bass', label: '베이스', rosterKey: 'bass', className: 'is-bass', colClass: 'song-col--bass' },
+  { key: 'drums', label: '드럼', rosterKey: 'drums', className: 'is-drums', colClass: 'song-col--drums' },
+  {
+    key: 'keyboard',
+    label: '키보드',
+    rosterKey: 'keyboard',
+    className: 'is-keyboard',
+    colClass: 'song-col--keyboard',
+  },
+]
+
+type Rosters = Record<InstrumentSession, string[]>
+
 function namesForSession(profiles: MemberProfile[], session: InstrumentSession): string[] {
   return profiles
     .filter((profile) => profile.sessions.includes(session))
@@ -58,6 +81,99 @@ function MemberSelect({
   )
 }
 
+function SongTitleInput({
+  song,
+  draftTitles,
+  busy,
+  onDraftChange,
+  onCommit,
+}: {
+  song: Song
+  draftTitles: Record<string, string>
+  busy: boolean
+  onDraftChange: (id: string, title: string) => void
+  onCommit: (song: Song) => void
+}) {
+  return (
+    <input
+      className="song-title-input"
+      value={draftTitles[song.id] ?? song.title}
+      disabled={busy}
+      placeholder="가수 / 곡 제목"
+      onChange={(e) => onDraftChange(song.id, e.target.value)}
+      onBlur={() => onCommit(song)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.currentTarget.blur()
+        }
+      }}
+    />
+  )
+}
+
+function SongCard({
+  song,
+  draftTitles,
+  rosters,
+  busy,
+  onDraftChange,
+  onCommitTitle,
+  onUpdate,
+  onDelete,
+}: {
+  song: Song
+  draftTitles: Record<string, string>
+  rosters: Rosters
+  busy: boolean
+  onDraftChange: (id: string, title: string) => void
+  onCommitTitle: (song: Song) => void
+  onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
+  onDelete: (id: string) => void | Promise<void>
+}) {
+  return (
+    <article className="song-card">
+      <div className="song-card-title">
+        <SongTitleInput
+          song={song}
+          draftTitles={draftTitles}
+          busy={busy}
+          onDraftChange={onDraftChange}
+          onCommit={onCommitTitle}
+        />
+      </div>
+
+      <div className="song-card-grid">
+        {SESSION_FIELDS.map((field) => (
+          <label key={field.key} className={['song-card-field', field.colClass].filter(Boolean).join(' ')}>
+            <span>{field.label}</span>
+            <MemberSelect
+              value={song[field.key]}
+              roster={rosters[field.rosterKey]}
+              disabled={busy}
+              className={field.className}
+              onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
+            />
+          </label>
+        ))}
+      </div>
+
+      <div className="song-card-footer">
+        <button
+          type="button"
+          className="btn-ghost song-delete"
+          disabled={busy}
+          onClick={() => {
+            if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
+            void onDelete(song.id)
+          }}
+        >
+          삭제
+        </button>
+      </div>
+    </article>
+  )
+}
+
 export function SongListBoard({
   session: _session,
   songs,
@@ -69,11 +185,16 @@ export function SongListBoard({
 }: Props) {
   const [draftTitles, setDraftTitles] = useState<Record<string, string>>({})
 
-  const vocalRoster = useMemo(() => namesForSession(profiles, 'vocal'), [profiles])
-  const guitarRoster = useMemo(() => namesForSession(profiles, 'guitar'), [profiles])
-  const bassRoster = useMemo(() => namesForSession(profiles, 'bass'), [profiles])
-  const drumsRoster = useMemo(() => namesForSession(profiles, 'drums'), [profiles])
-  const keyboardRoster = useMemo(() => namesForSession(profiles, 'keyboard'), [profiles])
+  const rosters = useMemo<Rosters>(
+    () => ({
+      vocal: namesForSession(profiles, 'vocal'),
+      guitar: namesForSession(profiles, 'guitar'),
+      bass: namesForSession(profiles, 'bass'),
+      drums: namesForSession(profiles, 'drums'),
+      keyboard: namesForSession(profiles, 'keyboard'),
+    }),
+    [profiles],
+  )
 
   useEffect(() => {
     const next: Record<string, string> = {}
@@ -85,6 +206,10 @@ export function SongListBoard({
     const next = (draftTitles[song.id] ?? '').trim()
     if (next === song.title) return
     void onUpdate(song.id, { title: next })
+  }
+
+  function handleDraftChange(id: string, title: string) {
+    setDraftTitles((prev) => ({ ...prev, [id]: title }))
   }
 
   return (
@@ -124,26 +249,18 @@ export function SongListBoard({
               songs.map((song) => (
                 <tr key={song.id}>
                   <td className="song-col--title">
-                    <input
-                      className="song-title-input"
-                      value={draftTitles[song.id] ?? song.title}
-                      disabled={busy}
-                      placeholder="가수 / 곡 제목"
-                      onChange={(e) =>
-                        setDraftTitles((prev) => ({ ...prev, [song.id]: e.target.value }))
-                      }
-                      onBlur={() => commitTitle(song)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.currentTarget.blur()
-                        }
-                      }}
+                    <SongTitleInput
+                      song={song}
+                      draftTitles={draftTitles}
+                      busy={busy}
+                      onDraftChange={handleDraftChange}
+                      onCommit={commitTitle}
                     />
                   </td>
                   <td className="song-col--vocal">
                     <MemberSelect
                       value={song.vocal}
-                      roster={vocalRoster}
+                      roster={rosters.vocal}
                       disabled={busy}
                       className="is-vocal"
                       onChange={(next) => void onUpdate(song.id, { vocal: next })}
@@ -153,14 +270,14 @@ export function SongListBoard({
                     <div className="song-guitar-pair">
                       <MemberSelect
                         value={song.guitar1}
-                        roster={guitarRoster}
+                        roster={rosters.guitar}
                         disabled={busy}
                         className="is-guitar"
                         onChange={(next) => void onUpdate(song.id, { guitar1: next })}
                       />
                       <MemberSelect
                         value={song.guitar2}
-                        roster={guitarRoster}
+                        roster={rosters.guitar}
                         disabled={busy}
                         className="is-guitar"
                         onChange={(next) => void onUpdate(song.id, { guitar2: next })}
@@ -170,7 +287,7 @@ export function SongListBoard({
                   <td className="song-col--bass">
                     <MemberSelect
                       value={song.bass}
-                      roster={bassRoster}
+                      roster={rosters.bass}
                       disabled={busy}
                       className="is-bass"
                       onChange={(next) => void onUpdate(song.id, { bass: next })}
@@ -179,7 +296,7 @@ export function SongListBoard({
                   <td className="song-col--drums">
                     <MemberSelect
                       value={song.drums}
-                      roster={drumsRoster}
+                      roster={rosters.drums}
                       disabled={busy}
                       className="is-drums"
                       onChange={(next) => void onUpdate(song.id, { drums: next })}
@@ -188,7 +305,7 @@ export function SongListBoard({
                   <td className="song-col--keyboard">
                     <MemberSelect
                       value={song.keyboard}
-                      roster={keyboardRoster}
+                      roster={rosters.keyboard}
                       disabled={busy}
                       className="is-keyboard"
                       onChange={(next) => void onUpdate(song.id, { keyboard: next })}
@@ -212,6 +329,26 @@ export function SongListBoard({
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="song-card-list">
+        {songs.length === 0 ? (
+          <p className="song-empty song-empty--card">아직 곡이 없습니다. 위에서 곡을 추가하세요.</p>
+        ) : (
+          songs.map((song) => (
+            <SongCard
+              key={song.id}
+              song={song}
+              draftTitles={draftTitles}
+              rosters={rosters}
+              busy={busy}
+              onDraftChange={handleDraftChange}
+              onCommitTitle={commitTitle}
+              onUpdate={onUpdate}
+              onDelete={onDelete}
+            />
+          ))
+        )}
       </div>
     </section>
   )
