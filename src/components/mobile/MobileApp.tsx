@@ -51,8 +51,13 @@ type Props = {
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onDeleteSong: (id: string) => void
   onReorderSongs: (ids: string[]) => void
-  onCreateRequest: (title: string, slots: SongRequestSlot[]) => void
+  onCreateRequest: (
+    title: string,
+    neededSlots: SongRequestSlot[],
+    mySlots: SongRequestSlot[],
+  ) => void
   onClaimRequest: (id: string, slot: SongRequestSlot) => void
+  onPromoteRequest: (id: string) => void
   onDeleteRequest: (id: string) => void
   onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
   onChangePin: (oldPin: string, newPin: string) => void | Promise<void>
@@ -85,6 +90,7 @@ export function MobileApp({
   onReorderSongs,
   onCreateRequest,
   onClaimRequest,
+  onPromoteRequest,
   onDeleteRequest,
   onSaveSessions,
   onChangePin,
@@ -210,11 +216,11 @@ export function MobileApp({
         ) : tab === 'requests' ? (
           <SongRequestBoard
             session={member as Session}
-            songs={songs}
             requests={songRequests}
             busy={busy}
             onCreate={onCreateRequest}
             onClaim={onClaimRequest}
+            onPromote={onPromoteRequest}
             onDelete={onDeleteRequest}
           />
         ) : tab === 'profile' ? (

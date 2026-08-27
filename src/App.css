@@ -1781,8 +1781,18 @@
   background: rgba(232, 58, 44, 0.08);
 }
 
-.song-request-pick input {
-  accent-color: var(--accent);
+.song-request-pick.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.song-request-card.is-complete {
+  border-color: rgba(232, 58, 44, 0.35);
+}
+
+.song-request-promote {
+  margin-top: 0.75rem;
+  width: 100%;
 }
 
 .song-request-list {

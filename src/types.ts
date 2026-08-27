@@ -102,6 +102,7 @@ export type SongRequest = {
   bass: string
   drums: string
   keyboard: string
+  neededSlots: SongRequestSlot[]
   createdBy: Member
   createdAt: string
   updatedAt?: string
