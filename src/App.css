@@ -1070,25 +1070,39 @@
   background: #fff;
 }
 
+.dt-scroll {
+  overflow: auto;
+  max-height: min(58vh, 520px);
+  -webkit-overflow-scrolling: touch;
+}
+
 .dt-track-wrap {
   display: grid;
+  min-width: 100%;
 }
 
 .dt-gutter {
-  border-right: 2px solid #cfcfcf;
-  background: #fafafa;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 52px;
+  border-right: 2px solid #bdbdbd;
+  background: #f0f0f0;
 }
 
 .dt-hour-label {
   display: flex;
   align-items: flex-start;
-  justify-content: center;
-  padding-top: 0.3rem;
-  color: #555;
-  font-size: 0.72rem;
+  justify-content: flex-end;
+  padding: 0.35rem 0.45rem 0 0;
+  color: #333;
+  font-size: 0.68rem;
   font-weight: 700;
-  border-bottom: 1px solid #e0e0e0;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  border-bottom: 1px solid #ddd;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .dt-track {
@@ -1127,12 +1141,14 @@
 }
 
 .dt-block strong {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .dt-block span {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
+  line-height: 1.15;
   opacity: 0.95;
 }
 
