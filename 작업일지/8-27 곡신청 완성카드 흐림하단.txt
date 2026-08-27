@@ -1,0 +1,13 @@
+작업: 완성된 곡 신청 카드 비활성·흐림·하단 정렬
+
+변경 내용:
+- 세션이 전부 찬 완성 신청: 삭제/세션/재생 등 터치 불가
+- 카드 opacity로 흐리게 표시
+- 목록에서 미완성 → 완성 순으로 정렬(완성본은 최하단)
+- 수동 「곡 리스트로 보내기」 버튼 제거(완성 시 서버 자동 이관 유지)
+
+파일:
+- src/components/SongRequestBoard.tsx
+- src/App.css
+- src/App.tsx
+- src/components/mobile/MobileApp.tsx

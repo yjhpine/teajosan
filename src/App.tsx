@@ -27,7 +27,6 @@ import {
   getMyProfile,
   loadSession,
   loginMember,
-  promoteSongRequest,
   reorderSongs,
   resumeSession,
   setMySessions,
@@ -234,22 +233,6 @@ function App() {
       console.error(err)
       setError(err instanceof Error ? err.message : '요청에 실패했습니다.')
       return false
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function runPromoteAction(id: string) {
-    if (!member) return
-    setBusy(true)
-    setError('')
-    try {
-      const next = await promoteSongRequest(member, id)
-      setSongs(next.songs)
-      setSongRequests(next.requests)
-    } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : '곡 리스트로 옮기지 못했습니다.')
     } finally {
       setBusy(false)
     }
@@ -493,7 +476,6 @@ function App() {
           onClaimRequest={(id, slot) =>
             void runRequestAction(() => claimSongRequestSlot(member, id, slot))
           }
-          onPromoteRequest={(id) => void runPromoteAction(id)}
           onDeleteRequest={(id) => void runRequestAction(() => deleteSongRequest(member, id))}
           onSaveSessions={handleSaveSessions}
           onChangePin={handleChangePin}
@@ -572,7 +554,6 @@ function App() {
             onClaim={(id, slot) =>
               void runRequestAction(() => claimSongRequestSlot(member, id, slot))
             }
-            onPromote={(id) => void runPromoteAction(id)}
             onDelete={(id) => void runRequestAction(() => deleteSongRequest(member, id))}
           />
         </main>
