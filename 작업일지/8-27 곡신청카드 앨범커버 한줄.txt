@@ -1,0 +1,11 @@
+# 8/27 곡신청 카드 앨범커버 한줄 레이아웃
+
+## 변경 요약
+- 신청 카드 썸네일을 정사각(앨범 커버 ~72px)으로 축소
+- 세션 칸 축소 후 가로 한 줄 배치 (좌: 커버 → 우: 메타+세션+삭제)
+- 재생 시 플레이어는 카드 하단에 펼침
+
+## 수정 파일
+- src/components/SongRequestBoard.tsx
+- src/components/SongYoutubeMedia.tsx (variant=cover)
+- src/App.css

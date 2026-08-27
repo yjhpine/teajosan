@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { fetchYoutubeTitle, parseYoutubeId, youtubeWatchUrl } from '../lib/youtube'
+import { fetchYoutubeTitle, parseYoutubeId, youtubeEmbedUrl, youtubeWatchUrl } from '../lib/youtube'
 import { SongYoutubeMedia } from './SongYoutubeMedia'
 import {
   SONG_REQUEST_SLOTS,
@@ -245,28 +245,70 @@ function RequestCard({
   const complete = isComplete(request)
   const filled = request.neededSlots.filter((slot) => Boolean(slotValue(request, slot).trim())).length
   const visibleSlots = SONG_REQUEST_SLOTS.filter((slot) => request.neededSlots.includes(slot.id))
+  const videoId = parseYoutubeId(request.youtubeUrl)
 
   return (
     <article className={['song-request-card', complete ? 'is-complete' : ''].filter(Boolean).join(' ')}>
-      <div className="song-request-card-top">
-        <div className="song-request-card-media">
-          <SongYoutubeMedia
-            youtubeUrl={request.youtubeUrl}
-            title={request.title}
-            playing={playing}
-            onPlay={() => setPlaying(true)}
-            onClose={() => setPlaying(false)}
-            fallbackText={request.title || '링크 없는 신청'}
-          />
+      <div className="song-request-card-row">
+        <SongYoutubeMedia
+          youtubeUrl={request.youtubeUrl}
+          title={request.title}
+          playing={playing}
+          onPlay={() => setPlaying(true)}
+          onClose={() => setPlaying(false)}
+          fallbackText={request.title || '신청'}
+          variant="cover"
+          className="song-request-cover"
+        />
+
+        <div className="song-request-card-body">
           <p className="song-request-meta">
-            신청 · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length} 자리
-            {complete ? ' · 팀 완성' : ''}
+            <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
+            <span className="song-request-meta-rest">
+              · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length}
+              {complete ? ' · 완성' : ''}
+            </span>
           </p>
+
+          <div className="song-request-slots">
+            {visibleSlots.map((slot) => {
+              const value = slotValue(request, slot.id)
+              const isMine = value === me.name
+              const taken = Boolean(value) && !isMine
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  className={[
+                    'song-request-slot',
+                    `is-${slot.id}`,
+                    value ? 'is-filled' : 'is-open',
+                    isMine ? 'is-mine' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  disabled={busy || taken}
+                  title={
+                    taken
+                      ? `${slot.label}: ${value}`
+                      : isMine
+                        ? '다시 누르면 신청 취소'
+                        : `${slot.label} 신청`
+                  }
+                  onClick={() => void onClaim(request.id, slot.id)}
+                >
+                  <span className="song-request-slot-label">{slot.label}</span>
+                  <span className="song-request-slot-name">{value || '신청'}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
+
         {mine ? (
           <button
             type="button"
-            className="btn-ghost song-delete song-delete--inline"
+            className="btn-ghost song-delete song-delete--inline song-request-delete"
             disabled={busy}
             onClick={() => {
               if (!window.confirm(`「${request.title}」 신청을 삭제할까요?`)) return
@@ -278,39 +320,21 @@ function RequestCard({
         ) : null}
       </div>
 
-      <div className="song-request-slots">
-        {visibleSlots.map((slot) => {
-          const value = slotValue(request, slot.id)
-          const isMine = value === me.name
-          const taken = Boolean(value) && !isMine
-          return (
-            <button
-              key={slot.id}
-              type="button"
-              className={[
-                'song-request-slot',
-                `is-${slot.id}`,
-                value ? 'is-filled' : 'is-open',
-                isMine ? 'is-mine' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              disabled={busy || taken}
-              title={
-                taken
-                  ? `${slot.label}: ${value}`
-                  : isMine
-                    ? '다시 누르면 신청 취소'
-                    : `${slot.label} 신청`
-              }
-              onClick={() => void onClaim(request.id, slot.id)}
-            >
-              <span className="song-request-slot-label">{slot.label}</span>
-              <span className="song-request-slot-name">{value || '신청'}</span>
-            </button>
-          )
-        })}
-      </div>
+      {playing && videoId ? (
+        <div className="song-request-player">
+          <div className="song-youtube-player">
+            <iframe
+              title={`${request.title || 'YouTube'} player`}
+              src={youtubeEmbedUrl(videoId, true)}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <button type="button" className="btn-ghost song-youtube-close" onClick={() => setPlaying(false)}>
+            닫기
+          </button>
+        </div>
+      ) : null}
 
       {complete ? (
         <button
