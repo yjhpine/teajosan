@@ -1862,11 +1862,11 @@
 .song-thumb--cover {
   flex: 0 0 auto;
   width: auto;
-  height: auto;
+  height: 50%;
   min-width: 0;
   max-width: none;
   aspect-ratio: 1 / 1;
-  align-self: stretch;
+  align-self: center;
   border-radius: 8px;
 }
 
@@ -1880,7 +1880,7 @@
 }
 
 .song-thumb--cover .song-thumb-play {
-  font-size: 1.15rem;
+  font-size: 0.9rem;
 }
 
 .song-thumb--cover.is-playing {
@@ -1893,19 +1893,19 @@
   display: grid;
   place-items: center;
   width: auto;
-  height: auto;
+  height: 50%;
   min-width: 0;
   max-width: none;
   aspect-ratio: 1 / 1;
-  align-self: stretch;
+  align-self: center;
   margin: 0;
   padding: 0.25rem;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f3efe7;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   text-align: center;
   overflow: hidden;
 }
@@ -1921,11 +1921,11 @@
 .song-request-cover.song-title-fallback--cover {
   flex: 0 0 auto;
   width: auto !important;
-  height: auto;
+  height: 50%;
   min-width: 0;
   max-width: none;
   aspect-ratio: 1 / 1;
-  align-self: stretch;
+  align-self: center;
 }
 
 .song-request-card-body {
@@ -2215,15 +2215,15 @@
   .song-request-cover.song-title-fallback--cover {
     flex: 0 0 auto;
     width: auto !important;
-    height: auto;
+    height: 50%;
     min-width: 0;
     max-width: none;
     aspect-ratio: 1 / 1;
-    align-self: stretch;
+    align-self: center;
   }
 
   .song-thumb--cover .song-thumb-play {
-    font-size: 1.15rem;
+    font-size: 0.85rem;
   }
 
   .song-request-card-body {
