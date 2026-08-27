@@ -1,0 +1,16 @@
+작업: 완성된 곡 신청이 목록에서 사라지지 않도록 DB 이관 수정
+
+원인:
+- 세션이 다 차면 promote_song_request가 곡 리스트로 옮긴 뒤
+  song_requests 행을 delete 해서 신청 탭에서 즉시 사라짐
+
+변경 내용:
+- promoted_at 컬럼 추가
+- promote 시 songs에 insert + promoted_at 기록, 신청글은 유지
+- 완성/이관된 신청은 claim 변경 차단
+- 신청 목록 안내 문구 보완
+
+파일:
+- supabase/migrations/20260827_song_request_keep_complete.sql  ← SQL Editor에서 실행 필요
+- supabase/ops/verify_applied.sql
+- src/components/SongRequestBoard.tsx
