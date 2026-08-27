@@ -133,4 +133,7 @@ create policy "anon read activity_logs"
   on activity_logs for select to anon, authenticated using (true);
 
 -- 이하 RPC/트리거: migrations/20260827_security_hardening.sql 실행으로 적용
+-- pgcrypto 경로: migrations/20260827_fix_pgcrypto_extensions.sql
+-- 곡 리스트: migrations/20260827_song_list.sql
 -- 멤버 등록: SELECT admin_set_member_pin('12', '김태조', '1234');
+-- 멤버 PIN 시드: seed_member_pins.sql
