@@ -1861,12 +1861,12 @@
 
 .song-thumb--cover {
   flex: 0 0 auto;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  max-width: none;
+  width: 3rem;
+  height: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
   aspect-ratio: 1 / 1;
-  align-self: stretch;
+  align-self: center;
   border-radius: 8px;
 }
 
@@ -1880,7 +1880,7 @@
 }
 
 .song-thumb--cover .song-thumb-play {
-  font-size: 0.95rem;
+  font-size: 0.75rem;
 }
 
 .song-thumb--cover.is-playing {
@@ -1892,27 +1892,27 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  max-width: none;
+  width: 3rem;
+  height: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
   aspect-ratio: 1 / 1;
-  align-self: stretch;
+  align-self: center;
   margin: 0;
-  padding: 0.25rem;
+  padding: 0.2rem;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f3efe7;
-  font-size: 0.68rem;
+  font-size: 0.55rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   text-align: center;
   overflow: hidden;
 }
 
 .song-request-card-row {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 0.45rem;
   min-width: 0;
 }
@@ -1920,12 +1920,12 @@
 .song-request-cover.song-thumb--cover,
 .song-request-cover.song-title-fallback--cover {
   flex: 0 0 auto;
-  width: auto !important;
-  height: auto;
-  min-width: 0;
-  max-width: none;
+  width: 3rem !important;
+  height: 3rem;
+  min-width: 3rem;
+  max-width: 3rem;
   aspect-ratio: 1 / 1;
-  align-self: stretch;
+  align-self: center;
 }
 
 .song-request-card-body {
@@ -2207,23 +2207,23 @@
 
   .song-request-card-row {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     gap: 0.4rem;
   }
 
   .song-request-cover.song-thumb--cover,
   .song-request-cover.song-title-fallback--cover {
     flex: 0 0 auto;
-    width: auto !important;
-    height: auto;
-    min-width: 0;
-    max-width: none;
+    width: 2.75rem !important;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    max-width: 2.75rem;
     aspect-ratio: 1 / 1;
-    align-self: stretch;
+    align-self: center;
   }
 
   .song-thumb--cover .song-thumb-play {
-    font-size: 1.2rem;
+    font-size: 0.7rem;
   }
 
   .song-request-card-body {
