@@ -44,3 +44,16 @@ export function youtubeWatchUrl(id: string): string {
 export function youtubeThumbUrl(id: string): string {
   return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 }
+
+export async function fetchYoutubeTitle(id: string): Promise<string | null> {
+  try {
+    const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(youtubeWatchUrl(id))}&format=json`
+    const res = await fetch(endpoint)
+    if (!res.ok) return null
+    const data = (await res.json()) as { title?: unknown }
+    const title = typeof data.title === 'string' ? data.title.trim() : ''
+    return title || null
+  } catch {
+    return null
+  }
+}

@@ -1,0 +1,14 @@
+# 8/27 곡 신청 유튜브 썸네일 클릭 재생
+
+## 변경 요약
+- 곡 신청의 「합주하고 싶은 곡」제목 입력칸 제거
+- 유튜브 링크 필수, oEmbed로 곡 제목 자동 가져오기
+- 신청 카드·작성 미리보기에서 썸네일 클릭 시 바로 재생
+- SongYoutubeMedia 공통 컴포넌트로 곡 리스트와 공유
+
+## 수정 파일
+- src/components/SongRequestBoard.tsx
+- src/components/SongYoutubeMedia.tsx (신규)
+- src/components/SongListBoard.tsx
+- src/lib/youtube.ts
+- src/App.css

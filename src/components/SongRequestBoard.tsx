@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { parseYoutubeId, youtubeWatchUrl } from '../lib/youtube'
+import { fetchYoutubeTitle, parseYoutubeId, youtubeWatchUrl } from '../lib/youtube'
+import { SongYoutubeMedia } from './SongYoutubeMedia'
 import {
   SONG_REQUEST_SLOTS,
   isSameMember,
@@ -42,7 +43,6 @@ export function SongRequestBoard({
   onPromote,
   onDelete,
 }: Props) {
-  const [title, setTitle] = useState('')
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [neededSlots, setNeededSlots] = useState<SongRequestSlot[]>([
     'vocal',
@@ -52,11 +52,14 @@ export function SongRequestBoard({
   ])
   const [mySlots, setMySlots] = useState<SongRequestSlot[]>([])
   const [localError, setLocalError] = useState('')
+  const [previewPlaying, setPreviewPlaying] = useState(false)
 
   const sortedNeeded = useMemo(
     () => SONG_REQUEST_SLOTS.filter((slot) => neededSlots.includes(slot.id)).map((slot) => slot.id),
     [neededSlots],
   )
+
+  const previewId = parseYoutubeId(youtubeUrl)
 
   function toggleNeeded(slot: SongRequestSlot) {
     setNeededSlots((prev) => {
@@ -76,31 +79,28 @@ export function SongRequestBoard({
   }
 
   async function handleCreate() {
-    const nextTitle = title.trim()
     const nextYoutube = youtubeUrl.trim()
-    if (!nextTitle) {
-      setLocalError('합주하고 싶은 곡 제목을 입력해 주세요.')
+    const videoId = parseYoutubeId(nextYoutube)
+    if (!videoId) {
+      setLocalError('유튜브 링크를 입력해 주세요.')
       return
     }
     if (neededSlots.length === 0) {
       setLocalError('필요한 세션을 하나 이상 선택해 주세요.')
       return
     }
-    if (nextYoutube && !parseYoutubeId(nextYoutube)) {
-      setLocalError('유튜브 링크 형식을 확인해 주세요.')
-      return
-    }
     setLocalError('')
-    const id = nextYoutube ? parseYoutubeId(nextYoutube) : null
+    const fetched = await fetchYoutubeTitle(videoId)
+    const nextTitle = fetched || '유튜브 곡'
     await onCreate(
       nextTitle,
       sortedNeeded,
       mySlots.filter((slot) => neededSlots.includes(slot)),
-      id ? youtubeWatchUrl(id) : '',
+      youtubeWatchUrl(videoId),
     )
-    setTitle('')
     setYoutubeUrl('')
     setMySlots([])
+    setPreviewPlaying(false)
   }
 
   return (
@@ -109,29 +109,14 @@ export function SongRequestBoard({
         <p className="section-kicker">Requests</p>
         <h2>곡 신청</h2>
         <p className="panel-lead">
-          새 곡과 유튜브 링크를 올리고 필요한 세션 칸을 만들면, 멤버들이 자리를 채워 팀을 완성합니다.
-          완성되면 곡 리스트로 옮겨집니다.
+          유튜브 링크를 올리고 필요한 세션 칸을 만들면, 멤버들이 자리를 채워 팀을 완성합니다. 완성되면
+          곡 리스트로 옮겨집니다.
         </p>
       </header>
 
       <div className="song-request-compose">
         <label className="field">
-          <span>합주하고 싶은 곡</span>
-          <input
-            type="text"
-            value={title}
-            disabled={busy}
-            placeholder="예: 가수 / 곡 제목"
-            maxLength={120}
-            onChange={(e) => {
-              setTitle(e.target.value)
-              setLocalError('')
-            }}
-          />
-        </label>
-
-        <label className="field">
-          <span>유튜브 링크 (선택)</span>
+          <span>유튜브 링크</span>
           <input
             type="url"
             value={youtubeUrl}
@@ -140,10 +125,24 @@ export function SongRequestBoard({
             maxLength={300}
             onChange={(e) => {
               setYoutubeUrl(e.target.value)
+              setPreviewPlaying(false)
               setLocalError('')
             }}
           />
         </label>
+
+        {previewId ? (
+          <div className="song-request-compose-preview">
+            <SongYoutubeMedia
+              youtubeUrl={youtubeWatchUrl(previewId)}
+              title=""
+              playing={previewPlaying}
+              onPlay={() => setPreviewPlaying(true)}
+              onClose={() => setPreviewPlaying(false)}
+            />
+            <p className="song-request-preview-hint">썸네일을 누르면 바로 재생됩니다. 곡 제목은 유튜브에서 가져옵니다.</p>
+          </div>
+        ) : null}
 
         <div className="song-request-slot-picks" role="group" aria-label="필요한 세션">
           <span className="song-request-slot-picks-label">필요한 세션</span>
@@ -241,31 +240,28 @@ function RequestCard({
   onPromote: (id: string) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
 }) {
+  const [playing, setPlaying] = useState(false)
   const mine = isSameMember(me, request.createdBy)
   const complete = isComplete(request)
   const filled = request.neededSlots.filter((slot) => Boolean(slotValue(request, slot).trim())).length
   const visibleSlots = SONG_REQUEST_SLOTS.filter((slot) => request.neededSlots.includes(slot.id))
-  const youtubeId = parseYoutubeId(request.youtubeUrl)
 
   return (
     <article className={['song-request-card', complete ? 'is-complete' : ''].filter(Boolean).join(' ')}>
       <div className="song-request-card-top">
-        <div>
-          <h3>{request.title}</h3>
+        <div className="song-request-card-media">
+          <SongYoutubeMedia
+            youtubeUrl={request.youtubeUrl}
+            title={request.title}
+            playing={playing}
+            onPlay={() => setPlaying(true)}
+            onClose={() => setPlaying(false)}
+            fallbackText={request.title || '링크 없는 신청'}
+          />
           <p className="song-request-meta">
             신청 · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length} 자리
             {complete ? ' · 팀 완성' : ''}
           </p>
-          {youtubeId ? (
-            <a
-              className="song-youtube-link"
-              href={youtubeWatchUrl(youtubeId)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              유튜브 보기
-            </a>
-          ) : null}
         </div>
         {mine ? (
           <button

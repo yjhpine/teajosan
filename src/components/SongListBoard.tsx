@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { parseYoutubeId, youtubeEmbedUrl, youtubeThumbUrl } from '../lib/youtube'
+import { SongYoutubeMedia } from './SongYoutubeMedia'
 import { type InstrumentSession, type MemberProfile, type Session, type Song, type SongDraft } from '../types'
 
 type SessionKey = keyof Omit<SongDraft, 'title'>
@@ -62,44 +62,15 @@ function SongMedia({
   onPlay: () => void
   onClose: () => void
 }) {
-  const videoId = parseYoutubeId(song.youtubeUrl)
-
-  if (playing && videoId) {
-    return (
-      <div className="song-media">
-        <div className="song-youtube-player">
-          <iframe
-            title={`${song.title || 'YouTube'} player`}
-            src={youtubeEmbedUrl(videoId, true)}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-        <button type="button" className="btn-ghost song-youtube-close" onClick={onClose}>
-          닫기
-        </button>
-      </div>
-    )
-  }
-
-  if (videoId) {
-    return (
-      <button
-        type="button"
-        className="song-thumb"
-        aria-label={`${song.title || '유튜브'} 재생`}
-        onClick={onPlay}
-      >
-        <img src={youtubeThumbUrl(videoId)} alt="" loading="lazy" />
-        <span className="song-thumb-play" aria-hidden="true">
-          ▶
-        </span>
-        {song.title ? <span className="song-thumb-title">{song.title}</span> : null}
-      </button>
-    )
-  }
-
-  return <p className="song-title-fallback">{song.title || '링크 없는 곡'}</p>
+  return (
+    <SongYoutubeMedia
+      youtubeUrl={song.youtubeUrl}
+      title={song.title}
+      playing={playing}
+      onPlay={onPlay}
+      onClose={onClose}
+    />
+  )
 }
 
 function MemberSelect({

@@ -1843,6 +1843,38 @@
   border-bottom: 1px solid var(--line);
 }
 
+.song-request-compose-preview {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.song-request-compose-preview .song-media,
+.song-request-compose-preview .song-thumb {
+  width: min(100%, 280px);
+}
+
+.song-request-preview-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.song-request-card-media {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.song-request-card-media .song-media,
+.song-request-card-media .song-thumb {
+  width: min(100%, 280px);
+}
+
+.song-request-card-media .song-title-fallback {
+  font-size: 1.05rem;
+}
+
 .song-request-slot-picks-label {
   display: block;
   margin-bottom: 0.45rem;
