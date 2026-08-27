@@ -88,6 +88,7 @@ export function MobileApp({
         className={[
           'mobile-main',
           isMonthHome ? 'mobile-main--month' : '',
+          tab === 'log' ? 'mobile-main--log' : '',
         ]
           .filter(Boolean)
           .join(' ')}

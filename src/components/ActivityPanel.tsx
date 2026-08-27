@@ -16,9 +16,10 @@ const VISIBLE_ACTIONS = new Set<ActivityLog['action']>(['create', 'delete'])
 
 export function ActivityPanel({ logs, variant = 'desktop' }: Props) {
   const visible = logs.filter((log) => VISIBLE_ACTIONS.has(log.action)).slice(0, 30)
+  const Root = variant === 'mobile' ? 'div' : 'aside'
 
   return (
-    <aside
+    <Root
       className={[
         'activity-panel',
         variant === 'mobile' ? 'activity-panel--mobile' : '',
@@ -54,6 +55,6 @@ export function ActivityPanel({ logs, variant = 'desktop' }: Props) {
           ))}
         </ul>
       )}
-    </aside>
+    </Root>
   )
 }

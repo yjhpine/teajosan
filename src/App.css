@@ -605,6 +605,19 @@
   overflow: auto;
 }
 
+.activity-panel--mobile {
+  padding: 0;
+  align-self: stretch;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .log-item {
   padding: 0.8rem 0.85rem;
   border-radius: 12px;
@@ -919,9 +932,31 @@
 }
 
 .mobile-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   padding: 0.75rem 0.85rem 1rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-main--log {
+  padding-top: 0.35rem;
+}
+
+.mobile-shell .log-list {
+  margin: 0;
+}
+
+.mobile-shell .empty-state {
+  margin: 0;
+  padding: 0.75rem 0;
+  color: var(--muted);
+}
+
+.mobile-shell .log-item {
+  background: var(--panel-solid);
 }
 
 .mobile-tabbar {
@@ -974,16 +1009,6 @@
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 8px 24px rgba(232, 58, 44, 0.35);
-}
-
-.activity-panel--mobile {
-  align-self: stretch;
-  max-height: none;
-  border: none;
-  box-shadow: none;
-  background: transparent;
-  backdrop-filter: none;
-  padding: 0;
 }
 
 .mobile-shell .calendar-board,

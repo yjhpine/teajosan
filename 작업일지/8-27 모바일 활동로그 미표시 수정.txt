@@ -1,0 +1,5 @@
+8-27 모바일 활동 로그 미표시 수정
+
+- iOS Safari: backdrop-filter/overflow로 로그 영역 안 보이던 문제
+- 모바일 로그는 div 레이아웃 + z-index/스크롤 보강
+- 로그 카드 배경 solid로 가독성 개선
