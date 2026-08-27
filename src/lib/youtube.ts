@@ -42,8 +42,7 @@ export function youtubeWatchUrl(id: string): string {
 }
 
 export function youtubeThumbUrl(id: string): string {
-  // mqdefault is true 16:9; hqdefault is 4:3 with letterbox bars baked in
-  return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`
+  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
 }
 
 export async function fetchYoutubeTitle(id: string): Promise<string | null> {
