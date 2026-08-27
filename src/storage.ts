@@ -6,7 +6,7 @@ import {
   persistSession,
 } from './lib/device'
 import { supabase, supabaseConfigured } from './lib/supabase'
-import type { ActivityLog, AppData, Member, Rehearsal, Session } from './types'
+import type { ActivityLog, AppData, Member, Rehearsal, Session, Song, SongDraft } from './types'
 
 type RehearsalRow = {
   id: string
@@ -144,6 +144,11 @@ export function subscribeAppDataChanges(onChange: () => void): () => void {
       { event: '*', schema: 'public', table: 'activity_logs' },
       () => onChange(),
     )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'songs' },
+      () => onChange(),
+    )
     .subscribe()
 
   return () => {
@@ -253,4 +258,119 @@ export async function deleteRehearsal(session: Session, id: string): Promise<App
 
   if (error) throw mapRpcError(error, '합주 삭제에 실패했습니다.')
   return fetchAppData()
+}
+
+type SongRow = {
+  id: string
+  title: string
+  vocal: string
+  guitar1: string
+  guitar2: string
+  bass: string
+  drums: string
+  keyboard: string
+  sort_order: number
+  created_by_cohort: string
+  created_by_name: string
+  created_at: string
+  updated_at: string | null
+}
+
+function mapSong(row: SongRow): Song {
+  return {
+    id: row.id,
+    title: row.title ?? '',
+    vocal: row.vocal ?? '',
+    guitar1: row.guitar1 ?? '',
+    guitar2: row.guitar2 ?? '',
+    bass: row.bass ?? '',
+    drums: row.drums ?? '',
+    keyboard: row.keyboard ?? '',
+    sortOrder: row.sort_order,
+    createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }
+}
+
+export async function fetchSongs(): Promise<Song[]> {
+  assertConfigured()
+  const { data, error } = await supabase
+    .from('songs')
+    .select('*')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return ((data ?? []) as SongRow[]).map(mapSong)
+}
+
+export async function fetchRoster(): Promise<string[]> {
+  assertConfigured()
+  const { data, error } = await supabase
+    .from('band_roster')
+    .select('name')
+    .order('name', { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((row) => String((row as { name: string }).name))
+}
+
+export async function createSong(session: Session, draft: Partial<SongDraft> = {}): Promise<Song[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('create_song', {
+    p_session_token: token,
+    p_title: draft.title ?? '',
+    p_vocal: draft.vocal ?? '',
+    p_guitar1: draft.guitar1 ?? '',
+    p_guitar2: draft.guitar2 ?? '',
+    p_bass: draft.bass ?? '',
+    p_drums: draft.drums ?? '',
+    p_keyboard: draft.keyboard ?? '',
+  })
+  if (error) throw mapRpcError(error, '곡 추가에 실패했습니다.')
+  return fetchSongs()
+}
+
+export async function updateSong(
+  session: Session,
+  id: string,
+  draft: Partial<SongDraft>,
+): Promise<Song[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('update_song', {
+    p_session_token: token,
+    p_id: id,
+    p_title: draft.title ?? null,
+    p_vocal: draft.vocal ?? null,
+    p_guitar1: draft.guitar1 ?? null,
+    p_guitar2: draft.guitar2 ?? null,
+    p_bass: draft.bass ?? null,
+    p_drums: draft.drums ?? null,
+    p_keyboard: draft.keyboard ?? null,
+  })
+  if (error) throw mapRpcError(error, '곡 수정에 실패했습니다.')
+  return fetchSongs()
+}
+
+export async function deleteSong(session: Session, id: string): Promise<Song[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('delete_song', {
+    p_session_token: token,
+    p_id: id,
+  })
+  if (error) throw mapRpcError(error, '곡 삭제에 실패했습니다.')
+  return fetchSongs()
+}
+
+export async function addRosterMember(session: Session, name: string): Promise<string[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('add_roster_member', {
+    p_session_token: token,
+    p_name: name,
+  })
+  if (error) throw mapRpcError(error, '명단 추가에 실패했습니다.')
+  return fetchRoster()
 }

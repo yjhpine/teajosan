@@ -1,0 +1,7 @@
+8-27 곡 리스트 페이지 (시트형)
+
+- 상단/모바일 탭: 일정 | 곡 리스트(| 로그)
+- 가수/곡 + 보컬·기타1/2·베이스·드럼·키보드 드롭다운
+- DB: band_roster, songs + create/update/delete_song RPC
+- 시트 초기 곡·명단 시드 포함
+- SQL 필수: supabase/migrations/20260827_song_list.sql

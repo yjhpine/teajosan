@@ -1277,3 +1277,207 @@
   }
 }
 
+.page-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 252, 247, 0.7);
+}
+
+.page-tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.page-tab.is-active {
+  background: var(--ink);
+  color: #fffaf3;
+}
+
+.layout--songs {
+  grid-template-columns: 1fr;
+}
+
+.song-board {
+  position: relative;
+  width: 100%;
+  padding: 1.25rem 1.2rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  animation: rise 0.45s ease both;
+}
+
+.song-board-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.song-board-header h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.song-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdf9;
+}
+
+.song-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.song-table th,
+.song-table td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid rgba(23, 24, 26, 0.06);
+  padding: 0.45rem 0.5rem;
+  vertical-align: middle;
+}
+
+.song-table th:last-child,
+.song-table td:last-child {
+  border-right: 0;
+}
+
+.song-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.song-col--title {
+  width: 28%;
+  text-align: left !important;
+  background: #f7f3ec;
+}
+
+.song-col--vocal {
+  width: 12%;
+  background: #d7ebf8;
+}
+
+.song-col--guitar {
+  width: 18%;
+  background: #f6efc8;
+}
+
+.song-col--bass {
+  width: 12%;
+  background: #f6d9c8;
+}
+
+.song-col--drums {
+  width: 12%;
+  background: #d8efd5;
+}
+
+.song-col--keyboard {
+  width: 12%;
+  background: #dde3ea;
+}
+
+.song-col--actions {
+  width: 6%;
+  background: #f7f3ec;
+}
+
+.song-title-input,
+.song-select {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+}
+
+.song-title-input:focus,
+.song-select:focus {
+  outline: 2px solid rgba(232, 58, 44, 0.35);
+  border-color: transparent;
+  background: #fff;
+}
+
+.song-select.is-vocal {
+  background: rgba(215, 235, 248, 0.85);
+}
+
+.song-select.is-guitar {
+  background: rgba(246, 239, 200, 0.9);
+}
+
+.song-select.is-bass {
+  background: rgba(246, 217, 200, 0.9);
+}
+
+.song-select.is-drums {
+  background: rgba(216, 239, 213, 0.9);
+}
+
+.song-select.is-keyboard {
+  background: rgba(221, 227, 234, 0.95);
+}
+
+.song-guitar-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+}
+
+.song-empty {
+  padding: 1.5rem !important;
+  text-align: center;
+  color: var(--muted);
+}
+
+.song-delete {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.45rem;
+}
+
+.mobile-main--songs {
+  padding-bottom: 5.5rem;
+}
+
+@media (max-width: 768px) {
+  .song-board {
+    padding: 0.85rem 0.65rem 1.2rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .song-board-header {
+    padding: 0 0.25rem;
+  }
+
+  .song-board-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .song-table {
+    min-width: 680px;
+  }
+}
+
+

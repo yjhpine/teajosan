@@ -1,24 +1,30 @@
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityPanel } from '../ActivityPanel'
 import { CalendarBoard } from '../CalendarBoard'
-import type { AppData, Member, Rehearsal } from '../../types'
+import { SongListBoard } from '../SongListBoard'
+import type { AppData, Member, Rehearsal, Session, Song, SongDraft } from '../../types'
 import { DayTimeline } from './DayTimeline'
 import { MobileHeader } from './MobileHeader'
 import { MobileTabBar } from './MobileTabBar'
 
 type ScheduleView = 'month' | 'day'
-type MobileTab = 'schedule' | 'log'
+type MobileTab = 'schedule' | 'songs' | 'log'
+type AppPage = 'calendar' | 'songs'
 
 type Props = {
   member: Member
   data: AppData
+  songs: Song[]
+  roster: string[]
   busy: boolean
   error: string
   month: Date
   selectedDate: Date
   scheduleView: ScheduleView
+  page: AppPage
+  onPageChange: (page: AppPage) => void
   onMonthChange: (month: Date) => void
   onSelectDate: (date: Date) => void
   onScheduleViewChange: (view: ScheduleView) => void
@@ -26,16 +32,23 @@ type Props = {
   onLogout: () => void
   onCreate: (date: Date, startTime?: string) => void
   onSelectRehearsal: (rehearsal: Rehearsal) => void
+  onCreateSong: () => void
+  onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
+  onDeleteSong: (id: string) => void
 }
 
 export function MobileApp({
   member,
   data,
+  songs,
+  roster,
   busy,
   error,
   month,
   selectedDate,
   scheduleView,
+  page,
+  onPageChange,
   onMonthChange,
   onSelectDate,
   onScheduleViewChange,
@@ -43,29 +56,48 @@ export function MobileApp({
   onLogout,
   onCreate,
   onSelectRehearsal,
+  onCreateSong,
+  onUpdateSong,
+  onDeleteSong,
 }: Props) {
-  const [tab, setTab] = useState<MobileTab>('schedule')
+  const [tab, setTab] = useState<MobileTab>(page === 'songs' ? 'songs' : 'schedule')
   const isMonthHome = tab === 'schedule' && scheduleView === 'month'
+
+  useEffect(() => {
+    if (page === 'songs' && tab !== 'songs') setTab('songs')
+    if (page === 'calendar' && tab === 'songs') setTab('schedule')
+  }, [page, tab])
+
+  function handleTabChange(next: MobileTab) {
+    setTab(next)
+    if (next === 'songs') onPageChange('songs')
+    if (next === 'schedule') onPageChange('calendar')
+  }
 
   function openDay(date: Date) {
     onSelectDate(date)
     onScheduleViewChange('day')
     setTab('schedule')
+    onPageChange('calendar')
   }
 
   const headerTitle =
     tab === 'log'
       ? '활동 로그'
-      : scheduleView === 'day'
-        ? format(selectedDate, 'M월 d일 EEEE', { locale: ko })
-        : ''
+      : tab === 'songs'
+        ? '곡 리스트'
+        : scheduleView === 'day'
+          ? format(selectedDate, 'M월 d일 EEEE', { locale: ko })
+          : ''
 
   const headerSubtitle =
     tab === 'log'
       ? '합주 등록·삭제 기록'
-      : scheduleView === 'day'
-        ? '시간표 블록을 눌러 수정·삭제 · +로 추가'
-        : undefined
+      : tab === 'songs'
+        ? '가수/곡 · 세션 멤버'
+        : scheduleView === 'day'
+          ? '시간표 블록을 눌러 수정·삭제 · +로 추가'
+          : undefined
 
   return (
     <div className="mobile-shell">
@@ -91,6 +123,7 @@ export function MobileApp({
           'mobile-main',
           isMonthHome ? 'mobile-main--month' : '',
           tab === 'log' ? 'mobile-main--log' : '',
+          tab === 'songs' ? 'mobile-main--songs' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -112,6 +145,16 @@ export function MobileApp({
               onSelectRehearsal={onSelectRehearsal}
             />
           )
+        ) : tab === 'songs' ? (
+          <SongListBoard
+            session={member as Session}
+            songs={songs}
+            roster={roster}
+            busy={busy}
+            onCreate={onCreateSong}
+            onUpdate={onUpdateSong}
+            onDelete={onDeleteSong}
+          />
         ) : (
           <ActivityPanel logs={data.logs} variant="mobile" />
         )}
@@ -128,7 +171,7 @@ export function MobileApp({
         </button>
       ) : null}
 
-      <MobileTabBar active={tab} onChange={setTab} />
+      <MobileTabBar active={tab} onChange={handleTabChange} />
     </div>
   )
 }

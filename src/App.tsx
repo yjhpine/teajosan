@@ -5,30 +5,41 @@ import { CalendarBoard } from './components/CalendarBoard'
 import { LoginScreen } from './components/LoginScreen'
 import { MobileApp } from './components/mobile/MobileApp'
 import { RehearsalModal } from './components/RehearsalModal'
+import { SongListBoard } from './components/SongListBoard'
 import { WeekTimetable } from './components/WeekTimetable'
 import { useMediaQuery } from './hooks/useMediaQuery'
 import { supabaseConfigured } from './lib/supabase'
 import {
   clearSession,
   createRehearsal,
+  createSong,
   deleteRehearsal,
+  deleteSong,
   fetchAppData,
+  fetchRoster,
+  fetchSongs,
   loadSession,
   loginMember,
   resumeSession,
   subscribeAppDataChanges,
   updateRehearsal,
+  updateSong,
 } from './storage'
-import type { AppData, Member, Rehearsal, Session } from './types'
+import type { AppData, Member, Rehearsal, Session, Song, SongDraft } from './types'
 import { isSameMember, memberLabel } from './types'
 import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
+type AppPage = 'calendar' | 'songs'
+
 function App() {
   const isMobile = useMediaQuery('(max-width: 768px)')
   const [member, setMember] = useState<Session | null>(null)
   const [data, setData] = useState<AppData>(emptyData)
+  const [songs, setSongs] = useState<Song[]>([])
+  const [roster, setRoster] = useState<string[]>([])
+  const [page, setPage] = useState<AppPage>('calendar')
   const [booting, setBooting] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -69,6 +80,10 @@ function App() {
         if (cancelled) return
         setMember(saved)
         setData(next)
+        const [nextSongs, nextRoster] = await Promise.all([fetchSongs(), fetchRoster()])
+        if (cancelled) return
+        setSongs(nextSongs)
+        setRoster(nextRoster)
       } catch (err) {
         if (cancelled) return
         console.error(err)
@@ -85,7 +100,6 @@ function App() {
     }
   }, [])
 
-  // Realtime + 탭 복귀 시 자동 동기화 (수동 새로고침 불필요)
   useEffect(() => {
     if (!member || !supabaseConfigured) return
 
@@ -97,8 +111,16 @@ function App() {
       debounceTimer = setTimeout(() => {
         void (async () => {
           try {
-            const next = await fetchAppData()
-            if (!cancelled) setData(next)
+            const [nextData, nextSongs, nextRoster] = await Promise.all([
+              fetchAppData(),
+              fetchSongs(),
+              fetchRoster(),
+            ])
+            if (!cancelled) {
+              setData(nextData)
+              setSongs(nextSongs)
+              setRoster(nextRoster)
+            }
           } catch (err) {
             console.error(err)
           }
@@ -139,11 +161,34 @@ function App() {
     }
   }
 
+  async function runSongAction(action: () => Promise<Song[]>) {
+    setBusy(true)
+    setError('')
+    try {
+      const next = await action()
+      setSongs(next)
+      return true
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '요청에 실패했습니다.')
+      return false
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function handleLogin(next: Member, pin: string) {
     const ok = await runAction(() => loginMember(next, pin))
     if (ok) {
       const saved = loadSession()
       if (saved) setMember(saved)
+      try {
+        const [nextSongs, nextRoster] = await Promise.all([fetchSongs(), fetchRoster()])
+        setSongs(nextSongs)
+        setRoster(nextRoster)
+      } catch (err) {
+        console.error(err)
+      }
     }
   }
 
@@ -151,11 +196,21 @@ function App() {
     await clearSession()
     setMember(null)
     setData(emptyData)
+    setSongs([])
+    setRoster([])
+    setPage('calendar')
     setViewMode('month')
   }
 
   async function handleRefresh() {
     await runAction(() => fetchAppData())
+    try {
+      const [nextSongs, nextRoster] = await Promise.all([fetchSongs(), fetchRoster()])
+      setSongs(nextSongs)
+      setRoster(nextRoster)
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   function openCreate(date: Date, startTime = '19:00') {
@@ -203,6 +258,20 @@ function App() {
       />
     )
   }
+
+  const songBoard = (
+    <SongListBoard
+      session={member}
+      songs={songs}
+      roster={roster}
+      busy={busy}
+      onCreate={() => void runSongAction(() => createSong(member))}
+      onUpdate={(id, draft: Partial<SongDraft>) =>
+        void runSongAction(() => updateSong(member, id, draft))
+      }
+      onDelete={(id) => void runSongAction(() => deleteSong(member, id))}
+    />
+  )
 
   const modal = (
     <RehearsalModal
@@ -258,11 +327,15 @@ function App() {
         <MobileApp
           member={member}
           data={data}
+          songs={songs}
+          roster={roster}
           busy={busy}
           error={error}
           month={month}
           selectedDate={selectedDate}
           scheduleView={viewMode === 'day' ? 'day' : 'month'}
+          page={page}
+          onPageChange={setPage}
           onMonthChange={setMonth}
           onSelectDate={setSelectedDate}
           onScheduleViewChange={(next) => setViewMode(next === 'day' ? 'day' : 'month')}
@@ -270,6 +343,9 @@ function App() {
           onLogout={handleLogout}
           onCreate={openCreate}
           onSelectRehearsal={openEdit}
+          onCreateSong={() => void runSongAction(() => createSong(member))}
+          onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
+          onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
         />
         {modal}
       </>
@@ -286,6 +362,22 @@ function App() {
           <h1 className="brand-mark brand-mark--header">태조산</h1>
         </div>
         <div className="topbar-actions">
+          <nav className="page-tabs" aria-label="페이지">
+            <button
+              type="button"
+              className={['page-tab', page === 'calendar' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => setPage('calendar')}
+            >
+              일정
+            </button>
+            <button
+              type="button"
+              className={['page-tab', page === 'songs' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => setPage('songs')}
+            >
+              곡 리스트
+            </button>
+          </nav>
           <span className="member-pill">{memberLabel(member)}</span>
           <button type="button" className="btn-ghost" onClick={() => void handleRefresh()} disabled={busy}>
             새로고침
@@ -299,29 +391,33 @@ function App() {
       {error ? <p className="banner-error">{error}</p> : null}
       {busy ? <p className="banner-busy">동기화 중…</p> : null}
 
-      <main className="layout">
-        <div className="main-column">
-          {viewMode === 'month' ? (
-            <CalendarBoard
-              month={month}
-              rehearsals={data.rehearsals}
-              onMonthChange={setMonth}
-              onSelectDate={openScheduleDetail}
-              onSelectRehearsal={openEdit}
-            />
-          ) : (
-            <WeekTimetable
-              anchorDate={selectedDate}
-              rehearsals={data.rehearsals}
-              onBackToMonth={() => setViewMode('month')}
-              onCreate={openCreate}
-              onSelectRehearsal={openEdit}
-            />
-          )}
-        </div>
+      {page === 'songs' ? (
+        <main className="layout layout--songs">{songBoard}</main>
+      ) : (
+        <main className="layout">
+          <div className="main-column">
+            {viewMode === 'month' ? (
+              <CalendarBoard
+                month={month}
+                rehearsals={data.rehearsals}
+                onMonthChange={setMonth}
+                onSelectDate={openScheduleDetail}
+                onSelectRehearsal={openEdit}
+              />
+            ) : (
+              <WeekTimetable
+                anchorDate={selectedDate}
+                rehearsals={data.rehearsals}
+                onBackToMonth={() => setViewMode('month')}
+                onCreate={openCreate}
+                onSelectRehearsal={openEdit}
+              />
+            )}
+          </div>
 
-        <ActivityPanel logs={data.logs} />
-      </main>
+          <ActivityPanel logs={data.logs} />
+        </main>
+      )}
 
       {modal}
     </div>

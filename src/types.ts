@@ -36,6 +36,31 @@ export type AppData = {
   logs: ActivityLog[]
 }
 
+export type Song = {
+  id: string
+  title: string
+  vocal: string
+  guitar1: string
+  guitar2: string
+  bass: string
+  drums: string
+  keyboard: string
+  sortOrder: number
+  createdBy: Member
+  createdAt: string
+  updatedAt?: string
+}
+
+export type SongDraft = {
+  title: string
+  vocal: string
+  guitar1: string
+  guitar2: string
+  bass: string
+  drums: string
+  keyboard: string
+}
+
 export function memberLabel(member: Member): string {
   return `${normalizeMemberField(member.cohort)}기 ${normalizeMemberField(member.name)}`
 }
