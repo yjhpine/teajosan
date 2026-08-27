@@ -1,0 +1,17 @@
+작업: 곡 리스트 삭제 시 연결된 완성(흐린) 신청도 삭제
+
+변경 내용:
+- song_requests.promoted_song_id 추가 (songs FK, on delete cascade)
+- promote 시 생성된 곡 id 저장
+- delete_song 시 promoted_song_id 일치 신청 삭제
+- 프론트: 곡 삭제 후 신청 목록도 갱신
+
+필수 SQL (순서):
+1) supabase/migrations/20260827_song_request_keep_complete.sql (미적용 시)
+2) supabase/migrations/20260827_song_request_delete_with_song.sql
+
+파일:
+- supabase/migrations/20260827_song_request_delete_with_song.sql
+- supabase/migrations/20260827_song_request_keep_complete.sql
+- supabase/ops/verify_applied.sql
+- src/App.tsx
