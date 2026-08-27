@@ -1,6 +1,12 @@
 const DEVICE_KEY = 'teajosan-device-id-v1'
 const SESSION_KEY = 'teajosan-session-v1'
 
+export type PersistedSession = {
+  cohort: string
+  name: string
+  token: string
+}
+
 export function getOrCreateDeviceId(): string {
   const existing = localStorage.getItem(DEVICE_KEY)
   if (existing) return existing
@@ -12,23 +18,27 @@ export function getOrCreateDeviceId(): string {
   return id
 }
 
-export function loadPersistedMember(): { cohort: string; name: string } | null {
+export function loadPersistedSession(): PersistedSession | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as { cohort?: string; name?: string }
-    if (!parsed.cohort?.trim() || !parsed.name?.trim()) return null
-    return { cohort: parsed.cohort.trim(), name: parsed.name.trim() }
+    const parsed = JSON.parse(raw) as { cohort?: string; name?: string; token?: string }
+    if (!parsed.cohort?.trim() || !parsed.name?.trim() || !parsed.token?.trim()) return null
+    return {
+      cohort: parsed.cohort.trim(),
+      name: parsed.name.trim(),
+      token: parsed.token.trim(),
+    }
   } catch {
     return null
   }
 }
 
-export function persistMember(member: { cohort: string; name: string }) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(member))
+export function persistSession(session: PersistedSession) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
 }
 
-export function clearPersistedMember() {
+export function clearPersistedSession() {
   localStorage.removeItem(SESSION_KEY)
 }
 

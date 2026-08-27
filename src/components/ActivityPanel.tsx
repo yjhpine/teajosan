@@ -50,7 +50,6 @@ export function ActivityPanel({ logs, variant = 'desktop' }: Props) {
                 </time>
               </div>
               <p>{log.summary}</p>
-              {log.ip ? <p className="log-ip">IP {log.ip}</p> : null}
             </li>
           ))}
         </ul>

@@ -3,6 +3,10 @@ export type Member = {
   name: string
 }
 
+export type Session = Member & {
+  token: string
+}
+
 export type Rehearsal = {
   id: string
   date: string

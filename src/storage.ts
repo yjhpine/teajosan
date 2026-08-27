@@ -1,14 +1,12 @@
 import {
-  clearPersistedMember,
+  clearPersistedSession,
   fetchClientIp,
   getOrCreateDeviceId,
-  loadPersistedMember,
-  persistMember,
+  loadPersistedSession,
+  persistSession,
 } from './lib/device'
-import { findOverlappingRehearsal } from './lib/rehearsalOverlap'
 import { supabase, supabaseConfigured } from './lib/supabase'
-import type { ActivityLog, AppData, Member, Rehearsal } from './types'
-import { isSameMember, memberLabel } from './types'
+import type { ActivityLog, AppData, Member, Rehearsal, Session } from './types'
 
 type RehearsalRow = {
   id: string
@@ -76,80 +74,35 @@ function mapLog(row: LogRow): ActivityLog {
   }
 }
 
-async function insertLog(input: {
-  actor: Member
-  action: ActivityLog['action']
-  summary: string
-  rehearsalId?: string
-  ip?: string | null
-}) {
-  const deviceId = getOrCreateDeviceId()
-  const { error } = await supabase.from('activity_logs').insert({
-    actor_cohort: input.actor.cohort,
-    actor_name: input.actor.name,
-    action: input.action,
-    summary: input.summary,
-    rehearsal_id: input.rehearsalId ?? null,
-    ip: input.ip ?? null,
-    device_id: deviceId,
-  })
-  if (error) throw error
+function mapRpcError(error: { message?: string; code?: string }, fallback: string) {
+  const message = error.message ?? fallback
+  if (error.code === '23P01' || /overlap|rehearsals_no_overlap/i.test(message)) {
+    return new Error('같은 시간대에 이미 다른 합주가 있어 등록할 수 없습니다.')
+  }
+  return new Error(message)
 }
 
-async function upsertDevice(member: Member, ip: string | null) {
-  const deviceId = getOrCreateDeviceId()
-  const { error } = await supabase.from('devices').upsert(
-    {
-      device_id: deviceId,
-      cohort: member.cohort,
-      name: member.name,
-      last_ip: ip,
-      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-      last_seen_at: new Date().toISOString(),
-    },
-    { onConflict: 'device_id' },
-  )
-  if (error) throw error
+function requireSessionToken(session: Session): string {
+  if (!session.token) {
+    throw new Error('세션이 없습니다. 다시 로그인해 주세요.')
+  }
+  return session.token
 }
 
-export function loadSession(): Member | null {
-  return loadPersistedMember()
+export function loadSession(): Session | null {
+  return loadPersistedSession()
 }
 
-export function clearSession() {
-  clearPersistedMember()
+export async function clearSession() {
+  const saved = loadPersistedSession()
+  if (saved?.token && supabaseConfigured) {
+    await supabase.rpc('logout', { p_token: saved.token })
+  }
+  clearPersistedSession()
 }
 
 const REHEARSAL_SELECT =
   'id,date,start_time,end_time,team_name,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at'
-
-
-async function assertNoTimeOverlap(
-  input: { date: string; startTime: string; endTime: string },
-  excludeId?: string,
-) {
-  if (input.startTime >= input.endTime) {
-    throw new Error('종료 시간은 시작 시간보다 뒤여야 합니다.')
-  }
-
-  const { data, error } = await supabase
-    .from('rehearsals')
-    .select(REHEARSAL_SELECT)
-    .eq('date', input.date)
-
-  if (error) throw error
-
-  const conflict = findOverlappingRehearsal(
-    ((data ?? []) as RehearsalRow[]).map(mapRehearsal),
-    input,
-    excludeId,
-  )
-  if (conflict) {
-    throw new Error(
-      `이미 ${conflict.teamName || '합주'} (${conflict.startTime.slice(0, 5)}–${conflict.endTime.slice(0, 5)})가 있어 등록할 수 없습니다.`,
-    )
-  }
-}
 
 export async function fetchAppData(): Promise<AppData> {
   assertConfigured()
@@ -176,7 +129,6 @@ export async function fetchAppData(): Promise<AppData> {
   }
 }
 
-/** 다른 기기의 합주/로그 변경을 Realtime으로 감지. 구독 해제 함수를 반환 */
 export function subscribeAppDataChanges(onChange: () => void): () => void {
   assertConfigured()
 
@@ -199,146 +151,106 @@ export function subscribeAppDataChanges(onChange: () => void): () => void {
   }
 }
 
-export async function loginMember(member: Member): Promise<AppData> {
+export async function loginMember(member: Member, pin: string): Promise<AppData> {
   assertConfigured()
-  persistMember(member)
-  const ip = await fetchClientIp()
-  await upsertDevice(member, ip)
+  const deviceId = getOrCreateDeviceId()
+  const clientIp = await fetchClientIp()
+
+  const { data, error } = await supabase.rpc('login', {
+    p_cohort: member.cohort,
+    p_name: member.name,
+    p_pin: pin,
+    p_device_id: deviceId,
+    p_client_ip: clientIp,
+  })
+
+  if (error) throw mapRpcError(error, '로그인에 실패했습니다.')
+  if (!data) throw new Error('로그인에 실패했습니다.')
+
+  const session: Session = { ...member, token: String(data) }
+  persistSession(session)
   return fetchAppData()
 }
 
-/** 저장된 기기로 자동 입장 — 기기/IP만 갱신하고 로그인 로그는 남기지 않음 */
-export async function resumeSession(member: Member): Promise<AppData> {
+export async function resumeSession(session: Session): Promise<AppData> {
   assertConfigured()
-  persistMember(member)
-  const ip = await fetchClientIp()
-  await upsertDevice(member, ip)
-  return fetchAppData()
-}
+  const token = requireSessionToken(session)
 
-function mapWriteError(error: { code?: string; message?: string }, fallback: string) {
-  if (error.code === '23P01' || /rehearsals_no_overlap|overlap/i.test(error.message ?? '')) {
-    return new Error('같은 시간대에 이미 다른 합주가 있어 등록할 수 없습니다.')
+  const { data, error } = await supabase.rpc('validate_session', { p_token: token })
+  if (error) throw mapRpcError(error, '세션이 만료되었습니다. 다시 로그인해 주세요.')
+
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row?.cohort || !row?.name) {
+    throw new Error('세션이 만료되었습니다. 다시 로그인해 주세요.')
   }
-  return new Error(error.message || fallback)
+
+  const nextSession: Session = {
+    cohort: String(row.cohort),
+    name: String(row.name),
+    token,
+  }
+  persistSession(nextSession)
+
+  const clientIp = await fetchClientIp()
+  const { error: touchError } = await supabase.rpc('touch_device', {
+    p_token: token,
+    p_client_ip: clientIp,
+    p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+  })
+  if (touchError) console.warn(touchError)
+
+  return fetchAppData()
 }
 
 export async function createRehearsal(
-  actor: Member,
+  session: Session,
   input: Omit<Rehearsal, 'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'>,
 ): Promise<AppData> {
   assertConfigured()
-  const ip = await fetchClientIp()
-  await assertNoTimeOverlap(input)
+  const token = requireSessionToken(session)
 
-  const { data, error } = await supabase
-    .from('rehearsals')
-    .insert({
-      date: input.date,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      team_name: input.teamName,
-      created_by_cohort: actor.cohort,
-      created_by_name: actor.name,
-    })
-    .select(REHEARSAL_SELECT)
-    .single()
-
-  if (error) throw mapWriteError(error, '합주 등록에 실패했습니다.')
-
-  const row = data as RehearsalRow
-  await insertLog({
-    actor,
-    action: 'create',
-    summary: `${memberLabel(actor)} · ${row.date} ${input.teamName || '합주'} 등록`,
-    rehearsalId: row.id,
-    ip,
+  const { error } = await supabase.rpc('create_rehearsal', {
+    p_session_token: token,
+    p_date: input.date,
+    p_start_time: input.startTime,
+    p_end_time: input.endTime,
+    p_team_name: input.teamName,
   })
-  await upsertDevice(actor, ip)
+
+  if (error) throw mapRpcError(error, '합주 등록에 실패했습니다.')
   return fetchAppData()
 }
 
 export async function updateRehearsal(
-  actor: Member,
+  session: Session,
   id: string,
   input: Omit<Rehearsal, 'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'>,
 ): Promise<AppData> {
   assertConfigured()
-  const ip = await fetchClientIp()
-  await assertNoTimeOverlap(input, id)
+  const token = requireSessionToken(session)
 
-  const { data, error } = await supabase
-    .from('rehearsals')
-    .update({
-      date: input.date,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      team_name: input.teamName,
-      updated_by_cohort: actor.cohort,
-      updated_by_name: actor.name,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .eq('created_by_cohort', actor.cohort)
-    .eq('created_by_name', actor.name)
-    .select('id')
-
-  if (error) throw mapWriteError(error, '합주 수정에 실패했습니다.')
-  if (!data?.length) {
-    throw new Error('본인이 등록한 합주만 수정할 수 있습니다.')
-  }
-
-  await insertLog({
-    actor,
-    action: 'update',
-    summary: `${memberLabel(actor)} · ${input.date} ${input.teamName || '합주'} 수정`,
-    rehearsalId: id,
-    ip,
+  const { error } = await supabase.rpc('update_rehearsal', {
+    p_session_token: token,
+    p_id: id,
+    p_date: input.date,
+    p_start_time: input.startTime,
+    p_end_time: input.endTime,
+    p_team_name: input.teamName,
   })
-  await upsertDevice(actor, ip)
+
+  if (error) throw mapRpcError(error, '합주 수정에 실패했습니다.')
   return fetchAppData()
 }
 
-export async function deleteRehearsal(actor: Member, id: string): Promise<AppData> {
+export async function deleteRehearsal(session: Session, id: string): Promise<AppData> {
   assertConfigured()
-  const ip = await fetchClientIp()
+  const token = requireSessionToken(session)
 
-  const { data: existing, error: existingError } = await supabase
-    .from('rehearsals')
-    .select('date,created_by_cohort,created_by_name,team_name')
-    .eq('id', id)
-    .maybeSingle()
-  if (existingError) throw existingError
-  if (!existing) throw new Error('합주를 찾을 수 없습니다.')
-
-  const owner = {
-    cohort: String((existing as { created_by_cohort: string }).created_by_cohort ?? ''),
-    name: String((existing as { created_by_name: string }).created_by_name ?? ''),
-  }
-  if (!isSameMember(actor, owner)) {
-    throw new Error('본인이 등록한 합주만 삭제할 수 있습니다.')
-  }
-
-  const { data: deleted, error } = await supabase
-    .from('rehearsals')
-    .delete()
-    .eq('id', id)
-    .eq('created_by_cohort', actor.cohort)
-    .eq('created_by_name', actor.name)
-    .select('id')
-
-  if (error) throw error
-  if (!deleted?.length) {
-    throw new Error('본인이 등록한 합주만 삭제할 수 있습니다.')
-  }
-
-  const row = existing as { date?: string; team_name?: string }
-  await insertLog({
-    actor,
-    action: 'delete',
-    summary: `${memberLabel(actor)} · ${row.date ?? '일정'} ${row.team_name || '합주'} 삭제`,
-    ip,
+  const { error } = await supabase.rpc('delete_rehearsal', {
+    p_session_token: token,
+    p_id: id,
   })
-  await upsertDevice(actor, ip)
+
+  if (error) throw mapRpcError(error, '합주 삭제에 실패했습니다.')
   return fetchAppData()
 }

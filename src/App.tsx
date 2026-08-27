@@ -19,7 +19,7 @@ import {
   subscribeAppDataChanges,
   updateRehearsal,
 } from './storage'
-import type { AppData, Member, Rehearsal } from './types'
+import type { AppData, Member, Rehearsal, Session } from './types'
 import { isSameMember, memberLabel } from './types'
 import './App.css'
 
@@ -27,7 +27,7 @@ const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
 function App() {
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const [member, setMember] = useState<Member | null>(null)
+  const [member, setMember] = useState<Session | null>(null)
   const [data, setData] = useState<AppData>(emptyData)
   const [booting, setBooting] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -72,8 +72,8 @@ function App() {
       } catch (err) {
         if (cancelled) return
         console.error(err)
-        setError('자동 로그인에 실패했습니다. 다시 로그인해 주세요.')
-        clearSession()
+        setError('세션이 만료되었습니다. 다시 로그인해 주세요.')
+        void clearSession()
       } finally {
         if (!cancelled) setBooting(false)
       }
@@ -139,13 +139,16 @@ function App() {
     }
   }
 
-  async function handleLogin(next: Member) {
-    const ok = await runAction(() => loginMember(next))
-    if (ok) setMember(next)
+  async function handleLogin(next: Member, pin: string) {
+    const ok = await runAction(() => loginMember(next, pin))
+    if (ok) {
+      const saved = loadSession()
+      if (saved) setMember(saved)
+    }
   }
 
-  function handleLogout() {
-    clearSession()
+  async function handleLogout() {
+    await clearSession()
     setMember(null)
     setData(emptyData)
     setViewMode('month')
@@ -287,7 +290,7 @@ function App() {
           <button type="button" className="btn-ghost" onClick={() => void handleRefresh()} disabled={busy}>
             새로고침
           </button>
-          <button type="button" className="btn-ghost" onClick={handleLogout}>
+          <button type="button" className="btn-ghost" onClick={() => void handleLogout()}>
             나가기
           </button>
         </div>

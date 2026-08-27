@@ -1,0 +1,30 @@
+8-27 보안강화 멤버PIN 세션RPC
+
+## 변경 요약
+- 인증: 기수+이름+개인 PIN (members 테이블, bcrypt 해시)
+- 세션: login RPC → UUID token → localStorage (90일)
+- 쓰기: create/update/delete_rehearsal RPC만 허용 (세션 검증 + 소유권)
+- RLS: rehearsals/activity_logs SELECT만 anon 허용, INSERT/UPDATE/DELETE 거부
+- activity_logs: 트리거로만 기록 (클라이언트 insertLog 제거)
+- devices/sessions/members: anon 접근 거부
+- login rate limit: IP당 5분 10회 실패 시 차단
+- UI: PIN 입력 필드, 활동로그 IP 표시 제거
+
+## Supabase SQL 실행 순서 (필수)
+1. SQL Editor에서 `supabase/migrations/20260827_security_hardening.sql` 전체 실행
+2. 멤버 PIN 등록 (멤버마다 1회):
+   ```sql
+   SELECT admin_set_member_pin('12', '김태조', '1234');
+   ```
+3. (선택) 검증용 테스트 멤버:
+   ```sql
+   SELECT admin_set_member_pin('99', '테스트', 'test1234');
+   node scripts/verify-security.mjs
+   ```
+
+## 배포 후 안내
+- 기존 localStorage 세션 무효 → 전원 PIN으로 재로그인 필요
+- PIN 분실: SQL Editor에서 admin_set_member_pin으로 재설정
+
+## 미해결(의도적)
+- 일정/로그 SELECT는 여전히 anon key로 열람 가능 (동아리 공개 캘린더 전제)
