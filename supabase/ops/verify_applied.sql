@@ -72,6 +72,18 @@ select
     where table_schema = 'public' and table_name = 'song_requests' and column_name = 'youtube_url'
   ) as song_requests_has_youtube_url,
   exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'song_requests' and column_name = 'promoted_at'
+  ) as song_requests_has_promoted_at,
+  exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'promote_song_request'
+      and pg_get_functiondef(p.oid) like '%promoted_at%'
+      and pg_get_functiondef(p.oid) not like '%delete from song_requests%'
+  ) as promote_keeps_song_request,
+  exists (
     select 1
     from pg_publication_tables
     where pubname = 'supabase_realtime'
