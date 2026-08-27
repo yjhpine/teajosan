@@ -155,7 +155,7 @@ if (sessionToken) {
     })
   }
 
-  // Song ownership: A creates, B can update, B cannot delete
+  // Song ACL: A creates, B can update and delete
   const createSong = await supabase.rpc('create_song', {
     p_session_token: sessionToken,
     p_title: `verify-song-${Date.now()}`,
@@ -199,15 +199,18 @@ if (sessionToken) {
       p_session_token: otherToken,
       p_id: songId,
     })
-    if (deleteByB.error && /본인|삭제/i.test(deleteByB.error.message)) {
-      pass('delete_song rejects non-owner')
-    } else {
+    if (deleteByB.error) {
       fail(
-        'delete_song rejects non-owner',
-        deleteByB.error?.message ?? 'unexpected success — run song_owner_delete.sql',
+        'delete_song allows any logged-in member',
+        `${deleteByB.error.message} — run song_delete_any_member.sql`,
       )
+    } else {
+      pass('delete_song allows any logged-in member')
+      songId = null
     }
+  }
 
+  if (songId) {
     await supabase.rpc('delete_song', {
       p_session_token: sessionToken,
       p_id: songId,

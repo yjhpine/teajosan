@@ -1539,9 +1539,10 @@
 
 .song-delete--inline {
   flex: 0 0 auto;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   padding: 0.35rem 0.5rem;
   white-space: nowrap;
+  color: #b42318;
 }
 
 .song-mobile-sessions {

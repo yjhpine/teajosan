@@ -17,11 +17,12 @@
 7. `supabase/migrations/20260827_signup_name_login.sql` — 셀프 가입 + 이름/PIN 로그인
 8. `supabase/migrations/20260827_member_cascade_delete.sql` — 멤버 삭제 CASCADE
 9. `supabase/migrations/20260827_signup_cohort_name_check.sql` — 가입 기수·이름 중복 차단
-10. `supabase/migrations/20260827_song_owner_delete.sql` — **곡 삭제는 등록자만** (수정은 전원)
+10. `supabase/migrations/20260827_song_owner_delete.sql` — (구) 등록자만 삭제
 11. `supabase/migrations/20260827_login_rate_limit_keys.sql` — 로그인 rate limit (device/name/ip)
 12. `supabase/migrations/20260827_change_my_pin.sql` — 본인 PIN 변경 RPC
 13. `supabase/migrations/20260827_members_realtime.sql` — members Realtime
 14. `supabase/migrations/20260827_reorder_songs.sql` — 곡 순서 변경 RPC
+15. `supabase/migrations/20260827_song_delete_any_member.sql` — **곡 삭제 전원 가능**
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 
@@ -29,7 +30,7 @@
 
 ## 3) 권한 요약
 - **합주**: 본인만 수정·삭제
-- **곡**: 로그인 멤버 전원 수정·순서변경 / **등록자만 삭제**
+- **곡**: 로그인 멤버 전원 수정·순서변경·**삭제** 가능
 - **가입**: 기수+이름 중복 불가, 이름은 전역 유니크
 - **로그인**: device·이름·IP 버킷 중 하나라도 5분에 10회 실패하면 잠시 차단
 - **PIN**: 로그인 후 마이페이지에서 본인 변경. 분실 시 관리자가 `admin_set_member_pin(기수, 이름, 새PIN)` 으로 재설정

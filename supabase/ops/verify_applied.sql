@@ -37,8 +37,8 @@ select
     select 1 from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'delete_song'
-      and pg_get_functiondef(p.oid) like '%created_by_name%'
-  ) as delete_song_owner_guard,
+      and pg_get_functiondef(p.oid) not like '%created_by_name%'
+  ) as delete_song_any_member,
   exists (
     select 1 from pg_trigger where tgname = 'member_deleted_clear_songs'
   ) as member_delete_clears_songs,
