@@ -20,6 +20,7 @@ type Props = {
   initialStartTime?: string
   editing: Rehearsal | null
   busy?: boolean
+  mobile?: boolean
   onClose: () => void
   onSave: (draft: RehearsalDraft) => void
   onDelete?: () => void
@@ -46,6 +47,7 @@ export function RehearsalModal({
   initialStartTime = '19:00',
   editing,
   busy = false,
+  mobile = false,
   onClose,
   onSave,
   onDelete,
@@ -94,9 +96,16 @@ export function RehearsalModal({
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div
+      className={['modal-backdrop', mobile ? 'modal-backdrop--mobile' : '']
+        .filter(Boolean)
+        .join(' ')}
+      onClick={onClose}
+    >
       <div
-        className="modal-panel"
+        className={['modal-panel', mobile ? 'modal-panel--mobile' : '']
+          .filter(Boolean)
+          .join(' ')}
         role="dialog"
         aria-modal="true"
         aria-labelledby="rehearsal-modal-title"

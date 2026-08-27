@@ -4,6 +4,7 @@ import type { ActivityLog } from '../types'
 
 type Props = {
   logs: ActivityLog[]
+  variant?: 'desktop' | 'mobile'
 }
 
 const ACTION_LABEL: Partial<Record<ActivityLog['action'], string>> = {
@@ -13,16 +14,25 @@ const ACTION_LABEL: Partial<Record<ActivityLog['action'], string>> = {
 
 const VISIBLE_ACTIONS = new Set<ActivityLog['action']>(['create', 'delete'])
 
-export function ActivityPanel({ logs }: Props) {
+export function ActivityPanel({ logs, variant = 'desktop' }: Props) {
   const visible = logs.filter((log) => VISIBLE_ACTIONS.has(log.action)).slice(0, 30)
 
   return (
-    <aside className="activity-panel">
-      <header>
-        <p className="section-kicker">Activity</p>
-        <h2>활동 로그</h2>
-        <p className="panel-lead">합주 등록·삭제만 표시합니다.</p>
-      </header>
+    <aside
+      className={[
+        'activity-panel',
+        variant === 'mobile' ? 'activity-panel--mobile' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {variant === 'desktop' ? (
+        <header>
+          <p className="section-kicker">Activity</p>
+          <h2>활동 로그</h2>
+          <p className="panel-lead">합주 등록·삭제만 표시합니다.</p>
+        </header>
+      ) : null}
 
       {visible.length === 0 ? (
         <p className="empty-state">아직 기록이 없습니다.</p>

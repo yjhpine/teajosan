@@ -1,0 +1,33 @@
+type Tab = 'schedule' | 'log'
+
+type Props = {
+  active: Tab
+  onChange: (tab: Tab) => void
+}
+
+export function MobileTabBar({ active, onChange }: Props) {
+  return (
+    <nav className="mobile-tabbar" aria-label="주요 메뉴">
+      <button
+        type="button"
+        className={['mobile-tab', active === 'schedule' ? 'is-active' : ''].filter(Boolean).join(' ')}
+        onClick={() => onChange('schedule')}
+      >
+        <span className="mobile-tab-icon" aria-hidden="true">
+          ◷
+        </span>
+        <span>일정</span>
+      </button>
+      <button
+        type="button"
+        className={['mobile-tab', active === 'log' ? 'is-active' : ''].filter(Boolean).join(' ')}
+        onClick={() => onChange('log')}
+      >
+        <span className="mobile-tab-icon" aria-hidden="true">
+          ☰
+        </span>
+        <span>로그</span>
+      </button>
+    </nav>
+  )
+}

@@ -3,8 +3,10 @@ import { isSameDay, parseISO } from 'date-fns'
 import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarBoard } from './components/CalendarBoard'
 import { LoginScreen } from './components/LoginScreen'
+import { MobileApp } from './components/mobile/MobileApp'
 import { RehearsalModal } from './components/RehearsalModal'
 import { WeekTimetable } from './components/WeekTimetable'
+import { useMediaQuery } from './hooks/useMediaQuery'
 import { supabaseConfigured } from './lib/supabase'
 import {
   clearSession,
@@ -23,6 +25,7 @@ import './App.css'
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
 function App() {
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [member, setMember] = useState<Member | null>(null)
   const [data, setData] = useState<AppData>(emptyData)
   const [booting, setBooting] = useState(true)
@@ -30,10 +33,19 @@ function App() {
   const [error, setError] = useState('')
   const [month, setMonth] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date())
-  const [viewMode, setViewMode] = useState<'month' | 'week'>('month')
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Rehearsal | null>(null)
   const [createStartTime, setCreateStartTime] = useState('19:00')
+
+  useEffect(() => {
+    if (!isMobile && viewMode === 'day') {
+      setViewMode('week')
+    }
+    if (isMobile && viewMode === 'week') {
+      setViewMode('day')
+    }
+  }, [isMobile, viewMode])
 
   useEffect(() => {
     let cancelled = false
@@ -117,14 +129,14 @@ function App() {
     setEditing(rehearsal)
     setSelectedDate(date)
     setMonth(date)
-    setViewMode('week')
+    setViewMode(isMobile ? 'day' : 'week')
     setModalOpen(true)
   }
 
-  function openWeek(date: Date) {
+  function openScheduleDetail(date: Date) {
     setSelectedDate(date)
     setMonth(date)
-    setViewMode('week')
+    setViewMode(isMobile ? 'day' : 'week')
   }
 
   if (booting) {
@@ -147,6 +159,78 @@ function App() {
         busy={busy}
         error={error}
       />
+    )
+  }
+
+  const modal = (
+    <RehearsalModal
+      open={modalOpen}
+      member={member}
+      rehearsals={data.rehearsals}
+      initialDate={selectedDate}
+      initialStartTime={createStartTime}
+      editing={editing}
+      busy={busy}
+      mobile={isMobile}
+      onClose={() => {
+        setModalOpen(false)
+        setEditing(null)
+      }}
+      onSave={(draft) => {
+        void (async () => {
+          const ok = await runAction(() =>
+            editing
+              ? updateRehearsal(member, editing.id, draft)
+              : createRehearsal(member, draft),
+          )
+          if (!ok) return
+          const nextDate = parseISO(draft.date)
+          setSelectedDate(nextDate)
+          setMonth(nextDate)
+          if (!editing && (!selectedDate || !isSameDay(selectedDate, nextDate))) {
+            setViewMode(isMobile ? 'day' : 'week')
+          }
+          setModalOpen(false)
+          setEditing(null)
+        })()
+      }}
+      onDelete={
+        editing
+          ? () => {
+              if (!window.confirm('이 합주 일정을 삭제할까요?')) return
+              void (async () => {
+                const ok = await runAction(() => deleteRehearsal(member, editing.id))
+                if (!ok) return
+                setModalOpen(false)
+                setEditing(null)
+              })()
+            }
+          : undefined
+      }
+    />
+  )
+
+  if (isMobile) {
+    return (
+      <>
+        <MobileApp
+          member={member}
+          data={data}
+          busy={busy}
+          error={error}
+          month={month}
+          selectedDate={selectedDate}
+          scheduleView={viewMode === 'day' ? 'day' : 'month'}
+          onMonthChange={setMonth}
+          onSelectDate={setSelectedDate}
+          onScheduleViewChange={(next) => setViewMode(next === 'day' ? 'day' : 'month')}
+          onRefresh={handleRefresh}
+          onLogout={handleLogout}
+          onCreate={openCreate}
+          onSelectRehearsal={openEdit}
+        />
+        {modal}
+      </>
     )
   }
 
@@ -180,7 +264,7 @@ function App() {
               month={month}
               rehearsals={data.rehearsals}
               onMonthChange={setMonth}
-              onSelectDate={openWeek}
+              onSelectDate={openScheduleDetail}
               onSelectRehearsal={openEdit}
             />
           ) : (
@@ -197,50 +281,7 @@ function App() {
         <ActivityPanel logs={data.logs} />
       </main>
 
-      <RehearsalModal
-        open={modalOpen}
-        member={member}
-        rehearsals={data.rehearsals}
-        initialDate={selectedDate}
-        initialStartTime={createStartTime}
-        editing={editing}
-        busy={busy}
-        onClose={() => {
-          setModalOpen(false)
-          setEditing(null)
-        }}
-        onSave={(draft) => {
-          void (async () => {
-            const ok = await runAction(() =>
-              editing
-                ? updateRehearsal(member, editing.id, draft)
-                : createRehearsal(member, draft),
-            )
-            if (!ok) return
-            const nextDate = parseISO(draft.date)
-            setSelectedDate(nextDate)
-            setMonth(nextDate)
-            if (!editing && (!selectedDate || !isSameDay(selectedDate, nextDate))) {
-              setViewMode('week')
-            }
-            setModalOpen(false)
-            setEditing(null)
-          })()
-        }}
-        onDelete={
-          editing
-            ? () => {
-                if (!window.confirm('이 합주 일정을 삭제할까요?')) return
-                void (async () => {
-                  const ok = await runAction(() => deleteRehearsal(member, editing.id))
-                  if (!ok) return
-                  setModalOpen(false)
-                  setEditing(null)
-                })()
-              }
-            : undefined
-        }
-      />
+      {modal}
     </div>
   )
 }
