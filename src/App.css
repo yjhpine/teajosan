@@ -1490,49 +1490,84 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fffdf9;
-  padding: 0.75rem;
+  padding: 0.65rem 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.45rem;
 }
 
-.song-card-title .song-title-input {
-  background: #f7f3ec;
-}
-
-.song-card-grid {
+.song-card-title-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.35rem;
 }
 
-.song-card-field {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
+.song-card-title-row .song-title-input {
+  flex: 1;
+  min-width: 0;
+  background: #f7f3ec;
 }
 
-.song-card-field > span {
-  flex: 0 0 2.85rem;
-  font-size: 0.74rem;
+.song-delete--inline {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.5rem;
+  white-space: nowrap;
+}
+
+.song-card-sessions {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.2rem;
+}
+
+.song-card-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.song-card-slot > span {
+  font-size: 0.62rem;
   font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
   color: var(--ink);
   white-space: nowrap;
 }
 
-.song-card-field .song-select {
-  flex: 1;
+.song-card-slot .song-select {
+  width: 100%;
   min-width: 0;
-  padding: 0.4rem 0.45rem;
-  font-size: 0.82rem;
+  padding: 0.32rem 0.12rem;
+  font-size: 0.68rem;
+  text-align: center;
+  text-align-last: center;
+}
+
+.song-card-slot.song-col--vocal .song-select {
+  background: rgba(215, 235, 248, 0.85);
+}
+
+.song-card-slot.song-col--guitar .song-select {
+  background: rgba(246, 239, 200, 0.9);
+}
+
+.song-card-slot.song-col--bass .song-select {
+  background: rgba(246, 217, 200, 0.9);
+}
+
+.song-card-slot.song-col--drums .song-select {
+  background: rgba(216, 239, 213, 0.9);
+}
+
+.song-card-slot.song-col--keyboard .song-select {
+  background: rgba(221, 227, 234, 0.95);
 }
 
 .song-card-footer {
-  display: flex;
-  justify-content: flex-end;
+  display: none;
 }
 
 .song-empty--card {
