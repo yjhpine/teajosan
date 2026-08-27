@@ -808,6 +808,45 @@
   overflow-x: hidden;
 }
 
+.mobile-header--compact {
+  padding-bottom: 0.2rem;
+  border-bottom: none;
+}
+
+.mobile-header--compact .mobile-member-line {
+  margin-top: 0.25rem;
+}
+
+.mobile-main--month {
+  padding-top: 0.2rem;
+}
+
+.mobile-shell .calendar-board--mobile .calendar-toolbar {
+  margin-bottom: 0.35rem;
+}
+
+.calendar-board--mobile .calendar-title--mobile {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.calendar-board--mobile .calendar-toolbar {
+  align-items: center;
+}
+
+.event-chip--readonly {
+  pointer-events: none;
+}
+
+.dt-track--readonly {
+  cursor: default;
+}
+
+.dt-block--readonly {
+  pointer-events: none;
+}
+
 .mobile-header {
   position: sticky;
   top: 0;

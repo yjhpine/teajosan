@@ -16,9 +16,10 @@ import type { Rehearsal } from '../types'
 type Props = {
   month: Date
   rehearsals: Rehearsal[]
+  variant?: 'desktop' | 'mobile'
   onMonthChange: (month: Date) => void
   onSelectDate: (date: Date) => void
-  onSelectRehearsal: (rehearsal: Rehearsal) => void
+  onSelectRehearsal?: (rehearsal: Rehearsal) => void
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -26,12 +27,20 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 export function CalendarBoard({
   month,
   rehearsals,
+  variant = 'desktop',
   onMonthChange,
   onSelectDate,
   onSelectRehearsal,
 }: Props) {
+  const today = new Date()
+  const monthStart = startOfMonth(month)
+  const gridStart =
+    variant === 'mobile' && isSameMonth(month, today)
+      ? startOfWeek(today, { weekStartsOn: 0 })
+      : startOfWeek(monthStart, { weekStartsOn: 0 })
+
   const days = eachDayOfInterval({
-    start: startOfWeek(startOfMonth(month), { weekStartsOn: 0 }),
+    start: gridStart,
     end: endOfWeek(endOfMonth(month), { weekStartsOn: 0 }),
   })
 
@@ -43,14 +52,20 @@ export function CalendarBoard({
   }
 
   return (
-    <section className="calendar-board">
+    <section className={['calendar-board', variant === 'mobile' ? 'calendar-board--mobile' : ''].filter(Boolean).join(' ')}>
       <header className="calendar-toolbar">
-        <div>
-          <p className="section-kicker">Rehearsal</p>
-          <h2 className="calendar-title">
+        {variant === 'desktop' ? (
+          <div>
+            <p className="section-kicker">Rehearsal</p>
+            <h2 className="calendar-title">
+              {format(month, 'yyyy년 M월', { locale: ko })}
+            </h2>
+          </div>
+        ) : (
+          <h2 className="calendar-title calendar-title--mobile">
             {format(month, 'yyyy년 M월', { locale: ko })}
           </h2>
-        </div>
+        )}
         <div className="month-nav">
           <button
             type="button"
@@ -106,18 +121,24 @@ export function CalendarBoard({
             >
               <span className="day-number">{format(day, 'd')}</span>
               <div className="day-events">
-                {dayEvents.slice(0, 3).map((event) => (
-                  <span
-                    key={event.id}
-                    className="event-chip"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onSelectRehearsal(event)
-                    }}
-                  >
-                    {event.teamName || event.startTime}
-                  </span>
-                ))}
+                {dayEvents.slice(0, 3).map((event) =>
+                  variant === 'mobile' ? (
+                    <span key={event.id} className="event-chip event-chip--readonly">
+                      {event.teamName || event.startTime}
+                    </span>
+                  ) : (
+                    <span
+                      key={event.id}
+                      className="event-chip"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSelectRehearsal?.(event)
+                      }}
+                    >
+                      {event.teamName || event.startTime}
+                    </span>
+                  ),
+                )}
                 {dayEvents.length > 3 ? (
                   <span className="event-more">+{dayEvents.length - 3}</span>
                 ) : null}

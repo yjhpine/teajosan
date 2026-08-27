@@ -227,7 +227,6 @@ function App() {
           onRefresh={handleRefresh}
           onLogout={handleLogout}
           onCreate={openCreate}
-          onSelectRehearsal={openEdit}
         />
         {modal}
       </>

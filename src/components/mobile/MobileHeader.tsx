@@ -6,6 +6,7 @@ type Props = {
   subtitle?: string
   member: Member
   busy?: boolean
+  compact?: boolean
   showBack?: boolean
   onBack?: () => void
   onRefresh: () => void
@@ -17,13 +18,18 @@ export function MobileHeader({
   subtitle,
   member,
   busy = false,
+  compact = false,
   showBack = false,
   onBack,
   onRefresh,
   onLogout,
 }: Props) {
   return (
-    <header className="mobile-header">
+    <header
+      className={['mobile-header', compact ? 'mobile-header--compact' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="mobile-header-top">
         {showBack ? (
           <button type="button" className="mobile-icon-btn" onClick={onBack} aria-label="뒤로">
@@ -52,10 +58,12 @@ export function MobileHeader({
           </button>
         </div>
       </div>
-      <div className="mobile-header-main">
-        <h1 className="mobile-header-title">{title}</h1>
-        {subtitle ? <p className="mobile-header-subtitle">{subtitle}</p> : null}
-      </div>
+      {!compact && title ? (
+        <div className="mobile-header-main">
+          <h1 className="mobile-header-title">{title}</h1>
+          {subtitle ? <p className="mobile-header-subtitle">{subtitle}</p> : null}
+        </div>
+      ) : null}
       <p className="mobile-member-line">{memberLabel(member)}</p>
     </header>
   )
