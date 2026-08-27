@@ -67,12 +67,12 @@ const loginBad = await supabase.rpc('login', {
   p_device_id: testDeviceId,
   p_client_ip: '127.0.0.1',
 })
-if (loginBad.error && /PIN|기수|로그인/i.test(loginBad.error.message)) {
-  pass('login RPC rejects wrong PIN')
-} else if (loginBad.error?.message?.includes('Could not find the function')) {
+if (loginBad.error?.message?.includes('Could not find the function')) {
   fail('migration applied', 'login RPC not found — run security_hardening.sql first')
   console.log('\nSummary:', results)
   process.exit(1)
+} else if (loginBad.error && /PIN|기수|이름/i.test(loginBad.error.message)) {
+  pass('login RPC rejects wrong PIN')
 } else {
   fail('login RPC rejects wrong PIN', loginBad.error?.message ?? 'unexpected success')
 }
