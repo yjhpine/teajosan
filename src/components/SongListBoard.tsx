@@ -111,7 +111,7 @@ function SongTitleInput({
   )
 }
 
-function SongCard({
+function SongMobileRow({
   song,
   draftTitles,
   rosters,
@@ -131,8 +131,8 @@ function SongCard({
   onDelete: (id: string) => void | Promise<void>
 }) {
   return (
-    <article className="song-card">
-      <div className="song-card-title-row">
+    <div className="song-mobile-grid song-mobile-grid--body">
+      <div className="song-mobile-cell song-mobile-cell--title">
         <SongTitleInput
           song={song}
           draftTitles={draftTitles}
@@ -140,9 +140,22 @@ function SongCard({
           onDraftChange={onDraftChange}
           onCommit={onCommitTitle}
         />
+      </div>
+      {SESSION_FIELDS.map((field) => (
+        <div key={field.key} className={['song-mobile-cell', field.colClass].filter(Boolean).join(' ')}>
+          <MemberSelect
+            value={song[field.key]}
+            roster={rosters[field.rosterKey]}
+            disabled={busy}
+            className={field.className}
+            onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
+          />
+        </div>
+      ))}
+      <div className="song-mobile-cell song-mobile-cell--action">
         <button
           type="button"
-          className="btn-ghost song-delete song-delete--inline"
+          className="btn-ghost song-delete"
           disabled={busy}
           onClick={() => {
             if (!window.confirm(`「${song.title || '이 곡'}」을 삭제할까요?`)) return
@@ -152,22 +165,58 @@ function SongCard({
           삭제
         </button>
       </div>
+    </div>
+  )
+}
 
-      <div className="song-card-sessions">
+function SongMobileSheet({
+  songs,
+  draftTitles,
+  rosters,
+  busy,
+  onDraftChange,
+  onCommitTitle,
+  onUpdate,
+  onDelete,
+}: {
+  songs: Song[]
+  draftTitles: Record<string, string>
+  rosters: Rosters
+  busy: boolean
+  onDraftChange: (id: string, title: string) => void
+  onCommitTitle: (song: Song) => void
+  onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
+  onDelete: (id: string) => void | Promise<void>
+}) {
+  if (songs.length === 0) {
+    return <p className="song-empty song-empty--mobile">아직 곡이 없습니다. 위에서 곡을 추가하세요.</p>
+  }
+
+  return (
+    <div className="song-mobile-sheet">
+      <div className="song-mobile-grid song-mobile-grid--head">
+        <div className="song-mobile-cell song-mobile-cell--title">가수/곡</div>
         {SESSION_FIELDS.map((field) => (
-          <label key={field.key} className={['song-card-slot', field.colClass].filter(Boolean).join(' ')}>
-            <span>{field.label}</span>
-            <MemberSelect
-              value={song[field.key]}
-              roster={rosters[field.rosterKey]}
-              disabled={busy}
-              className={field.className}
-              onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
-            />
-          </label>
+          <div key={field.key} className={['song-mobile-cell', field.colClass].filter(Boolean).join(' ')}>
+            {field.label}
+          </div>
         ))}
+        <div className="song-mobile-cell song-mobile-cell--action" aria-hidden="true" />
       </div>
-    </article>
+      {songs.map((song) => (
+        <SongMobileRow
+          key={song.id}
+          song={song}
+          draftTitles={draftTitles}
+          rosters={rosters}
+          busy={busy}
+          onDraftChange={onDraftChange}
+          onCommitTitle={onCommitTitle}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
   )
 }
 
@@ -328,24 +377,17 @@ export function SongListBoard({
         </table>
       </div>
 
-      <div className="song-card-list">
-        {songs.length === 0 ? (
-          <p className="song-empty song-empty--card">아직 곡이 없습니다. 위에서 곡을 추가하세요.</p>
-        ) : (
-          songs.map((song) => (
-            <SongCard
-              key={song.id}
-              song={song}
-              draftTitles={draftTitles}
-              rosters={rosters}
-              busy={busy}
-              onDraftChange={handleDraftChange}
-              onCommitTitle={commitTitle}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-            />
-          ))
-        )}
+      <div className="song-mobile-list">
+        <SongMobileSheet
+          songs={songs}
+          draftTitles={draftTitles}
+          rosters={rosters}
+          busy={busy}
+          onDraftChange={handleDraftChange}
+          onCommitTitle={commitTitle}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+        />
       </div>
     </section>
   )
