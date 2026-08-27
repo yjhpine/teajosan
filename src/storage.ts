@@ -193,6 +193,13 @@ export async function resumeSession(member: Member): Promise<AppData> {
   return fetchAppData()
 }
 
+function mapWriteError(error: { code?: string; message?: string }, fallback: string) {
+  if (error.code === '23P01' || /rehearsals_no_overlap|overlap/i.test(error.message ?? '')) {
+    return new Error('같은 시간대에 이미 다른 합주가 있어 등록할 수 없습니다.')
+  }
+  return new Error(error.message || fallback)
+}
+
 export async function createRehearsal(
   actor: Member,
   input: Omit<Rehearsal, 'id' | 'createdBy' | 'createdAt' | 'updatedBy' | 'updatedAt'>,
@@ -214,7 +221,7 @@ export async function createRehearsal(
     .select(REHEARSAL_SELECT)
     .single()
 
-  if (error) throw error
+  if (error) throw mapWriteError(error, '합주 등록에 실패했습니다.')
 
   const row = data as RehearsalRow
   await insertLog({
@@ -253,7 +260,7 @@ export async function updateRehearsal(
     .eq('created_by_name', actor.name)
     .select('id')
 
-  if (error) throw error
+  if (error) throw mapWriteError(error, '합주 수정에 실패했습니다.')
   if (!data?.length) {
     throw new Error('본인이 등록한 합주만 수정할 수 있습니다.')
   }

@@ -2,6 +2,16 @@
 -- Supabase SQL Editor에서 한 번 실행
 
 create extension if not exists "pgcrypto";
+create extension if not exists btree_gist;
+
+create or replace function public.hhmm_to_minutes(t text)
+returns integer
+language sql
+immutable
+as $$
+  select split_part(t, ':', 1)::integer * 60
+       + coalesce(nullif(split_part(t, ':', 2), '')::integer, 0);
+$$;
 
 create table if not exists devices (
   id uuid primary key default gen_random_uuid(),
@@ -25,7 +35,20 @@ create table if not exists rehearsals (
   created_at timestamptz not null default now(),
   updated_by_cohort text,
   updated_by_name text,
-  updated_at timestamptz
+  updated_at timestamptz,
+  time_span int4range
+    generated always as (
+      int4range(
+        public.hhmm_to_minutes(start_time),
+        public.hhmm_to_minutes(end_time),
+        '[)'
+      )
+    ) stored,
+  constraint rehearsals_no_overlap_excl
+    exclude using gist (
+      date with =,
+      time_span with &&
+    )
 );
 
 create table if not exists activity_logs (

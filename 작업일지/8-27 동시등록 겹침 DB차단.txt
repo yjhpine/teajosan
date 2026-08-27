@@ -1,0 +1,6 @@
+8-27 동시 등록 겹침 DB 차단
+
+- 기존: 앱에서만 겹침 검사 → 동시 등록 시 둘 다 통과 가능
+- 추가: rehearsals_no_overlap_excl (같은 날짜 + 시간 구간 겹침 불가)
+- 앱에서 exclusion 위반 시 한글 안내
+- Supabase SQL Editor에서 migrations/20260827_rehearsal_no_overlap.sql 실행 필요

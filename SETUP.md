@@ -7,7 +7,10 @@
    - Project URL
    - anon public key
    를 복사
-4. SQL Editor에서 `supabase/schema.sql` 전체 실행
+4. SQL Editor에서 `supabase/schema.sql` 전체 실행  
+   (이미 프로젝트가 있으면 추가 마이그레이션만 실행:  
+   `supabase/migrations/20260827_rehearsal_no_overlap.sql`  
+   → 같은 시간대 동시 등록 중복을 DB에서 차단)
 
 ## 2) 로컬 연결
 프로젝트 루트에 `.env.local` 생성:
