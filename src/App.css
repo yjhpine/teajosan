@@ -2172,7 +2172,7 @@
 
   .song-request-card-row {
     display: grid;
-    grid-template-columns: minmax(6.5rem, 1.35fr) minmax(0, 0.72fr) auto;
+    grid-template-columns: clamp(3.4rem, 26vw, 5.6rem) minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.35rem;
   }
@@ -2182,22 +2182,21 @@
     width: 100%;
     height: auto;
     min-width: 0;
-    max-width: 8rem;
+    max-width: none;
     aspect-ratio: 1 / 1;
     align-self: center;
     justify-self: stretch;
   }
 
   .song-thumb--cover .song-thumb-play {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
   }
 
   .song-request-card-body {
     flex: unset;
     width: 100%;
     min-width: 0;
-    max-width: 10.25rem;
-    justify-self: end;
+    justify-self: stretch;
     gap: 0.28rem;
   }
 
@@ -2209,7 +2208,7 @@
 
   .song-request-slot {
     min-height: 2.55rem;
-    padding: 0.3rem 0.15rem;
+    padding: 0.3rem 0.2rem;
     border-radius: 8px;
     gap: 0.08rem;
   }
@@ -2219,7 +2218,7 @@
   }
 
   .song-request-slot-name {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
 
   .song-request-delete {
