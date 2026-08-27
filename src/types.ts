@@ -60,6 +60,7 @@ export type Song = {
   bass: string
   drums: string
   keyboard: string
+  youtubeUrl: string
   sortOrder: number
   createdBy: Member
   createdAt: string
@@ -102,6 +103,7 @@ export type SongRequest = {
   bass: string
   drums: string
   keyboard: string
+  youtubeUrl: string
   neededSlots: SongRequestSlot[]
   createdBy: Member
   createdAt: string

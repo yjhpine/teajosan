@@ -25,6 +25,7 @@
 15. `supabase/migrations/20260827_song_delete_any_member.sql` — **곡 삭제 전원 가능**
 16. `supabase/migrations/20260827_song_requests.sql` — 곡 신청 게시판
 17. `supabase/migrations/20260827_song_requests_promote.sql` — 새 곡 신청·팀 완성 시 곡 리스트 이관
+18. `supabase/migrations/20260827_song_youtube.sql` — 곡 신청/리스트 유튜브 링크
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 
@@ -60,4 +61,4 @@ PR/main: `.github/workflows/ci.yml` 에서 `lint` + `build` (live DB verify는 C
 - 가입(기수·이름·PIN·세션) 또는 이름+PIN 로그인 → 기기(localStorage)에 세션 유지
 - 합주·곡·멤버·활동로그는 Realtime으로 자동 동기화
 - 마이페이지에서 PIN 변경, 곡 리스트 ↑↓로 순서 변경
-- 곡 신청: 새 곡 제목 + 필요 세션 칸 → 멤버가 자리 신청 → 팀 완성 시 곡 리스트로 이관
+- 곡 신청: 새 곡 제목 + 유튜브 링크 + 필요 세션 칸 → 멤버가 자리 신청 → 팀 완성 시 곡 리스트로 이관 (리스트에서 재생)

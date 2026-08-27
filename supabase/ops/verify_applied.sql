@@ -64,6 +64,15 @@ select
     where table_schema = 'public' and table_name = 'song_requests' and column_name = 'needed_slots'
   ) as song_requests_has_needed_slots,
   exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'songs' and column_name = 'youtube_url'
+  ) as songs_has_youtube_url,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'song_requests' and column_name = 'youtube_url'
+  ) as song_requests_has_youtube_url,
+  to_regprocedure('public.create_song_request(uuid,text,text[],text[],text)') is not null as has_create_song_request_youtube,
+  exists (
     select 1
     from pg_publication_tables
     where pubname = 'supabase_realtime'
