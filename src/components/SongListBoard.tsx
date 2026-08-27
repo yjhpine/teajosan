@@ -115,42 +115,41 @@ function SessionSlot({
   label,
   value,
   roster,
-  className,
-  colClass,
   disabled,
   onChange,
+  colClass,
 }: {
   label: string
   value: string
   roster: string[]
-  className?: string
-  colClass: string
   disabled?: boolean
   onChange: (next: string) => void
+  colClass: string
 }) {
-  const filled = Boolean(value)
-
   return (
-    <label
-      className={[
-        'song-mobile-slot',
-        filled ? 'is-filled' : 'is-empty',
-        colClass,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <span className="song-mobile-slot-label">{label}</span>
-      <span className="song-mobile-slot-value">
-        <MemberSelect
+    <div className={['song-mobile-slot', colClass].filter(Boolean).join(' ')}>
+      <div className="song-mobile-slot-label">{label}</div>
+      <div className="song-mobile-slot-value">
+        <span className={['song-mobile-slot-name', value ? '' : 'is-empty'].filter(Boolean).join(' ')}>
+          {value || '—'}
+        </span>
+        <select
+          className="song-mobile-slot-picker"
           value={value}
-          roster={roster}
           disabled={disabled}
-          className={['song-mobile-slot-select', className].filter(Boolean).join(' ')}
-          onChange={onChange}
-        />
-      </span>
-    </label>
+          aria-label={label}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">—</option>
+          {roster.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+          {value && !roster.includes(value) ? <option value={value}>{value}</option> : null}
+        </select>
+      </div>
+    </div>
   )
 }
 
@@ -204,7 +203,6 @@ function SongMobileCard({
             value={song[field.key]}
             roster={rosters[field.rosterKey]}
             disabled={busy}
-            className={field.className}
             colClass={field.colClass}
             onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
           />
