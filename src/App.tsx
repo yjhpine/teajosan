@@ -19,7 +19,7 @@ import {
   updateRehearsal,
 } from './storage'
 import type { AppData, Member, Rehearsal } from './types'
-import { memberLabel } from './types'
+import { isSameMember, memberLabel } from './types'
 import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
@@ -195,7 +195,7 @@ function App() {
         })()
       }}
       onDelete={
-        editing
+        editing && isSameMember(member, editing.createdBy)
           ? () => {
               if (!window.confirm('이 합주 일정을 삭제할까요?')) return
               void (async () => {

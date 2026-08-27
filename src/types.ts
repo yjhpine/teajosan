@@ -35,3 +35,7 @@ export type AppData = {
 export function memberLabel(member: Member): string {
   return `${member.cohort}기 ${member.name}`
 }
+
+export function isSameMember(a: Member, b: Member): boolean {
+  return a.cohort === b.cohort && a.name === b.name
+}

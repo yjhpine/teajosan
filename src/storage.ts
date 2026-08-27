@@ -8,7 +8,7 @@ import {
 import { findOverlappingRehearsal } from './lib/rehearsalOverlap'
 import { supabase, supabaseConfigured } from './lib/supabase'
 import type { ActivityLog, AppData, Member, Rehearsal } from './types'
-import { memberLabel } from './types'
+import { isSameMember, memberLabel } from './types'
 
 type RehearsalRow = {
   id: string
@@ -235,6 +235,23 @@ export async function updateRehearsal(
 ): Promise<AppData> {
   assertConfigured()
   const ip = await fetchClientIp()
+
+  const { data: existing, error: existingError } = await supabase
+    .from('rehearsals')
+    .select('created_by_cohort,created_by_name')
+    .eq('id', id)
+    .maybeSingle()
+  if (existingError) throw existingError
+  if (!existing) throw new Error('합주를 찾을 수 없습니다.')
+  if (
+    !isSameMember(actor, {
+      cohort: (existing as { created_by_cohort: string }).created_by_cohort,
+      name: (existing as { created_by_name: string }).created_by_name,
+    })
+  ) {
+    throw new Error('본인이 등록한 합주만 수정할 수 있습니다.')
+  }
+
   await assertNoTimeOverlap(input, id)
 
   const { error } = await supabase
@@ -267,11 +284,21 @@ export async function deleteRehearsal(actor: Member, id: string): Promise<AppDat
   assertConfigured()
   const ip = await fetchClientIp()
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('rehearsals')
-    .select('date')
+    .select('date,created_by_cohort,created_by_name')
     .eq('id', id)
     .maybeSingle()
+  if (existingError) throw existingError
+  if (!existing) throw new Error('합주를 찾을 수 없습니다.')
+  if (
+    !isSameMember(actor, {
+      cohort: (existing as { created_by_cohort: string }).created_by_cohort,
+      name: (existing as { created_by_name: string }).created_by_name,
+    })
+  ) {
+    throw new Error('본인이 등록한 합주만 삭제할 수 있습니다.')
+  }
 
   const { error } = await supabase.from('rehearsals').delete().eq('id', id)
   if (error) throw error
@@ -279,7 +306,7 @@ export async function deleteRehearsal(actor: Member, id: string): Promise<AppDat
   await insertLog({
     actor,
     action: 'delete',
-    summary: `${memberLabel(actor)} · ${(existing as { date?: string } | null)?.date ?? '일정'} 합주 삭제`,
+    summary: `${memberLabel(actor)} · ${(existing as { date?: string }).date ?? '일정'} 합주 삭제`,
     ip,
   })
   await upsertDevice(actor, ip)

@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { findOverlappingRehearsal } from '../lib/rehearsalOverlap'
 import type { Member, Rehearsal } from '../types'
-import { memberLabel } from '../types'
+import { isSameMember, memberLabel } from '../types'
 
 export type RehearsalDraft = {
   date: string
@@ -56,6 +56,7 @@ export function RehearsalModal({
     emptyDraft(initialDate, initialStartTime),
   )
   const [localError, setLocalError] = useState('')
+  const canManage = !editing || isSameMember(member, editing.createdBy)
 
   useEffect(() => {
     if (!open) return
@@ -76,6 +77,7 @@ export function RehearsalModal({
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
+    if (!canManage) return
     if (!draft.date || !draft.startTime || !draft.endTime) return
     if (!draft.teamName.trim()) {
       setLocalError('팀명을 입력해 주세요.')
@@ -115,7 +117,7 @@ export function RehearsalModal({
           <div>
             <p className="section-kicker">합주</p>
             <h3 id="rehearsal-modal-title">
-              {editing ? '합주 수정' : '합주 잡기'}
+              {editing ? (canManage ? '합주 수정' : '합주 보기') : '합주 잡기'}
             </h3>
           </div>
           <button type="button" className="btn-ghost" onClick={onClose}>
@@ -131,7 +133,9 @@ export function RehearsalModal({
               value={draft.teamName}
               onChange={(e) => setDraft({ ...draft, teamName: e.target.value })}
               required
-              autoFocus
+              autoFocus={canManage}
+              readOnly={!canManage}
+              disabled={!canManage}
             />
           </label>
           <label className="field">
@@ -141,6 +145,8 @@ export function RehearsalModal({
               value={draft.date}
               onChange={(e) => setDraft({ ...draft, date: e.target.value })}
               required
+              readOnly={!canManage}
+              disabled={!canManage}
             />
           </label>
           <div className="field-row">
@@ -151,6 +157,8 @@ export function RehearsalModal({
                 value={draft.startTime}
                 onChange={(e) => setDraft({ ...draft, startTime: e.target.value })}
                 required
+                readOnly={!canManage}
+                disabled={!canManage}
               />
             </label>
             <label className="field">
@@ -160,28 +168,36 @@ export function RehearsalModal({
                 value={draft.endTime}
                 onChange={(e) => setDraft({ ...draft, endTime: e.target.value })}
                 required
+                readOnly={!canManage}
+                disabled={!canManage}
               />
             </label>
           </div>
 
           {localError ? <p className="form-error">{localError}</p> : null}
+          {editing && !canManage ? (
+            <p className="form-error">
+              본인이 등록한 합주만 수정·삭제할 수 있습니다.
+            </p>
+          ) : null}
 
           <p className="modal-meta">
-            작성자 · {memberLabel(member)}
             {editing
-              ? ` · 최초 ${memberLabel(editing.createdBy)} (${format(
+              ? `등록자 · ${memberLabel(editing.createdBy)} (${format(
                   new Date(editing.createdAt),
                   'M/d HH:mm',
                   { locale: ko },
                 )})`
-              : null}
+              : `작성자 · ${memberLabel(member)}`}
           </p>
 
           <div className="modal-actions">
-            {editing && onDelete ? (
+            {editing && canManage && onDelete ? (
               <button
                 type="button"
-                className={['btn-danger', mobile ? 'btn-danger--mobile' : ''].filter(Boolean).join(' ')}
+                className={['btn-danger', mobile ? 'btn-danger--mobile' : '']
+                  .filter(Boolean)
+                  .join(' ')}
                 onClick={onDelete}
                 disabled={busy}
               >
@@ -190,9 +206,15 @@ export function RehearsalModal({
             ) : (
               <span />
             )}
-            <button type="submit" className="btn-primary" disabled={busy}>
-              {busy ? '저장 중…' : editing ? '저장' : '등록'}
-            </button>
+            {canManage ? (
+              <button type="submit" className="btn-primary" disabled={busy}>
+                {busy ? '저장 중…' : editing ? '저장' : '등록'}
+              </button>
+            ) : (
+              <button type="button" className="btn-primary" onClick={onClose}>
+                확인
+              </button>
+            )}
           </div>
         </form>
       </div>
