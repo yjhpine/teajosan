@@ -128,44 +128,19 @@ function SessionSlot({
   disabled?: boolean
   onChange: (next: string) => void
 }) {
-  if (!value) return null
+  const filled = Boolean(value)
 
   return (
-    <label className={['song-mobile-slot', colClass].filter(Boolean).join(' ')}>
-      <span className="song-mobile-slot-label">{label}:</span>
-      <MemberSelect
-        value={value}
-        roster={roster}
-        disabled={disabled}
-        className={['song-mobile-slot-select', className].filter(Boolean).join(' ')}
-        onChange={onChange}
-      />
-    </label>
-  )
-}
-
-function SessionSlotEmpty({
-  label,
-  value,
-  roster,
-  className,
-  colClass,
-  disabled,
-  onChange,
-}: {
-  label: string
-  value: string
-  roster: string[]
-  className?: string
-  colClass: string
-  disabled?: boolean
-  onChange: (next: string) => void
-}) {
-  if (value) return null
-
-  return (
-    <label className={['song-mobile-slot', 'song-mobile-slot--empty', colClass].filter(Boolean).join(' ')}>
-      <span className="song-mobile-slot-label">{label}:</span>
+    <label
+      className={[
+        'song-mobile-slot',
+        filled ? 'is-filled' : 'is-empty',
+        colClass,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <span className="song-mobile-slot-label">{label}</span>
       <MemberSelect
         value={value}
         roster={roster}
@@ -222,19 +197,7 @@ function SongMobileCard({
       <div className="song-mobile-sessions">
         {SESSION_FIELDS.map((field) => (
           <SessionSlot
-            key={`${field.key}-filled`}
-            label={field.label}
-            value={song[field.key]}
-            roster={rosters[field.rosterKey]}
-            disabled={busy}
-            className={field.className}
-            colClass={field.colClass}
-            onChange={(next) => void onUpdate(song.id, { [field.key]: next })}
-          />
-        ))}
-        {SESSION_FIELDS.map((field) => (
-          <SessionSlotEmpty
-            key={`${field.key}-empty`}
+            key={field.key}
             label={field.label}
             value={song[field.key]}
             roster={rosters[field.rosterKey]}
