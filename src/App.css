@@ -1834,13 +1834,26 @@
   font-size: 1.55rem;
 }
 
+.song-request-actions {
+  display: flex;
+  margin-top: 0.85rem;
+}
+
+.song-request-new {
+  width: 100%;
+}
+
 .song-request-compose {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
   margin-top: 1rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--line);
+}
+
+.song-request-compose-toolbar {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .song-request-compose-preview {
