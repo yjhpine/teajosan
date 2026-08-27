@@ -1,0 +1,8 @@
+보안·UX 보완 6종 구현
+
+1. 로그인 rate limit: device / name / ip 다중 버킷 (login_attempts.attempt_key)
+2. change_my_pin RPC + 마이페이지 PIN 변경 UI (분실 시 admin_set_member_pin 안내)
+3. 합주 모달: 전체 곡 선택 (내 배정 / 다른 곡 optgroup)
+4. members Realtime + silentRefresh로 프로필/배정 자동 갱신
+5. reorder_songs RPC + 곡 리스트 ↑↓ 순서 변경
+6. PR용 ci.yml (lint + build), SETUP/작업일지 갱신

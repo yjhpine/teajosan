@@ -65,13 +65,18 @@ export function RehearsalModal({
       member.name,
     ),
   )
-
-  const songTitles = mySongs.map((song) => song.title.trim()).filter(Boolean)
-
-  const selectOptions = [...songTitles]
-  if (draft.teamName && !selectOptions.includes(draft.teamName)) {
-    selectOptions.unshift(draft.teamName)
-  }
+  const otherSongs = songs.filter((song) => !mySongs.includes(song))
+  const myTitles = mySongs.map((song) => song.title.trim()).filter(Boolean)
+  const otherTitles = otherSongs
+    .map((song) => song.title.trim())
+    .filter((title) => title && !myTitles.includes(title))
+  const hasAnySong = songs.some((song) => song.title.trim())
+  const orphanTitle =
+    draft.teamName &&
+    !myTitles.includes(draft.teamName) &&
+    !otherTitles.includes(draft.teamName)
+      ? draft.teamName
+      : ''
 
   useEffect(() => {
     if (!open) return
@@ -148,18 +153,30 @@ export function RehearsalModal({
               onChange={(e) => setDraft({ ...draft, teamName: e.target.value })}
               required
               autoFocus={canManage}
-              disabled={!canManage || songTitles.length === 0}
+              disabled={!canManage || !hasAnySong}
             >
               <option value="">
-                {songTitles.length === 0
-                  ? '배정된 곡이 없습니다 (곡 리스트에서 본인을 넣어 주세요)'
-                  : '곡 선택'}
+                {hasAnySong ? '곡 선택' : '곡 리스트에서 먼저 곡을 추가해 주세요'}
               </option>
-              {selectOptions.map((title) => (
-                <option key={title} value={title}>
-                  {title}
-                </option>
-              ))}
+              {orphanTitle ? <option value={orphanTitle}>{orphanTitle}</option> : null}
+              {myTitles.length > 0 ? (
+                <optgroup label="내 배정 곡">
+                  {myTitles.map((title) => (
+                    <option key={`mine-${title}`} value={title}>
+                      {title}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+              {otherTitles.length > 0 ? (
+                <optgroup label="다른 곡">
+                  {otherTitles.map((title) => (
+                    <option key={`other-${title}`} value={title}>
+                      {title}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
             </select>
           </label>
           <label className="field">
@@ -234,7 +251,7 @@ export function RehearsalModal({
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={busy || songTitles.length === 0}
+                disabled={busy || !hasAnySong}
               >
                 {busy ? '저장 중…' : editing ? '저장' : '등록'}
               </button>

@@ -159,6 +159,11 @@ export function subscribeAppDataChanges(onChange: () => void): () => void {
       { event: '*', schema: 'public', table: 'songs' },
       () => onChange(),
     )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'members' },
+      () => onChange(),
+    )
     .subscribe()
 
   return () => {
@@ -416,6 +421,21 @@ export async function setMySessions(
   }
 }
 
+export async function changeMyPin(
+  session: Session,
+  oldPin: string,
+  newPin: string,
+): Promise<void> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('change_my_pin', {
+    p_token: token,
+    p_old_pin: oldPin,
+    p_new_pin: newPin,
+  })
+  if (error) throw mapRpcError(error, 'PIN 변경에 실패했습니다.')
+}
+
 export async function fetchMemberProfiles(): Promise<MemberProfile[]> {
   assertConfigured()
   const { data, error } = await supabase.rpc('list_member_profiles')
@@ -478,6 +498,17 @@ export async function deleteSong(session: Session, id: string): Promise<Song[]> 
     p_id: id,
   })
   if (error) throw mapRpcError(error, '곡 삭제에 실패했습니다.')
+  return fetchSongs()
+}
+
+export async function reorderSongs(session: Session, ids: string[]): Promise<Song[]> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { error } = await supabase.rpc('reorder_songs', {
+    p_session_token: token,
+    p_ids: ids,
+  })
+  if (error) throw mapRpcError(error, '곡 순서 변경에 실패했습니다.')
   return fetchSongs()
 }
 

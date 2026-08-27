@@ -11,6 +11,7 @@ type Props = {
   onCreate: () => void | Promise<void>
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
+  onReorder: (ids: string[]) => void | Promise<void>
 }
 
 const SESSION_COLS: { key: SessionKey | 'guitar'; label: string; className: string }[] = [
@@ -111,6 +112,41 @@ function SongTitleInput({
   )
 }
 
+function OrderButtons({
+  index,
+  total,
+  busy,
+  onMove,
+}: {
+  index: number
+  total: number
+  busy: boolean
+  onMove: (from: number, to: number) => void
+}) {
+  return (
+    <div className="song-order-btns">
+      <button
+        type="button"
+        className="btn-ghost song-order-btn"
+        aria-label="위로"
+        disabled={busy || index <= 0}
+        onClick={() => onMove(index, index - 1)}
+      >
+        ↑
+      </button>
+      <button
+        type="button"
+        className="btn-ghost song-order-btn"
+        aria-label="아래로"
+        disabled={busy || index >= total - 1}
+        onClick={() => onMove(index, index + 1)}
+      >
+        ↓
+      </button>
+    </div>
+  )
+}
+
 function SessionSlot({
   label,
   value,
@@ -155,6 +191,8 @@ function SessionSlot({
 
 function SongMobileCard({
   song,
+  index,
+  total,
   draftTitles,
   rosters,
   busy,
@@ -163,8 +201,11 @@ function SongMobileCard({
   onCommitTitle,
   onUpdate,
   onDelete,
+  onMove,
 }: {
   song: Song
+  index: number
+  total: number
   draftTitles: Record<string, string>
   rosters: Rosters
   busy: boolean
@@ -173,10 +214,12 @@ function SongMobileCard({
   onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
+  onMove: (from: number, to: number) => void
 }) {
   return (
     <article className="song-mobile-card">
       <div className="song-mobile-title-row">
+        <OrderButtons index={index} total={total} busy={busy} onMove={onMove} />
         <SongTitleInput
           song={song}
           draftTitles={draftTitles}
@@ -226,6 +269,7 @@ function SongMobileList({
   onCommitTitle,
   onUpdate,
   onDelete,
+  onMove,
 }: {
   songs: Song[]
   draftTitles: Record<string, string>
@@ -236,6 +280,7 @@ function SongMobileList({
   onCommitTitle: (song: Song) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
+  onMove: (from: number, to: number) => void
 }) {
   if (songs.length === 0) {
     return <p className="song-empty song-empty--mobile">아직 곡이 없습니다. 위에서 곡을 추가하세요.</p>
@@ -243,10 +288,12 @@ function SongMobileList({
 
   return (
     <div className="song-mobile-cards">
-      {songs.map((song) => (
+      {songs.map((song, index) => (
         <SongMobileCard
           key={song.id}
           song={song}
+          index={index}
+          total={songs.length}
           draftTitles={draftTitles}
           rosters={rosters}
           busy={busy}
@@ -255,6 +302,7 @@ function SongMobileList({
           onCommitTitle={onCommitTitle}
           onUpdate={onUpdate}
           onDelete={onDelete}
+          onMove={onMove}
         />
       ))}
     </div>
@@ -269,6 +317,7 @@ export function SongListBoard({
   onCreate,
   onUpdate,
   onDelete,
+  onReorder,
 }: Props) {
   const [draftTitles, setDraftTitles] = useState<Record<string, string>>({})
 
@@ -299,6 +348,14 @@ export function SongListBoard({
     setDraftTitles((prev) => ({ ...prev, [id]: title }))
   }
 
+  function moveSong(from: number, to: number) {
+    if (to < 0 || to >= songs.length || from === to) return
+    const ids = songs.map((song) => song.id)
+    const [moved] = ids.splice(from, 1)
+    ids.splice(to, 0, moved)
+    void onReorder(ids)
+  }
+
   return (
     <section className="song-board">
       <header className="song-board-header">
@@ -316,6 +373,7 @@ export function SongListBoard({
         <table className="song-table">
           <thead>
             <tr>
+              <th className="song-col--order" aria-label="순서" />
               <th className="song-col--title">가수/곡</th>
               {SESSION_COLS.map((col) => (
                 <th key={col.key} className={col.className}>
@@ -328,13 +386,21 @@ export function SongListBoard({
           <tbody>
             {songs.length === 0 ? (
               <tr>
-                <td colSpan={7} className="song-empty">
+                <td colSpan={8} className="song-empty">
                   아직 곡이 없습니다. 위에서 곡을 추가하세요.
                 </td>
               </tr>
             ) : (
-              songs.map((song) => (
+              songs.map((song, index) => (
                 <tr key={song.id}>
+                  <td className="song-col--order">
+                    <OrderButtons
+                      index={index}
+                      total={songs.length}
+                      busy={busy}
+                      onMove={moveSong}
+                    />
+                  </td>
                   <td className="song-col--title">
                     <SongTitleInput
                       song={song}
@@ -431,6 +497,7 @@ export function SongListBoard({
           onCommitTitle={commitTitle}
           onUpdate={onUpdate}
           onDelete={onDelete}
+          onMove={moveSong}
         />
       </div>
     </section>
