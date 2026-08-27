@@ -1,0 +1,8 @@
+8/27 모바일 세션 글자 가로정렬
+
+## 변경
+- 세션 라벨/멤버명: white-space nowrap + writing-mode horizontal-tb
+- select 높이·line-height 고정으로 세로 글자 깨짐 방지
+
+## 파일
+- src/App.css
