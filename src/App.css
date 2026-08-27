@@ -1869,8 +1869,9 @@
 .song-thumb--cover img {
   width: 100%;
   height: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: auto;
   object-fit: cover;
+  object-position: center;
 }
 
 .song-thumb--cover .song-thumb-play {
@@ -2163,6 +2164,56 @@
 
   .session-checks {
     grid-template-columns: 1fr;
+  }
+
+  .song-request-card {
+    padding: 0.4rem;
+  }
+
+  .song-request-card-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+
+  .song-thumb--cover,
+  .song-title-fallback--cover {
+    width: auto;
+    height: auto;
+    min-width: 5.75rem;
+    max-width: 42vw;
+    aspect-ratio: 1 / 1;
+    align-self: stretch;
+    justify-self: start;
+  }
+
+  .song-thumb--cover .song-thumb-play {
+    font-size: 1.15rem;
+  }
+
+  .song-request-card-body {
+    flex: unset;
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+    gap: 0.25rem;
+  }
+
+  .song-request-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.22rem;
+    width: 100%;
+  }
+
+  .song-request-slot {
+    min-height: 2.15rem;
+    padding: 0.2rem 0.12rem;
+  }
+
+  .song-request-delete {
+    align-self: center;
+    justify-self: end;
   }
 }
 
