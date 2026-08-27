@@ -1,0 +1,8 @@
+작업: 모바일 하단 탭바에서 마이 ↔ 로그 위치 교체
+
+변경 내용:
+- MobileTabBar 탭 순서: 일정 · 곡 · 신청 · 로그 · 마이
+  (기존: … · 마이 · 로그)
+
+파일:
+- src/components/mobile/MobileTabBar.tsx

@@ -40,16 +40,6 @@ export function MobileTabBar({ active, onChange }: Props) {
       </button>
       <button
         type="button"
-        className={['mobile-tab', active === 'profile' ? 'is-active' : ''].filter(Boolean).join(' ')}
-        onClick={() => onChange('profile')}
-      >
-        <span className="mobile-tab-icon" aria-hidden="true">
-          ◉
-        </span>
-        <span>마이</span>
-      </button>
-      <button
-        type="button"
         className={['mobile-tab', active === 'log' ? 'is-active' : ''].filter(Boolean).join(' ')}
         onClick={() => onChange('log')}
       >
@@ -57,6 +47,16 @@ export function MobileTabBar({ active, onChange }: Props) {
           ☰
         </span>
         <span>로그</span>
+      </button>
+      <button
+        type="button"
+        className={['mobile-tab', active === 'profile' ? 'is-active' : ''].filter(Boolean).join(' ')}
+        onClick={() => onChange('profile')}
+      >
+        <span className="mobile-tab-icon" aria-hidden="true">
+          ◉
+        </span>
+        <span>마이</span>
       </button>
     </nav>
   )
