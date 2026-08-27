@@ -103,7 +103,6 @@ export function MobileApp({
               variant="mobile"
               onMonthChange={onMonthChange}
               onSelectDate={openDay}
-              onSelectRehearsal={onSelectRehearsal}
             />
           ) : (
             <DayTimeline

@@ -116,7 +116,33 @@ export function CalendarBoard({
           const dayEvents = eventsFor(day)
           const inMonth = isSameMonth(day, month)
 
-          return (
+          return variant === 'mobile' ? (
+            <button
+              key={day.toISOString()}
+              type="button"
+              className={[
+                'day-cell',
+                inMonth ? '' : 'is-outside',
+                isToday(day) ? 'is-today' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => onSelectDate(day)}
+              aria-label={`${format(day, 'M월 d일', { locale: ko })} 일정 보기`}
+            >
+              <span className="day-number">{format(day, 'd')}</span>
+              <div className="day-events">
+                {dayEvents.slice(0, 3).map((event) => (
+                  <span key={event.id} className="event-chip event-chip--readonly">
+                    {event.teamName || event.startTime}
+                  </span>
+                ))}
+                {dayEvents.length > 3 ? (
+                  <span className="event-more">+{dayEvents.length - 3}</span>
+                ) : null}
+              </div>
+            </button>
+          ) : (
             <div
               key={day.toISOString()}
               className={[
