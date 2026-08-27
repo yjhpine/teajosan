@@ -235,26 +235,9 @@ export async function updateRehearsal(
 ): Promise<AppData> {
   assertConfigured()
   const ip = await fetchClientIp()
-
-  const { data: existing, error: existingError } = await supabase
-    .from('rehearsals')
-    .select('created_by_cohort,created_by_name')
-    .eq('id', id)
-    .maybeSingle()
-  if (existingError) throw existingError
-  if (!existing) throw new Error('합주를 찾을 수 없습니다.')
-  if (
-    !isSameMember(actor, {
-      cohort: (existing as { created_by_cohort: string }).created_by_cohort,
-      name: (existing as { created_by_name: string }).created_by_name,
-    })
-  ) {
-    throw new Error('본인이 등록한 합주만 수정할 수 있습니다.')
-  }
-
   await assertNoTimeOverlap(input, id)
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('rehearsals')
     .update({
       date: input.date,
@@ -266,8 +249,14 @@ export async function updateRehearsal(
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .eq('created_by_cohort', actor.cohort)
+    .eq('created_by_name', actor.name)
+    .select('id')
 
   if (error) throw error
+  if (!data?.length) {
+    throw new Error('본인이 등록한 합주만 수정할 수 있습니다.')
+  }
 
   await insertLog({
     actor,
@@ -286,27 +275,38 @@ export async function deleteRehearsal(actor: Member, id: string): Promise<AppDat
 
   const { data: existing, error: existingError } = await supabase
     .from('rehearsals')
-    .select('date,created_by_cohort,created_by_name')
+    .select('date,created_by_cohort,created_by_name,team_name')
     .eq('id', id)
     .maybeSingle()
   if (existingError) throw existingError
   if (!existing) throw new Error('합주를 찾을 수 없습니다.')
-  if (
-    !isSameMember(actor, {
-      cohort: (existing as { created_by_cohort: string }).created_by_cohort,
-      name: (existing as { created_by_name: string }).created_by_name,
-    })
-  ) {
+
+  const owner = {
+    cohort: String((existing as { created_by_cohort: string }).created_by_cohort ?? ''),
+    name: String((existing as { created_by_name: string }).created_by_name ?? ''),
+  }
+  if (!isSameMember(actor, owner)) {
     throw new Error('본인이 등록한 합주만 삭제할 수 있습니다.')
   }
 
-  const { error } = await supabase.from('rehearsals').delete().eq('id', id)
-  if (error) throw error
+  const { data: deleted, error } = await supabase
+    .from('rehearsals')
+    .delete()
+    .eq('id', id)
+    .eq('created_by_cohort', actor.cohort)
+    .eq('created_by_name', actor.name)
+    .select('id')
 
+  if (error) throw error
+  if (!deleted?.length) {
+    throw new Error('본인이 등록한 합주만 삭제할 수 있습니다.')
+  }
+
+  const row = existing as { date?: string; team_name?: string }
   await insertLog({
     actor,
     action: 'delete',
-    summary: `${memberLabel(actor)} · ${(existing as { date?: string }).date ?? '일정'} 합주 삭제`,
+    summary: `${memberLabel(actor)} · ${row.date ?? '일정'} ${row.team_name || '합주'} 삭제`,
     ip,
   })
   await upsertDevice(actor, ip)

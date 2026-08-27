@@ -33,9 +33,16 @@ export type AppData = {
 }
 
 export function memberLabel(member: Member): string {
-  return `${member.cohort}기 ${member.name}`
+  return `${normalizeMemberField(member.cohort)}기 ${normalizeMemberField(member.name)}`
+}
+
+export function normalizeMemberField(value: string): string {
+  return value.normalize('NFC').trim()
 }
 
 export function isSameMember(a: Member, b: Member): boolean {
-  return a.cohort === b.cohort && a.name === b.name
+  return (
+    normalizeMemberField(a.cohort) === normalizeMemberField(b.cohort) &&
+    normalizeMemberField(a.name) === normalizeMemberField(b.name)
+  )
 }
