@@ -1,4 +1,5 @@
 import {
+  addDays,
   addMonths,
   eachDayOfInterval,
   endOfMonth,
@@ -23,6 +24,25 @@ type Props = {
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+const MOBILE_WEEK_COUNT = 4
+
+function buildDayRange(month: Date, variant: 'desktop' | 'mobile') {
+  const today = new Date()
+  const monthStart = startOfMonth(month)
+
+  if (variant === 'mobile') {
+    const gridStart = isSameMonth(month, today)
+      ? startOfWeek(today, { weekStartsOn: 0 })
+      : startOfWeek(monthStart, { weekStartsOn: 0 })
+    const gridEnd = addDays(gridStart, MOBILE_WEEK_COUNT * 7 - 1)
+    return eachDayOfInterval({ start: gridStart, end: gridEnd })
+  }
+
+  return eachDayOfInterval({
+    start: startOfWeek(monthStart, { weekStartsOn: 0 }),
+    end: endOfWeek(endOfMonth(month), { weekStartsOn: 0 }),
+  })
+}
 
 export function CalendarBoard({
   month,
@@ -32,17 +52,7 @@ export function CalendarBoard({
   onSelectDate,
   onSelectRehearsal,
 }: Props) {
-  const today = new Date()
-  const monthStart = startOfMonth(month)
-  const gridStart =
-    variant === 'mobile' && isSameMonth(month, today)
-      ? startOfWeek(today, { weekStartsOn: 0 })
-      : startOfWeek(monthStart, { weekStartsOn: 0 })
-
-  const days = eachDayOfInterval({
-    start: gridStart,
-    end: endOfWeek(endOfMonth(month), { weekStartsOn: 0 }),
-  })
+  const days = buildDayRange(month, variant)
 
   function eventsFor(day: Date) {
     const key = format(day, 'yyyy-MM-dd')
@@ -69,7 +79,7 @@ export function CalendarBoard({
         <div className="month-nav">
           <button
             type="button"
-            className="btn-ghost"
+            className="btn-ghost btn-ghost--compact"
             onClick={() => onMonthChange(subMonths(month, 1))}
             aria-label="이전 달"
           >
@@ -77,14 +87,14 @@ export function CalendarBoard({
           </button>
           <button
             type="button"
-            className="btn-ghost"
+            className="btn-ghost btn-ghost--compact"
             onClick={() => onMonthChange(new Date())}
           >
             오늘
           </button>
           <button
             type="button"
-            className="btn-ghost"
+            className="btn-ghost btn-ghost--compact"
             onClick={() => onMonthChange(addMonths(month, 1))}
             aria-label="다음 달"
           >

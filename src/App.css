@@ -822,30 +822,66 @@
 }
 
 .mobile-header--compact {
-  padding-bottom: 0.2rem;
+  padding-bottom: 0;
   border-bottom: none;
 }
 
 .mobile-header--compact .mobile-member-line {
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0;
 }
 
 .mobile-main--month {
-  padding-top: 0.2rem;
+  padding-top: 0;
+  padding-bottom: 0.5rem;
+}
+
+.mobile-shell .calendar-board--mobile {
+  margin-top: 0;
 }
 
 .mobile-shell .calendar-board--mobile .calendar-toolbar {
-  margin-bottom: 0.35rem;
+  margin: 0 0 0.3rem;
+  gap: 0.35rem;
 }
 
 .calendar-board--mobile .calendar-title--mobile {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
 }
 
 .calendar-board--mobile .calendar-toolbar {
   align-items: center;
+}
+
+.calendar-board--mobile .month-nav {
+  gap: 0.2rem;
+}
+
+.calendar-board--mobile .btn-ghost--compact {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.calendar-board--mobile .weekday-row {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+}
+
+.calendar-board--mobile .weekday-cell {
+  padding: 0.2rem;
+  font-size: 0.72rem;
+}
+
+.calendar-board--mobile .day-grid {
+  gap: 0.25rem;
+}
+
+.calendar-board--mobile .day-cell {
+  min-height: 3.1rem;
+  padding: 0.3rem;
+  gap: 0.2rem;
 }
 
 .event-chip--readonly {
@@ -864,7 +900,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  padding: calc(0.65rem + env(safe-area-inset-top, 0px)) 1rem 0.75rem;
+  padding: calc(0.5rem + env(safe-area-inset-top, 0px)) 0.85rem 0.35rem;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 250, 243, 0.92);
   backdrop-filter: blur(10px);
