@@ -6,7 +6,17 @@ import {
   persistSession,
 } from './lib/device'
 import { supabase, supabaseConfigured } from './lib/supabase'
-import type { ActivityLog, AppData, Member, Rehearsal, Session, Song, SongDraft } from './types'
+import type {
+  ActivityLog,
+  AppData,
+  InstrumentSession,
+  Member,
+  MemberProfile,
+  Rehearsal,
+  Session,
+  Song,
+  SongDraft,
+} from './types'
 
 type RehearsalRow = {
   id: string
@@ -312,6 +322,74 @@ export async function fetchRoster(): Promise<string[]> {
     .order('name', { ascending: true })
   if (error) throw error
   return (data ?? []).map((row) => String((row as { name: string }).name))
+}
+
+const SESSION_IDS = new Set<InstrumentSession>([
+  'vocal',
+  'guitar',
+  'bass',
+  'drums',
+  'keyboard',
+])
+
+function mapSessions(raw: unknown): InstrumentSession[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((value) => String(value))
+    .filter((value): value is InstrumentSession => SESSION_IDS.has(value as InstrumentSession))
+}
+
+export async function getMyProfile(session: Session): Promise<MemberProfile> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { data, error } = await supabase.rpc('get_my_profile', { p_token: token })
+  if (error) throw mapRpcError(error, '프로필을 불러오지 못했습니다.')
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row?.cohort || !row?.name) {
+    throw new Error('프로필을 불러오지 못했습니다.')
+  }
+  return {
+    cohort: String(row.cohort),
+    name: String(row.name),
+    sessions: mapSessions(row.sessions),
+  }
+}
+
+export async function setMySessions(
+  session: Session,
+  sessions: InstrumentSession[],
+): Promise<MemberProfile> {
+  assertConfigured()
+  const token = requireSessionToken(session)
+  const { data, error } = await supabase.rpc('set_my_sessions', {
+    p_token: token,
+    p_sessions: sessions,
+  })
+  if (error) throw mapRpcError(error, '세션 저장에 실패했습니다.')
+  const row = Array.isArray(data) ? data[0] : data
+  if (!row?.cohort || !row?.name) {
+    throw new Error('세션 저장에 실패했습니다.')
+  }
+  return {
+    cohort: String(row.cohort),
+    name: String(row.name),
+    sessions: mapSessions(row.sessions),
+  }
+}
+
+export async function fetchMemberProfiles(): Promise<MemberProfile[]> {
+  assertConfigured()
+  const { data, error } = await supabase.rpc('list_member_profiles')
+  if (error) throw mapRpcError(error, '멤버 목록을 불러오지 못했습니다.')
+  const rows = Array.isArray(data) ? data : data ? [data] : []
+  return rows
+    .filter((row) => row?.name)
+    .map((row) => ({
+      cohort: '',
+      name: String(row.name),
+      sessions: mapSessions(row.sessions),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
 }
 
 export async function createSong(session: Session, draft: Partial<SongDraft> = {}): Promise<Song[]> {

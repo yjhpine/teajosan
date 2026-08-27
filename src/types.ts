@@ -3,8 +3,23 @@ export type Member = {
   name: string
 }
 
+export type InstrumentSession = 'vocal' | 'guitar' | 'bass' | 'drums' | 'keyboard'
+
+export const INSTRUMENT_SESSIONS: { id: InstrumentSession; label: string }[] = [
+  { id: 'vocal', label: '보컬' },
+  { id: 'guitar', label: '기타' },
+  { id: 'bass', label: '베이스' },
+  { id: 'drums', label: '드럼' },
+  { id: 'keyboard', label: '키보드' },
+]
+
+export type MemberProfile = Member & {
+  sessions: InstrumentSession[]
+}
+
 export type Session = Member & {
   token: string
+  sessions?: InstrumentSession[]
 }
 
 export type Rehearsal = {

@@ -1482,4 +1482,75 @@
   }
 }
 
+.session-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 1.25rem 0 1rem;
+}
+
+.session-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 252, 247, 0.8);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.session-check input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
+.session-check.is-checked {
+  border-color: rgba(232, 58, 44, 0.45);
+  background: rgba(232, 58, 44, 0.08);
+}
+
+.profile-page {
+  position: relative;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 1.4rem 1.3rem 1.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  animation: rise 0.45s ease both;
+}
+
+.profile-header h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.profile-saved {
+  margin: 0 0 0.85rem;
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.mobile-main--profile {
+  padding: 0.75rem 0.85rem 5.5rem;
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    padding: 0.4rem 0.2rem 1rem;
+  }
+
+  .session-checks {
+    grid-template-columns: 1fr;
+  }
+}
+
 

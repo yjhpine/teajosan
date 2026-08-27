@@ -60,9 +60,13 @@ export function RehearsalModal({
   const [localError, setLocalError] = useState('')
   const canManage = !editing || isSameMember(member, editing.createdBy)
 
-  const songTitles = songs
-    .map((song) => song.title.trim())
-    .filter(Boolean)
+  const mySongs = songs.filter((song) =>
+    [song.vocal, song.guitar1, song.guitar2, song.bass, song.drums, song.keyboard].includes(
+      member.name,
+    ),
+  )
+
+  const songTitles = mySongs.map((song) => song.title.trim()).filter(Boolean)
 
   const selectOptions = [...songTitles]
   if (draft.teamName && !selectOptions.includes(draft.teamName)) {
@@ -147,7 +151,9 @@ export function RehearsalModal({
               disabled={!canManage || songTitles.length === 0}
             >
               <option value="">
-                {songTitles.length === 0 ? '곡 리스트에 곡을 먼저 추가하세요' : '곡 선택'}
+                {songTitles.length === 0
+                  ? '배정된 곡이 없습니다 (곡 리스트에서 본인을 넣어 주세요)'
+                  : '곡 선택'}
               </option>
               {selectOptions.map((title) => (
                 <option key={title} value={title}>

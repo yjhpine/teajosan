@@ -1,17 +1,16 @@
-import { useEffect, useState } from 'react'
-import type { Session, Song, SongDraft } from '../types'
+import { useEffect, useMemo, useState } from 'react'
+import type { InstrumentSession, MemberProfile, Session, Song, SongDraft } from '../types'
 
 type SessionKey = keyof Omit<SongDraft, 'title'>
 
 type Props = {
   session: Session
   songs: Song[]
-  roster: string[]
+  profiles: MemberProfile[]
   busy?: boolean
   onCreate: () => void | Promise<void>
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
-  onAddRoster?: (name: string) => void | Promise<void>
 }
 
 const SESSION_COLS: { key: SessionKey | 'guitar'; label: string; className: string }[] = [
@@ -21,6 +20,12 @@ const SESSION_COLS: { key: SessionKey | 'guitar'; label: string; className: stri
   { key: 'drums', label: '드럼', className: 'song-col--drums' },
   { key: 'keyboard', label: '키보드', className: 'song-col--keyboard' },
 ]
+
+function namesForSession(profiles: MemberProfile[], session: InstrumentSession): string[] {
+  return profiles
+    .filter((profile) => profile.sessions.includes(session))
+    .map((profile) => profile.name)
+}
 
 function MemberSelect({
   value,
@@ -56,13 +61,19 @@ function MemberSelect({
 export function SongListBoard({
   session: _session,
   songs,
-  roster,
+  profiles,
   busy = false,
   onCreate,
   onUpdate,
   onDelete,
 }: Props) {
   const [draftTitles, setDraftTitles] = useState<Record<string, string>>({})
+
+  const vocalRoster = useMemo(() => namesForSession(profiles, 'vocal'), [profiles])
+  const guitarRoster = useMemo(() => namesForSession(profiles, 'guitar'), [profiles])
+  const bassRoster = useMemo(() => namesForSession(profiles, 'bass'), [profiles])
+  const drumsRoster = useMemo(() => namesForSession(profiles, 'drums'), [profiles])
+  const keyboardRoster = useMemo(() => namesForSession(profiles, 'keyboard'), [profiles])
 
   useEffect(() => {
     const next: Record<string, string> = {}
@@ -82,7 +93,7 @@ export function SongListBoard({
         <div>
           <p className="section-kicker">Setlist</p>
           <h2>곡 리스트</h2>
-          <p className="panel-lead">가수/곡을 적고, 세션별 멤버를 고르세요.</p>
+          <p className="panel-lead">가수/곡을 적고, 해당 세션을 선택한 멤버만 고를 수 있습니다.</p>
         </div>
         <button type="button" className="btn-primary" disabled={busy} onClick={() => void onCreate()}>
           곡 추가
@@ -132,7 +143,7 @@ export function SongListBoard({
                   <td className="song-col--vocal">
                     <MemberSelect
                       value={song.vocal}
-                      roster={roster}
+                      roster={vocalRoster}
                       disabled={busy}
                       className="is-vocal"
                       onChange={(next) => void onUpdate(song.id, { vocal: next })}
@@ -142,14 +153,14 @@ export function SongListBoard({
                     <div className="song-guitar-pair">
                       <MemberSelect
                         value={song.guitar1}
-                        roster={roster}
+                        roster={guitarRoster}
                         disabled={busy}
                         className="is-guitar"
                         onChange={(next) => void onUpdate(song.id, { guitar1: next })}
                       />
                       <MemberSelect
                         value={song.guitar2}
-                        roster={roster}
+                        roster={guitarRoster}
                         disabled={busy}
                         className="is-guitar"
                         onChange={(next) => void onUpdate(song.id, { guitar2: next })}
@@ -159,7 +170,7 @@ export function SongListBoard({
                   <td className="song-col--bass">
                     <MemberSelect
                       value={song.bass}
-                      roster={roster}
+                      roster={bassRoster}
                       disabled={busy}
                       className="is-bass"
                       onChange={(next) => void onUpdate(song.id, { bass: next })}
@@ -168,7 +179,7 @@ export function SongListBoard({
                   <td className="song-col--drums">
                     <MemberSelect
                       value={song.drums}
-                      roster={roster}
+                      roster={drumsRoster}
                       disabled={busy}
                       className="is-drums"
                       onChange={(next) => void onUpdate(song.id, { drums: next })}
@@ -177,7 +188,7 @@ export function SongListBoard({
                   <td className="song-col--keyboard">
                     <MemberSelect
                       value={song.keyboard}
-                      roster={roster}
+                      roster={keyboardRoster}
                       disabled={busy}
                       className="is-keyboard"
                       onChange={(next) => void onUpdate(song.id, { keyboard: next })}

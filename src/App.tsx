@@ -4,7 +4,9 @@ import { ActivityPanel } from './components/ActivityPanel'
 import { CalendarBoard } from './components/CalendarBoard'
 import { LoginScreen } from './components/LoginScreen'
 import { MobileApp } from './components/mobile/MobileApp'
+import { ProfilePage } from './components/ProfilePage'
 import { RehearsalModal } from './components/RehearsalModal'
+import { SessionSetupScreen } from './components/SessionSetupScreen'
 import { SongListBoard } from './components/SongListBoard'
 import { WeekTimetable } from './components/WeekTimetable'
 import { useMediaQuery } from './hooks/useMediaQuery'
@@ -16,29 +18,50 @@ import {
   deleteRehearsal,
   deleteSong,
   fetchAppData,
-  fetchRoster,
+  fetchMemberProfiles,
   fetchSongs,
+  getMyProfile,
   loadSession,
   loginMember,
   resumeSession,
+  setMySessions,
   subscribeAppDataChanges,
   updateRehearsal,
   updateSong,
 } from './storage'
-import type { AppData, Member, Rehearsal, Session, Song, SongDraft } from './types'
+import type {
+  AppData,
+  InstrumentSession,
+  Member,
+  MemberProfile,
+  Rehearsal,
+  Session,
+  Song,
+  SongDraft,
+} from './types'
 import { isSameMember, memberLabel } from './types'
 import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
 
-type AppPage = 'calendar' | 'songs'
+type AppPage = 'calendar' | 'songs' | 'profile'
+
+async function loadExtras(session: Session) {
+  const [nextSongs, nextProfiles, nextProfile] = await Promise.all([
+    fetchSongs(),
+    fetchMemberProfiles(),
+    getMyProfile(session),
+  ])
+  return { nextSongs, nextProfiles, nextProfile }
+}
 
 function App() {
   const isMobile = useMediaQuery('(max-width: 768px)')
   const [member, setMember] = useState<Session | null>(null)
+  const [profile, setProfile] = useState<MemberProfile | null>(null)
   const [data, setData] = useState<AppData>(emptyData)
   const [songs, setSongs] = useState<Song[]>([])
-  const [roster, setRoster] = useState<string[]>([])
+  const [profiles, setProfiles] = useState<MemberProfile[]>([])
   const [page, setPage] = useState<AppPage>('calendar')
   const [booting, setBooting] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -80,10 +103,12 @@ function App() {
         if (cancelled) return
         setMember(saved)
         setData(next)
-        const [nextSongs, nextRoster] = await Promise.all([fetchSongs(), fetchRoster()])
+        const extras = await loadExtras(saved)
         if (cancelled) return
-        setSongs(nextSongs)
-        setRoster(nextRoster)
+        setSongs(extras.nextSongs)
+        setProfiles(extras.nextProfiles)
+        setProfile(extras.nextProfile)
+        setMember({ ...saved, sessions: extras.nextProfile.sessions })
       } catch (err) {
         if (cancelled) return
         console.error(err)
@@ -111,15 +136,15 @@ function App() {
       debounceTimer = setTimeout(() => {
         void (async () => {
           try {
-            const [nextData, nextSongs, nextRoster] = await Promise.all([
+            const [nextData, nextSongs, nextProfiles] = await Promise.all([
               fetchAppData(),
               fetchSongs(),
-              fetchRoster(),
+              fetchMemberProfiles(),
             ])
             if (!cancelled) {
               setData(nextData)
               setSongs(nextSongs)
-              setRoster(nextRoster)
+              setProfiles(nextProfiles)
             }
           } catch (err) {
             console.error(err)
@@ -179,35 +204,60 @@ function App() {
 
   async function handleLogin(next: Member, pin: string) {
     const ok = await runAction(() => loginMember(next, pin))
-    if (ok) {
-      const saved = loadSession()
-      if (saved) setMember(saved)
-      try {
-        const [nextSongs, nextRoster] = await Promise.all([fetchSongs(), fetchRoster()])
-        setSongs(nextSongs)
-        setRoster(nextRoster)
-      } catch (err) {
-        console.error(err)
-      }
+    if (!ok) return
+    const saved = loadSession()
+    if (!saved) return
+    setMember(saved)
+    try {
+      const extras = await loadExtras(saved)
+      setSongs(extras.nextSongs)
+      setProfiles(extras.nextProfiles)
+      setProfile(extras.nextProfile)
+      setMember({ ...saved, sessions: extras.nextProfile.sessions })
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '프로필을 불러오지 못했습니다.')
+    }
+  }
+
+  async function handleSaveSessions(sessions: InstrumentSession[]) {
+    if (!member) return
+    setBusy(true)
+    setError('')
+    try {
+      const nextProfile = await setMySessions(member, sessions)
+      setProfile(nextProfile)
+      setMember({ ...member, sessions: nextProfile.sessions })
+      const nextProfiles = await fetchMemberProfiles()
+      setProfiles(nextProfiles)
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : '세션 저장에 실패했습니다.')
+    } finally {
+      setBusy(false)
     }
   }
 
   async function handleLogout() {
     await clearSession()
     setMember(null)
+    setProfile(null)
     setData(emptyData)
     setSongs([])
-    setRoster([])
+    setProfiles([])
     setPage('calendar')
     setViewMode('month')
   }
 
   async function handleRefresh() {
+    if (!member) return
     await runAction(() => fetchAppData())
     try {
-      const [nextSongs, nextRoster] = await Promise.all([fetchSongs(), fetchRoster()])
-      setSongs(nextSongs)
-      setRoster(nextRoster)
+      const extras = await loadExtras(member)
+      setSongs(extras.nextSongs)
+      setProfiles(extras.nextProfiles)
+      setProfile(extras.nextProfile)
+      setMember({ ...member, sessions: extras.nextProfile.sessions })
     } catch (err) {
       console.error(err)
     }
@@ -250,11 +300,16 @@ function App() {
   }
 
   if (!member) {
+    return <LoginScreen onLogin={handleLogin} busy={busy} error={error} />
+  }
+
+  if (!profile || profile.sessions.length === 0) {
     return (
-      <LoginScreen
-        onLogin={handleLogin}
+      <SessionSetupScreen
+        member={member}
         busy={busy}
         error={error}
+        onSave={handleSaveSessions}
       />
     )
   }
@@ -263,7 +318,7 @@ function App() {
     <SongListBoard
       session={member}
       songs={songs}
-      roster={roster}
+      profiles={profiles}
       busy={busy}
       onCreate={() => void runSongAction(() => createSong(member))}
       onUpdate={(id, draft: Partial<SongDraft>) =>
@@ -327,9 +382,10 @@ function App() {
       <>
         <MobileApp
           member={member}
+          profile={profile}
           data={data}
           songs={songs}
-          roster={roster}
+          profiles={profiles}
           busy={busy}
           error={error}
           month={month}
@@ -347,6 +403,7 @@ function App() {
           onCreateSong={() => void runSongAction(() => createSong(member))}
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
+          onSaveSessions={handleSaveSessions}
         />
         {modal}
       </>
@@ -378,6 +435,13 @@ function App() {
             >
               곡 리스트
             </button>
+            <button
+              type="button"
+              className={['page-tab', page === 'profile' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => setPage('profile')}
+            >
+              마이
+            </button>
           </nav>
           <span className="member-pill">{memberLabel(member)}</span>
           <button type="button" className="btn-ghost" onClick={() => void handleRefresh()} disabled={busy}>
@@ -394,6 +458,10 @@ function App() {
 
       {page === 'songs' ? (
         <main className="layout layout--songs">{songBoard}</main>
+      ) : page === 'profile' ? (
+        <main className="layout layout--songs">
+          <ProfilePage profile={profile} busy={busy} onSave={handleSaveSessions} />
+        </main>
       ) : (
         <main className="layout">
           <div className="main-column">

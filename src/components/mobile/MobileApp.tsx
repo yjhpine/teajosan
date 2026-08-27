@@ -3,21 +3,32 @@ import { ko } from 'date-fns/locale'
 import { useEffect, useState } from 'react'
 import { ActivityPanel } from '../ActivityPanel'
 import { CalendarBoard } from '../CalendarBoard'
+import { ProfilePage } from '../ProfilePage'
 import { SongListBoard } from '../SongListBoard'
-import type { AppData, Member, Rehearsal, Session, Song, SongDraft } from '../../types'
+import type {
+  AppData,
+  InstrumentSession,
+  Member,
+  MemberProfile,
+  Rehearsal,
+  Session,
+  Song,
+  SongDraft,
+} from '../../types'
 import { DayTimeline } from './DayTimeline'
 import { MobileHeader } from './MobileHeader'
 import { MobileTabBar } from './MobileTabBar'
 
 type ScheduleView = 'month' | 'day'
-type MobileTab = 'schedule' | 'songs' | 'log'
-type AppPage = 'calendar' | 'songs'
+type MobileTab = 'schedule' | 'songs' | 'profile' | 'log'
+type AppPage = 'calendar' | 'songs' | 'profile'
 
 type Props = {
   member: Member
+  profile: MemberProfile
   data: AppData
   songs: Song[]
-  roster: string[]
+  profiles: MemberProfile[]
   busy: boolean
   error: string
   month: Date
@@ -35,13 +46,15 @@ type Props = {
   onCreateSong: () => void
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onDeleteSong: (id: string) => void
+  onSaveSessions: (sessions: InstrumentSession[]) => void | Promise<void>
 }
 
 export function MobileApp({
   member,
+  profile,
   data,
   songs,
-  roster,
+  profiles,
   busy,
   error,
   month,
@@ -59,19 +72,24 @@ export function MobileApp({
   onCreateSong,
   onUpdateSong,
   onDeleteSong,
+  onSaveSessions,
 }: Props) {
-  const [tab, setTab] = useState<MobileTab>(page === 'songs' ? 'songs' : 'schedule')
+  const [tab, setTab] = useState<MobileTab>(
+    page === 'songs' ? 'songs' : page === 'profile' ? 'profile' : 'schedule',
+  )
   const isMonthHome = tab === 'schedule' && scheduleView === 'month'
 
   useEffect(() => {
-    if (page === 'songs' && tab !== 'songs') setTab('songs')
-    if (page === 'calendar' && tab === 'songs') setTab('schedule')
-  }, [page, tab])
+    if (page === 'songs') setTab('songs')
+    else if (page === 'profile') setTab('profile')
+    else if (tab === 'songs' || tab === 'profile') setTab('schedule')
+  }, [page])
 
   function handleTabChange(next: MobileTab) {
     setTab(next)
     if (next === 'songs') onPageChange('songs')
-    if (next === 'schedule') onPageChange('calendar')
+    else if (next === 'profile') onPageChange('profile')
+    else if (next === 'schedule') onPageChange('calendar')
   }
 
   function openDay(date: Date) {
@@ -86,18 +104,22 @@ export function MobileApp({
       ? '활동 로그'
       : tab === 'songs'
         ? '곡 리스트'
-        : scheduleView === 'day'
-          ? format(selectedDate, 'M월 d일 EEEE', { locale: ko })
-          : ''
+        : tab === 'profile'
+          ? '마이페이지'
+          : scheduleView === 'day'
+            ? format(selectedDate, 'M월 d일 EEEE', { locale: ko })
+            : ''
 
   const headerSubtitle =
     tab === 'log'
       ? '합주 등록·삭제 기록'
       : tab === 'songs'
         ? '가수/곡 · 세션 멤버'
-        : scheduleView === 'day'
-          ? '시간표 블록을 눌러 수정·삭제 · +로 추가'
-          : undefined
+        : tab === 'profile'
+          ? '담당 세션 관리'
+          : scheduleView === 'day'
+            ? '시간표 블록을 눌러 수정·삭제 · +로 추가'
+            : undefined
 
   return (
     <div className="mobile-shell">
@@ -124,6 +146,7 @@ export function MobileApp({
           isMonthHome ? 'mobile-main--month' : '',
           tab === 'log' ? 'mobile-main--log' : '',
           tab === 'songs' ? 'mobile-main--songs' : '',
+          tab === 'profile' ? 'mobile-main--profile' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -149,12 +172,14 @@ export function MobileApp({
           <SongListBoard
             session={member as Session}
             songs={songs}
-            roster={roster}
+            profiles={profiles}
             busy={busy}
             onCreate={onCreateSong}
             onUpdate={onUpdateSong}
             onDelete={onDeleteSong}
           />
+        ) : tab === 'profile' ? (
+          <ProfilePage profile={profile} busy={busy} onSave={onSaveSessions} />
         ) : (
           <ActivityPanel logs={data.logs} variant="mobile" />
         )}
