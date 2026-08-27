@@ -130,7 +130,6 @@ function SessionSlot({
     <div className={['song-mobile-slot', colClass].filter(Boolean).join(' ')}>
       <span className="song-mobile-slot-text">
         <span className="song-mobile-slot-label">{label}</span>
-        <span className="song-mobile-slot-sep">:</span>
         <span className={['song-mobile-slot-name', value ? '' : 'is-empty'].filter(Boolean).join(' ')}>
           {value || '—'}
         </span>
