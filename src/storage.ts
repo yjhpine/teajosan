@@ -732,7 +732,8 @@ export async function fetchPerformances(): Promise<Performance[]> {
     supabase
       .from('performances')
       .select('*')
-      .order('performance_date', { ascending: false })
+      .order('performance_date', { ascending: true })
+      .order('start_time', { ascending: true })
       .order('created_at', { ascending: false }),
     supabase
       .from('performance_songs')
