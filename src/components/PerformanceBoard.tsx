@@ -73,9 +73,9 @@ export function PerformanceBoard({
   const sorted = useMemo(
     () =>
       [...performances].sort((a, b) => {
-        if (a.date !== b.date) return a.date < b.date ? 1 : -1
-        if (a.startTime !== b.startTime) return a.startTime < b.startTime ? 1 : -1
-        return a.createdAt < b.createdAt ? 1 : -1
+        if (a.date !== b.date) return a.date < b.date ? -1 : 1
+        if (a.startTime !== b.startTime) return a.startTime < b.startTime ? -1 : 1
+        return a.createdAt < b.createdAt ? -1 : 1
       }),
     [performances],
   )
