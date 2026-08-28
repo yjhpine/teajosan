@@ -117,6 +117,19 @@ select
   to_regprocedure('public.get_app_status()') is not null as has_get_app_status,
   exists (
     select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'members'
+      and column_name = 'is_admin'
+  ) as members_has_is_admin,
+  exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'is_admin_member'
+  ) as has_is_admin_member,
+  exists (
+    select 1
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'assert_valid_session'

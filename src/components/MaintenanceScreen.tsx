@@ -3,9 +3,10 @@ import { fetchAppStatus } from '../storage'
 
 type Props = {
   message?: string
+  onAdminLogin?: () => void
 }
 
-export function MaintenanceScreen({ message }: Props) {
+export function MaintenanceScreen({ message, onAdminLogin }: Props) {
   const [checking, setChecking] = useState(false)
 
   async function retry() {
@@ -39,6 +40,11 @@ export function MaintenanceScreen({ message }: Props) {
         <button type="button" className="btn-primary maintenance-retry" disabled={checking} onClick={() => void retry()}>
           {checking ? '확인 중…' : '다시 확인'}
         </button>
+        {onAdminLogin ? (
+          <button type="button" className="btn-ghost maintenance-admin-login" onClick={onAdminLogin}>
+            관리자 로그인
+          </button>
+        ) : null}
       </section>
     </div>
   )

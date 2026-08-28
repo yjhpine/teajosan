@@ -14,11 +14,18 @@ type Props = {
   ) => void | Promise<void>
   busy?: boolean
   error?: string
+  maintenanceMode?: boolean
 }
 
 type Mode = 'login' | 'signup'
 
-export function LoginScreen({ onLogin, onSignup, busy = false, error = '' }: Props) {
+export function LoginScreen({
+  onLogin,
+  onSignup,
+  busy = false,
+  error = '',
+  maintenanceMode = false,
+}: Props) {
   const [mode, setMode] = useState<Mode>('login')
   const [cohort, setCohort] = useState('')
   const [name, setName] = useState('')
@@ -91,6 +98,10 @@ export function LoginScreen({ onLogin, onSignup, busy = false, error = '' }: Pro
         <p className="login-kicker">School Band Calendar</p>
         <h1 className="brand-mark">태조산</h1>
 
+        {maintenanceMode ? (
+          <p className="login-lead maintenance-login-notice">점검 중입니다. 관리자만 로그인할 수 있습니다.</p>
+        ) : null}
+
         <div className="auth-tabs" role="tablist" aria-label="인증">
           <button
             type="button"
@@ -102,16 +113,18 @@ export function LoginScreen({ onLogin, onSignup, busy = false, error = '' }: Pro
           >
             로그인
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === 'signup'}
-            className={['auth-tab', mode === 'signup' ? 'is-active' : ''].filter(Boolean).join(' ')}
-            onClick={() => switchMode('signup')}
-            disabled={busy}
-          >
-            가입
-          </button>
+          {!maintenanceMode ? (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'signup'}
+              className={['auth-tab', mode === 'signup' ? 'is-active' : ''].filter(Boolean).join(' ')}
+              onClick={() => switchMode('signup')}
+              disabled={busy}
+            >
+              가입
+            </button>
+          ) : null}
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>

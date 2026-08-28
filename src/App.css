@@ -85,6 +85,26 @@
   width: 100%;
 }
 
+.maintenance-admin-login {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.maintenance-login-notice {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+}
+
+.banner-maintenance-admin {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  background: rgba(180, 120, 40, 0.14);
+  border-bottom: 1px solid rgba(180, 120, 40, 0.25);
+  color: var(--ink);
+  text-align: center;
+  font-weight: 600;
+}
+
 .auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
