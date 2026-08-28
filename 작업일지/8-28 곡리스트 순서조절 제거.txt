@@ -1,0 +1,11 @@
+작업일: 2026-08-28
+주제: 곡 리스트 순서 조절 버튼 및 기능 제거
+
+## 변경
+- SongListBoard: ↑↓ OrderButtons, moveSong, onReorder prop 제거
+- App: reorderSongs import·호출 제거
+- MobileApp: onReorderSongs prop 제거
+- App.css: 순서 조절 버튼 모바일 CSS 제거
+
+## 유지
+- 공연 탭 세트리스트 순서 조절(PerformanceBoard)은 그대로
