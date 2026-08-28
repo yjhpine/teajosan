@@ -1,0 +1,10 @@
+작업일: 2026-08-28
+주제: 공연 날짜에 시작 시간 표시
+
+## 변경
+- performances.start_time 컬럼 + create/update RPC
+- 등록/수정 폼에 시작 시간 입력 (기본 19:00)
+- 카드 날짜 표시: `2026.8.28 · 19:00` 형식
+
+## SQL (Supabase 수동 실행)
+supabase/migrations/20260828_performance_start_time.sql

@@ -57,6 +57,7 @@ export type Performance = {
   id: string
   title: string
   date: string
+  startTime: string
   place: string
   note: string
   songIds: string[]

@@ -711,6 +711,7 @@ type PerformanceRow = {
   id: string
   title: string
   performance_date: string
+  start_time: string | null
   place: string | null
   note: string | null
   created_by_cohort: string
@@ -752,6 +753,7 @@ export async function fetchPerformances(): Promise<Performance[]> {
     id: row.id,
     title: row.title ?? '',
     date: row.performance_date,
+    startTime: row.start_time?.trim() ?? '',
     place: row.place ?? '',
     note: row.note ?? '',
     songIds: songIdsByPerf.get(row.id) ?? [],
@@ -763,7 +765,14 @@ export async function fetchPerformances(): Promise<Performance[]> {
 
 export async function createPerformance(
   session: Session,
-  draft: { title: string; date: string; place: string; note: string; songIds: string[] },
+  draft: {
+    title: string
+    date: string
+    startTime: string
+    place: string
+    note: string
+    songIds: string[]
+  },
 ): Promise<Performance[]> {
   assertConfigured()
   const token = requireSessionToken(session)
@@ -771,6 +780,7 @@ export async function createPerformance(
     p_session_token: token,
     p_title: draft.title,
     p_performance_date: draft.date,
+    p_start_time: draft.startTime,
     p_place: draft.place,
     p_note: draft.note,
     p_song_ids: draft.songIds,
@@ -782,7 +792,14 @@ export async function createPerformance(
 export async function updatePerformance(
   session: Session,
   id: string,
-  draft: { title: string; date: string; place: string; note: string; songIds: string[] },
+  draft: {
+    title: string
+    date: string
+    startTime: string
+    place: string
+    note: string
+    songIds: string[]
+  },
 ): Promise<Performance[]> {
   assertConfigured()
   const token = requireSessionToken(session)
@@ -791,6 +808,7 @@ export async function updatePerformance(
     p_id: id,
     p_title: draft.title,
     p_performance_date: draft.date,
+    p_start_time: draft.startTime,
     p_place: draft.place,
     p_note: draft.note,
     p_song_ids: draft.songIds,

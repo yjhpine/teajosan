@@ -103,8 +103,15 @@ select
   ) as update_song_reactivates_request,
   to_regclass('public.performances') is not null as has_performances_table,
   to_regclass('public.performance_songs') is not null as has_performance_songs_table,
-  to_regprocedure('public.create_performance(uuid,text,date,text,text,uuid[])') is not null as has_create_performance,
-  to_regprocedure('public.update_performance(uuid,uuid,text,date,text,text,uuid[])') is not null as has_update_performance,
+  to_regprocedure('public.create_performance(uuid,text,date,text,text,text,uuid[])') is not null as has_create_performance,
+  to_regprocedure('public.update_performance(uuid,uuid,text,date,text,text,text,uuid[])') is not null as has_update_performance,
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'performances'
+      and column_name = 'start_time'
+  ) as performances_has_start_time,
   to_regprocedure('public.delete_performance(uuid,uuid)') is not null as has_delete_performance,
   exists (
     select 1
