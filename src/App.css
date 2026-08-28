@@ -2439,10 +2439,39 @@
   flex: 0 0 auto;
 }
 
-.performance-card-songs {
+.performance-card-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   margin-top: 0.75rem;
-  padding-top: 0.65rem;
+  padding: 0.55rem 0;
+  border: 0;
   border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.performance-card-toggle:hover {
+  color: var(--ink);
+}
+
+.performance-card-chevron {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.performance-card-details {
+  padding-top: 0.15rem;
+}
+
+.performance-card-songs {
+  margin-top: 0.35rem;
 }
 
 .performance-card-songs-label,

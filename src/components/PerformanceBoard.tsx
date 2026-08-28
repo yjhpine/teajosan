@@ -57,6 +57,7 @@ export function PerformanceBoard({
   const [note, setNote] = useState('')
   const [songIds, setSongIds] = useState<string[]>([])
   const [localError, setLocalError] = useState('')
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set())
 
   const songMap = useMemo(() => new Map(songs.map((song) => [song.id, song])), [songs])
 
@@ -111,6 +112,15 @@ export function PerformanceBoard({
       const next = [...prev]
       const [item] = next.splice(idx, 1)
       next.splice(nextIdx, 0, item)
+      return next
+    })
+  }
+
+  function toggleCardExpanded(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -292,7 +302,9 @@ export function PerformanceBoard({
             {sorted.length === 0 ? (
               <p className="performance-empty">아직 공연이 없습니다. 「공연 등록하기」로 올려 보세요.</p>
             ) : (
-              sorted.map((item) => (
+              sorted.map((item) => {
+                const expanded = expandedIds.has(item.id)
+                return (
                 <article key={item.id} className="performance-card">
                   <div className="performance-card-top">
                     <div>
@@ -323,30 +335,45 @@ export function PerformanceBoard({
                     </div>
                   </div>
 
-                  {item.note ? <p className="performance-card-note">{item.note}</p> : null}
+                  <button
+                    type="button"
+                    className={['performance-card-toggle', expanded ? 'is-open' : ''].filter(Boolean).join(' ')}
+                    aria-expanded={expanded}
+                    onClick={() => toggleCardExpanded(item.id)}
+                  >
+                    <span>세트리스트 · {item.songIds.length}곡</span>
+                    <span className="performance-card-chevron" aria-hidden="true">
+                      {expanded ? '▾' : '▸'}
+                    </span>
+                  </button>
 
-                  <div className="performance-card-songs">
-                    <p className="performance-card-songs-label">세트리스트 · {item.songIds.length}곡</p>
-                    {item.songIds.length === 0 ? (
-                      <p className="performance-empty-inline">등록된 곡이 없습니다.</p>
-                    ) : (
-                      <ol>
-                        {item.songIds.map((id, index) => {
-                          const song = songMap.get(id)
-                          return (
-                            <li key={`${item.id}-${id}`}>
-                              <span className="performance-setlist-num">{index + 1}</span>
-                              <span>{song?.title || '삭제된 곡'}</span>
-                            </li>
-                          )
-                        })}
-                      </ol>
-                    )}
-                  </div>
+                  {expanded ? (
+                    <div className="performance-card-details">
+                      {item.note ? <p className="performance-card-note">{item.note}</p> : null}
 
-                  <p className="performance-card-meta">등록 {memberLabel(item.createdBy)}</p>
+                      <div className="performance-card-songs">
+                        {item.songIds.length === 0 ? (
+                          <p className="performance-empty-inline">등록된 곡이 없습니다.</p>
+                        ) : (
+                          <ol>
+                            {item.songIds.map((id, index) => {
+                              const song = songMap.get(id)
+                              return (
+                                <li key={`${item.id}-${id}`}>
+                                  <span className="performance-setlist-num">{index + 1}</span>
+                                  <span>{song?.title || '삭제된 곡'}</span>
+                                </li>
+                              )
+                            })}
+                          </ol>
+                        )}
+                      </div>
+
+                      <p className="performance-card-meta">등록 {memberLabel(item.createdBy)}</p>
+                    </div>
+                  ) : null}
                 </article>
-              ))
+              )})
             )}
           </div>
         </>
