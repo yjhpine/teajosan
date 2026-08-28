@@ -7,6 +7,8 @@
 |------|------|
 | `verify_applied.sql` | 핵심 스키마/RPC 적용 여부 확인 (안전, 읽기 전용) |
 | `cleanup_orphan_promoted_requests.sql` | 곡과 연결 안 된 완성(흐린) 신청 정리 |
+| `maintenance_on.sql` | 점검 모드 켜기 (사용자 접속 차단) |
+| `maintenance_off.sql` | 점검 모드 끄기 |
 | `clear_old_song_assignments.sql` | 곡 세션 배정 텍스트 일괄 비우기 |
 | `delete_member_kimhuirim.sql` | 특정 멤버 제거 예시 (CASCADE 적용 후 members DELETE) |
 

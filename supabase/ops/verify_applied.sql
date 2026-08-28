@@ -112,4 +112,13 @@ select
     where pubname = 'supabase_realtime'
       and schemaname = 'public'
       and tablename = 'song_requests'
-  ) as song_requests_in_realtime;
+  ) as song_requests_in_realtime,
+  to_regclass('public.app_settings') is not null as has_app_settings_table,
+  to_regprocedure('public.get_app_status()') is not null as has_get_app_status,
+  exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'assert_valid_session'
+      and pg_get_functiondef(p.oid) like '%assert_maintenance_open%'
+  ) as session_checks_maintenance;

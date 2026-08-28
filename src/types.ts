@@ -63,6 +63,11 @@ export type Performance = {
   updatedAt?: string
 }
 
+export type AppStatus = {
+  maintenanceEnabled: boolean
+  maintenanceMessage: string
+}
+
 export type Song = {
   id: string
   title: string

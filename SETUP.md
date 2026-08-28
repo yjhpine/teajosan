@@ -26,10 +26,38 @@
 16. `supabase/migrations/20260827_song_requests.sql` — 곡 신청 게시판
 17. `supabase/migrations/20260827_song_requests_promote.sql` — 새 곡 신청·팀 완성 시 곡 리스트 이관
 18. `supabase/migrations/20260827_song_youtube.sql` — 곡 신청/리스트 유튜브 링크
+19. `supabase/migrations/20260827_song_request_keep_complete.sql` — 완성 신청 유지
+20. `supabase/migrations/20260827_song_request_delete_with_song.sql` — 곡 삭제 시 연결 신청 삭제
+21. `supabase/migrations/20260827_song_blank_reactivate_request.sql` — 곡 세션 공백 시 신청 재활성화
+22. `supabase/migrations/20260827_performances.sql` — 공연 탭
+23. `supabase/migrations/20260828_maintenance_mode.sql` — **점검(유지보수) 모드**
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 
 1회용/파괴적 SQL은 `supabase/ops/` 에만 둠 (migrations에 두지 않음).
+
+### 점검 모드 (작업 중 사용자 접속 차단)
+
+프론트/백 작업 전후 Supabase SQL Editor에서 실행:
+
+1. **최초 1회**: `supabase/migrations/20260828_maintenance_mode.sql`
+2. **작업 시작**: `supabase/ops/maintenance_on.sql`
+3. **작업 종료**: `supabase/ops/maintenance_off.sql`
+
+점검 ON 시:
+- 앱 첫 화면이 점검 안내로 전환 (Realtime으로 OFF 되면 자동 해제)
+- 로그인·가입·세션 검증 및 모든 RPC( `assert_valid_session` 경유 ) 차단
+- 이미 접속 중인 사용자도 Realtime으로 즉시 로그아웃·점검 화면 전환
+
+안내 문구 변경 예:
+
+```sql
+update app_settings
+set maintenance_enabled = true,
+    maintenance_message = 'DB 마이그레이션 중입니다. 30분 후 다시 시도해 주세요.',
+    updated_at = now()
+where id = 'default';
+```
 
 ## 3) 권한 요약
 - **합주**: 본인만 수정·삭제

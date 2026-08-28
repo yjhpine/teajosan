@@ -1,0 +1,28 @@
+작업일: 2026-08-28
+주제: 점검(유지보수) 모드 — 프론트/백 작업 중 사용자 접속 차단
+
+## 요청
+- 프론트·백엔드 작업할 때 일반 사용자가 접속하지 못하게 하고 싶음
+
+## DB (Supabase SQL Editor 수동 실행)
+- `supabase/migrations/20260828_maintenance_mode.sql` (최초 1회)
+  - `app_settings` 테이블 (maintenance_enabled, maintenance_message)
+  - RLS 읽기 허용 + Realtime 구독
+  - `assert_maintenance_open()`, `get_app_status()` RPC
+  - login / signup / validate_session / assert_valid_session 앞에 점검 체크
+- `supabase/ops/maintenance_on.sql` — 점검 ON
+- `supabase/ops/maintenance_off.sql` — 점검 OFF
+- `supabase/ops/verify_applied.sql` — app_settings·get_app_status·점검 연동 확인 항목 추가
+
+## 프론트
+- `MaintenanceScreen.tsx` — 점검 안내 + 30초 자동/수동 재확인
+- `storage.ts` — fetchAppStatus(), subscribeAppStatusChanges()
+- `App.tsx` — 부팅 시 점검 확인, Realtime으로 점검 ON 시 세션 클리어, RPC 오류 시 점검 화면 전환
+- `App.css` — maintenance-panel 스타일
+- `types.ts` — AppStatus 타입
+- `SETUP.md` — 점검 모드 사용법 추가
+
+## 사용법
+1. 마이그레이션 최초 적용 후
+2. 작업 시작 전: maintenance_on.sql 실행
+3. 작업 완료 후: maintenance_off.sql 실행
