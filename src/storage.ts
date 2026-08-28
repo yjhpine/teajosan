@@ -19,6 +19,7 @@ import type {
   SongDraft,
   SongRequest,
   SongRequestSlot,
+  AppStatus,
 } from './types'
 
 type RehearsalRow = {
@@ -116,6 +117,47 @@ export async function clearSession() {
 
 const REHEARSAL_SELECT =
   'id,date,start_time,end_time,team_name,created_by_cohort,created_by_name,created_at,updated_by_cohort,updated_by_name,updated_at'
+
+const DEFAULT_MAINTENANCE_MESSAGE = '지금은 점검 중입니다. 잠시 후 다시 접속해 주세요.'
+
+export async function fetchAppStatus(): Promise<AppStatus> {
+  if (!supabaseConfigured) {
+    return { maintenanceEnabled: false, maintenanceMessage: DEFAULT_MAINTENANCE_MESSAGE }
+  }
+
+  const { data, error } = await supabase.rpc('get_app_status')
+  if (error) {
+    const fallback = await supabase.from('app_settings').select('maintenance_enabled,maintenance_message').eq('id', 'default').maybeSingle()
+    if (fallback.error) throw fallback.error
+    return {
+      maintenanceEnabled: Boolean(fallback.data?.maintenance_enabled),
+      maintenanceMessage: fallback.data?.maintenance_message?.trim() || DEFAULT_MAINTENANCE_MESSAGE,
+    }
+  }
+
+  const row = Array.isArray(data) ? data[0] : data
+  return {
+    maintenanceEnabled: Boolean(row?.maintenance_enabled),
+    maintenanceMessage: String(row?.maintenance_message ?? '').trim() || DEFAULT_MAINTENANCE_MESSAGE,
+  }
+}
+
+export function subscribeAppStatusChanges(onChange: () => void): () => void {
+  assertConfigured()
+
+  const channel = supabase
+    .channel('teajosan-app-status')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'app_settings' },
+      () => onChange(),
+    )
+    .subscribe()
+
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}
 
 export async function fetchAppData(): Promise<AppData> {
   assertConfigured()

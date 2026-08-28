@@ -71,6 +71,20 @@
   animation: rise 0.55s ease both;
 }
 
+.maintenance-panel {
+  text-align: center;
+}
+
+.maintenance-message {
+  margin: 0.75rem 0 1.5rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.maintenance-retry {
+  width: 100%;
+}
+
 .auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;

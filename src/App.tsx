@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { isSameDay, parseISO } from 'date-fns'
 import { CalendarBoard } from './components/CalendarBoard'
 import { LoginScreen } from './components/LoginScreen'
+import { MaintenanceScreen } from './components/MaintenanceScreen'
 import { MobileApp } from './components/mobile/MobileApp'
 import { PerformanceBoard } from './components/PerformanceBoard'
 import { ProfilePage } from './components/ProfilePage'
@@ -23,6 +24,7 @@ import {
   deleteSong,
   deleteSongRequest,
   fetchAppData,
+  fetchAppStatus,
   fetchMemberProfiles,
   fetchPerformances,
   fetchSongRequests,
@@ -36,6 +38,7 @@ import {
   changeMyPin,
   signupMember,
   subscribeAppDataChanges,
+  subscribeAppStatusChanges,
   updatePerformance,
   updateRehearsal,
   updateSong,
@@ -56,6 +59,14 @@ import { isSameMember, memberLabel } from './types'
 import './App.css'
 
 const emptyData = (): AppData => ({ rehearsals: [], logs: [] })
+
+function messageFromError(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback
+}
+
+function isMaintenanceMessage(message: string): boolean {
+  return message.includes('점검')
+}
 
 type AppPage = 'calendar' | 'songs' | 'requests' | 'performances' | 'profile'
 
@@ -81,6 +92,8 @@ function App() {
   const [profiles, setProfiles] = useState<MemberProfile[]>([])
   const [page, setPage] = useState<AppPage>('calendar')
   const [booting, setBooting] = useState(true)
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
+  const [maintenanceMessage, setMaintenanceMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [month, setMonth] = useState(() => new Date())
@@ -109,13 +122,24 @@ function App() {
         return
       }
 
-      const saved = loadSession()
-      if (!saved) {
-        setBooting(false)
-        return
-      }
-
       try {
+        const status = await fetchAppStatus()
+        if (cancelled) return
+        if (status.maintenanceEnabled) {
+          setMaintenanceEnabled(true)
+          setMaintenanceMessage(status.maintenanceMessage)
+          setBooting(false)
+          return
+        }
+        setMaintenanceEnabled(false)
+        setMaintenanceMessage('')
+
+        const saved = loadSession()
+        if (!saved) {
+          setBooting(false)
+          return
+        }
+
         const next = await resumeSession(saved)
         if (cancelled) return
         setMember(saved)
@@ -131,8 +155,14 @@ function App() {
       } catch (err) {
         if (cancelled) return
         console.error(err)
-        setError('세션이 만료되었습니다. 다시 로그인해 주세요.')
-        void clearSession()
+        const message = err instanceof Error ? err.message : '세션이 만료되었습니다. 다시 로그인해 주세요.'
+        if (message.includes('점검')) {
+          setMaintenanceEnabled(true)
+          setMaintenanceMessage(message)
+        } else {
+          setError(message)
+          void clearSession()
+        }
       } finally {
         if (!cancelled) setBooting(false)
       }
@@ -142,6 +172,39 @@ function App() {
     return () => {
       cancelled = true
     }
+  }, [])
+
+  useEffect(() => {
+    if (!supabaseConfigured) return
+
+    let cancelled = false
+
+    return subscribeAppStatusChanges(() => {
+      void (async () => {
+        try {
+          const status = await fetchAppStatus()
+          if (cancelled) return
+          if (status.maintenanceEnabled) {
+            setMaintenanceEnabled(true)
+            setMaintenanceMessage(status.maintenanceMessage)
+            setMember(null)
+            setProfile(null)
+            setData(emptyData())
+            setSongs([])
+            setSongRequests([])
+            setPerformances([])
+            setProfiles([])
+            setError('')
+            await clearSession()
+          } else {
+            setMaintenanceEnabled(false)
+            setMaintenanceMessage('')
+          }
+        } catch (err) {
+          console.error(err)
+        }
+      })()
+    })
   }, [])
 
   useEffect(() => {
@@ -199,6 +262,31 @@ function App() {
     }
   }, [member])
 
+  async function enterMaintenance(message: string) {
+    setMaintenanceEnabled(true)
+    setMaintenanceMessage(message)
+    setMember(null)
+    setProfile(null)
+    setData(emptyData())
+    setSongs([])
+    setSongRequests([])
+    setPerformances([])
+    setProfiles([])
+    setError('')
+    await clearSession()
+  }
+
+  async function handleActionError(err: unknown, fallback: string): Promise<boolean> {
+    console.error(err)
+    const message = messageFromError(err, fallback)
+    if (isMaintenanceMessage(message)) {
+      await enterMaintenance(message)
+      return true
+    }
+    setError(message)
+    return false
+  }
+
   async function runAction(action: () => Promise<AppData>) {
     setBusy(true)
     setError('')
@@ -207,8 +295,7 @@ function App() {
       setData(next)
       return true
     } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : '요청에 실패했습니다.')
+      await handleActionError(err, '요청에 실패했습니다.')
       return false
     } finally {
       setBusy(false)
@@ -225,8 +312,7 @@ function App() {
       setSongRequests(await fetchSongRequests())
       return true
     } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : '요청에 실패했습니다.')
+      await handleActionError(err, '요청에 실패했습니다.')
       return false
     } finally {
       setBusy(false)
@@ -243,8 +329,7 @@ function App() {
       setSongs(await fetchSongs())
       return true
     } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : '요청에 실패했습니다.')
+      await handleActionError(err, '요청에 실패했습니다.')
       return false
     } finally {
       setBusy(false)
@@ -258,8 +343,7 @@ function App() {
       setPerformances(await action())
       return true
     } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : '공연 저장에 실패했습니다.')
+      await handleActionError(err, '공연 저장에 실패했습니다.')
       return false
     } finally {
       setBusy(false)
@@ -381,6 +465,23 @@ function App() {
           <p className="login-kicker">School Band Calendar</p>
           <h1 className="brand-mark">태조산</h1>
           <p className="login-lead">기기 정보를 확인하고 있습니다…</p>
+        </section>
+      </div>
+    )
+  }
+
+  if (maintenanceEnabled) {
+    return <MaintenanceScreen message={maintenanceMessage} />
+  }
+
+  if (!supabaseConfigured) {
+    return (
+      <div className="login-shell">
+        <div className="login-atmosphere" aria-hidden="true" />
+        <section className="login-panel">
+          <p className="login-kicker">School Band Calendar</p>
+          <h1 className="brand-mark">태조산</h1>
+          <p className="login-lead">{error || '서버 연결 정보가 없습니다. 배포/환경변수를 확인해 주세요.'}</p>
         </section>
       </div>
     )
