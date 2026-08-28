@@ -9,6 +9,7 @@
 | `cleanup_orphan_promoted_requests.sql` | 곡과 연결 안 된 완성(흐린) 신청 정리 |
 | `maintenance_on.sql` | 점검 모드 켜기 (사용자 접속 차단) |
 | `maintenance_off.sql` | 점검 모드 끄기 |
+| `grant_admin.sql` | 멤버 관리자 권한 부여 (점검 중 접속 허용) |
 | `clear_old_song_assignments.sql` | 곡 세션 배정 텍스트 일괄 비우기 |
 | `delete_member_kimhuirim.sql` | 특정 멤버 제거 예시 (CASCADE 적용 후 members DELETE) |
 

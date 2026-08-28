@@ -15,11 +15,13 @@ export const INSTRUMENT_SESSIONS: { id: InstrumentSession; label: string }[] = [
 
 export type MemberProfile = Member & {
   sessions: InstrumentSession[]
+  isAdmin?: boolean
 }
 
 export type Session = Member & {
   token: string
   sessions?: InstrumentSession[]
+  isAdmin?: boolean
 }
 
 export type Rehearsal = {

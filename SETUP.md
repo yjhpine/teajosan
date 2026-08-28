@@ -31,6 +31,7 @@
 21. `supabase/migrations/20260827_song_blank_reactivate_request.sql` — 곡 세션 공백 시 신청 재활성화
 22. `supabase/migrations/20260827_performances.sql` — 공연 탭
 23. `supabase/migrations/20260828_maintenance_mode.sql` — **점검(유지보수) 모드**
+24. `supabase/migrations/20260828_admin_maintenance_bypass.sql` — **관리자 점검 우회** (46기 양정환)
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 
@@ -48,6 +49,9 @@
 - 앱 첫 화면이 점검 안내로 전환 (Realtime으로 OFF 되면 자동 해제)
 - 로그인·가입·세션 검증 및 모든 RPC( `assert_valid_session` 경유 ) 차단
 - 이미 접속 중인 사용자도 Realtime으로 즉시 로그아웃·점검 화면 전환
+- **관리자(`members.is_admin`)** 는 점검 중에도 로그인·이용 가능 (화면 상단에 안내 표시)
+
+관리자 지정: `supabase/ops/grant_admin.sql` 참고
 
 안내 문구 변경 예:
 

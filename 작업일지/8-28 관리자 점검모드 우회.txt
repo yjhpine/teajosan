@@ -1,0 +1,23 @@
+작업일: 2026-08-28
+주제: 관리자 점검 모드 우회 — 46기 양정환
+
+## 요청
+- 점검 모드에서도 관리자(46기 양정환)는 자유롭게 접속·이용
+
+## DB
+- `supabase/migrations/20260828_admin_maintenance_bypass.sql`
+  - `members.is_admin` 컬럼
+  - 46기 양정환 `is_admin = true`
+  - `is_admin_member()` 헬퍼
+  - `assert_maintenance_open(cohort, name)` — 관리자면 통과
+  - login / validate_session / assert_valid_session / get_my_profile 갱신
+- `supabase/ops/grant_admin.sql` — 추가 관리자 지정용
+
+## 프론트
+- 점검 중 비관리자: 기존 점검 화면 + 「관리자 로그인」
+- 관리자 로그인: 가입 탭 숨김, 로그인만
+- 관리자 접속 중: 상단 「점검 모드 — 관리자로 접속 중」 배너
+- Realtime 점검 ON 시 관리자는 세션 유지
+
+## 적용
+Supabase SQL Editor에서 `20260828_admin_maintenance_bypass.sql` 실행

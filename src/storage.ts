@@ -254,6 +254,7 @@ export async function loginMember(name: string, pin: string): Promise<AppData> {
     name: profile.name,
     token,
     sessions: profile.sessions,
+    isAdmin: profile.isAdmin,
   }
   persistSession(session)
   return fetchAppData()
@@ -307,6 +308,7 @@ export async function resumeSession(session: Session): Promise<AppData> {
     cohort: String(row.cohort),
     name: String(row.name),
     token,
+    isAdmin: Boolean(row.is_admin),
   }
   persistSession(nextSession)
 
@@ -458,6 +460,7 @@ export async function getMyProfile(session: Session): Promise<MemberProfile> {
     cohort: String(row.cohort),
     name: String(row.name),
     sessions: mapSessions(row.sessions),
+    isAdmin: Boolean(row.is_admin),
   }
 }
 

@@ -94,6 +94,7 @@ function App() {
   const [booting, setBooting] = useState(true)
   const [maintenanceEnabled, setMaintenanceEnabled] = useState(false)
   const [maintenanceMessage, setMaintenanceMessage] = useState('')
+  const [adminLoginMode, setAdminLoginMode] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [month, setMonth] = useState(() => new Date())
@@ -125,14 +126,8 @@ function App() {
       try {
         const status = await fetchAppStatus()
         if (cancelled) return
-        if (status.maintenanceEnabled) {
-          setMaintenanceEnabled(true)
-          setMaintenanceMessage(status.maintenanceMessage)
-          setBooting(false)
-          return
-        }
-        setMaintenanceEnabled(false)
-        setMaintenanceMessage('')
+        setMaintenanceEnabled(status.maintenanceEnabled)
+        setMaintenanceMessage(status.maintenanceMessage)
 
         const saved = loadSession()
         if (!saved) {
@@ -142,16 +137,22 @@ function App() {
 
         const next = await resumeSession(saved)
         if (cancelled) return
-        setMember(saved)
-        setData(next)
         const extras = await loadExtras(saved)
         if (cancelled) return
+
+        if (status.maintenanceEnabled && !extras.nextProfile.isAdmin) {
+          await clearSession()
+          setBooting(false)
+          return
+        }
+
+        setMember({ ...saved, sessions: extras.nextProfile.sessions, isAdmin: extras.nextProfile.isAdmin })
+        setData(next)
         setSongs(extras.nextSongs)
         setProfiles(extras.nextProfiles)
         setProfile(extras.nextProfile)
         setSongRequests(extras.nextRequests)
         setPerformances(extras.nextPerformances)
-        setMember({ ...saved, sessions: extras.nextProfile.sessions })
       } catch (err) {
         if (cancelled) return
         console.error(err)
@@ -184,22 +185,31 @@ function App() {
         try {
           const status = await fetchAppStatus()
           if (cancelled) return
-          if (status.maintenanceEnabled) {
-            setMaintenanceEnabled(true)
-            setMaintenanceMessage(status.maintenanceMessage)
-            setMember(null)
-            setProfile(null)
-            setData(emptyData())
-            setSongs([])
-            setSongRequests([])
-            setPerformances([])
-            setProfiles([])
-            setError('')
-            await clearSession()
-          } else {
-            setMaintenanceEnabled(false)
-            setMaintenanceMessage('')
+          setMaintenanceEnabled(status.maintenanceEnabled)
+          setMaintenanceMessage(status.maintenanceMessage)
+
+          if (!status.maintenanceEnabled) {
+            setAdminLoginMode(false)
+            return
           }
+
+          const saved = loadSession()
+          if (!saved) return
+
+          const profile = await getMyProfile(saved)
+          if (cancelled) return
+          if (profile.isAdmin) return
+
+          setMember(null)
+          setProfile(null)
+          setData(emptyData())
+          setSongs([])
+          setSongRequests([])
+          setPerformances([])
+          setProfiles([])
+          setError('')
+          setAdminLoginMode(false)
+          await clearSession()
         } catch (err) {
           console.error(err)
         }
@@ -263,6 +273,7 @@ function App() {
   }, [member])
 
   async function enterMaintenance(message: string) {
+    if (profile?.isAdmin || member?.isAdmin) return
     setMaintenanceEnabled(true)
     setMaintenanceMessage(message)
     setMember(null)
@@ -356,7 +367,7 @@ function App() {
     setProfile(extras.nextProfile)
     setSongRequests(extras.nextRequests)
     setPerformances(extras.nextPerformances)
-    setMember({ ...saved, sessions: extras.nextProfile.sessions })
+    setMember({ ...saved, sessions: extras.nextProfile.sessions, isAdmin: extras.nextProfile.isAdmin })
   }
 
   async function handleLogin(name: string, pin: string) {
@@ -364,6 +375,7 @@ function App() {
     if (!ok) return
     const saved = loadSession()
     if (!saved) return
+    setAdminLoginMode(false)
     setMember(saved)
     try {
       applyExtras(await loadExtras(saved), saved)
@@ -394,7 +406,7 @@ function App() {
     setError('')
     try {
       const nextProfile = await setMySessions(member, sessions)
-      setProfile(nextProfile)
+      setProfile({ ...nextProfile, isAdmin: profile?.isAdmin ?? member.isAdmin })
       setMember({ ...member, sessions: nextProfile.sessions })
       const nextProfiles = await fetchMemberProfiles()
       setProfiles(nextProfiles)
@@ -457,6 +469,9 @@ function App() {
     setViewMode(isMobile ? 'day' : 'week')
   }
 
+  const isAdminUser = Boolean(profile?.isAdmin ?? member?.isAdmin)
+  const showMaintenanceGate = maintenanceEnabled && !isAdminUser
+
   if (booting) {
     return (
       <div className="login-shell">
@@ -470,8 +485,28 @@ function App() {
     )
   }
 
-  if (maintenanceEnabled) {
-    return <MaintenanceScreen message={maintenanceMessage} />
+  if (showMaintenanceGate && !member) {
+    if (adminLoginMode) {
+      return (
+        <LoginScreen
+          onLogin={handleLogin}
+          onSignup={handleSignup}
+          busy={busy}
+          error={error}
+          maintenanceMode
+        />
+      )
+    }
+
+    return (
+      <MaintenanceScreen
+        message={maintenanceMessage}
+        onAdminLogin={() => {
+          setAdminLoginMode(true)
+          setError('')
+        }}
+      />
+    )
   }
 
   if (!supabaseConfigured) {
@@ -572,9 +607,14 @@ function App() {
     />
   )
 
+  const maintenanceBanner = maintenanceEnabled && isAdminUser ? (
+    <p className="banner-maintenance-admin">점검 모드 — 관리자로 접속 중입니다.</p>
+  ) : null
+
   if (isMobile) {
     return (
       <>
+        {maintenanceBanner}
         <MobileApp
           member={member}
           profile={profile}
@@ -629,6 +669,8 @@ function App() {
   return (
     <div className="app-shell">
       <div className="app-atmosphere" aria-hidden="true" />
+
+      {maintenanceBanner}
 
       <header className="topbar">
         <div className="brand-block">
