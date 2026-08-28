@@ -432,9 +432,6 @@ export function SongListBoard({
         <div>
           <p className="section-kicker">Setlist</p>
           <h2>{composing ? '팀 만들기' : '곡 리스트'}</h2>
-          {composing ? (
-            <p className="panel-lead">구두로 정한 팀도 바로 곡 리스트에 추가할 수 있습니다.</p>
-          ) : null}
         </div>
         {!composing ? (
           <button
