@@ -59,6 +59,7 @@ type Props = {
   onCreate: (date: Date, startTime?: string) => void
   onSelectRehearsal: (rehearsal: Rehearsal) => void
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
+  onCreateSong: (draft: Partial<SongDraft> & { youtubeUrl?: string }) => void
   onDeleteSong: (id: string) => void
   onReorderSongs: (ids: string[]) => void
   onCreateRequest: (
@@ -99,6 +100,7 @@ export function MobileApp({
   onCreate,
   onSelectRehearsal,
   onUpdateSong,
+  onCreateSong,
   onDeleteSong,
   onReorderSongs,
   onCreateRequest,
@@ -234,6 +236,7 @@ export function MobileApp({
             songs={songs}
             profiles={profiles}
             busy={busy}
+            onCreate={onCreateSong}
             onUpdate={onUpdateSong}
             onDelete={onDeleteSong}
             onReorder={onReorderSongs}

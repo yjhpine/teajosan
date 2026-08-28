@@ -17,6 +17,7 @@ import {
   clearSession,
   createPerformance,
   createRehearsal,
+  createSong,
   createSongRequest,
   claimSongRequestSlot,
   deletePerformance,
@@ -550,6 +551,7 @@ function App() {
       songs={songs}
       profiles={profiles}
       busy={busy}
+      onCreate={(draft) => void runSongAction(() => createSong(member, draft))}
       onUpdate={(id, draft: Partial<SongDraft>) =>
         void runSongAction(() => updateSong(member, id, draft))
       }
@@ -638,6 +640,7 @@ function App() {
           onCreate={openCreate}
           onSelectRehearsal={openEdit}
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
+          onCreateSong={(draft) => void runSongAction(() => createSong(member, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
           onReorderSongs={(ids) => void runSongAction(() => reorderSongs(member, ids))}
           onCreateRequest={(title, needed, mine, youtubeUrl) =>

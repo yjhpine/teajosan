@@ -1390,6 +1390,69 @@
   font-size: 1.55rem;
 }
 
+.song-board-add {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fffaf3;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(232, 58, 44, 0.28);
+}
+
+.song-board-add:hover:not(:disabled) {
+  background: var(--accent-deep);
+}
+
+.song-board-add:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.song-list-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.song-list-compose-toolbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.song-list-compose-preview .song-media,
+.song-list-compose-preview .song-thumb {
+  width: min(100%, 280px);
+}
+
+.song-list-compose-sessions-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.song-list-compose-sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.75rem;
+}
+
+.song-list-compose-session {
+  margin: 0;
+}
+
+.song-list-compose-session .song-select {
+  width: 100%;
+}
+
 .song-list-search {
   margin: 0 0 0.85rem;
 }
@@ -2567,6 +2630,10 @@
   }
 
   .performance-song-picks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .song-list-compose-sessions-grid {
     grid-template-columns: 1fr;
   }
 }
