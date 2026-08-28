@@ -10,6 +10,7 @@ type Props = {
   onCreate: (draft: {
     title: string
     date: string
+    startTime: string
     place: string
     note: string
     songIds: string[]
@@ -19,6 +20,7 @@ type Props = {
     draft: {
       title: string
       date: string
+      startTime: string
       place: string
       note: string
       songIds: string[]
@@ -41,6 +43,12 @@ function formatDateLabel(iso: string) {
   return `${Number(y)}.${Number(m)}.${Number(d)}`
 }
 
+function formatPerformanceWhen(date: string, startTime: string) {
+  const dateLabel = formatDateLabel(date)
+  const time = startTime.trim()
+  return time ? `${dateLabel} · ${time}` : dateLabel
+}
+
 export function PerformanceBoard({
   session: _session,
   performances,
@@ -53,6 +61,7 @@ export function PerformanceBoard({
   const [editingId, setEditingId] = useState<string | 'new' | null>(null)
   const [title, setTitle] = useState('')
   const [date, setDate] = useState(todayIso)
+  const [startTime, setStartTime] = useState('19:00')
   const [place, setPlace] = useState('')
   const [note, setNote] = useState('')
   const [songIds, setSongIds] = useState<string[]>([])
@@ -65,6 +74,7 @@ export function PerformanceBoard({
     () =>
       [...performances].sort((a, b) => {
         if (a.date !== b.date) return a.date < b.date ? 1 : -1
+        if (a.startTime !== b.startTime) return a.startTime < b.startTime ? 1 : -1
         return a.createdAt < b.createdAt ? 1 : -1
       }),
     [performances],
@@ -73,6 +83,7 @@ export function PerformanceBoard({
   function resetForm() {
     setTitle('')
     setDate(todayIso())
+    setStartTime('19:00')
     setPlace('')
     setNote('')
     setSongIds([])
@@ -87,6 +98,7 @@ export function PerformanceBoard({
   function openEdit(item: Performance) {
     setTitle(item.title)
     setDate(item.date)
+    setStartTime(item.startTime || '19:00')
     setPlace(item.place)
     setNote(item.note)
     setSongIds([...item.songIds])
@@ -138,6 +150,7 @@ export function PerformanceBoard({
     const draft = {
       title: nextTitle,
       date,
+      startTime,
       place: place.trim(),
       note: note.trim(),
       songIds,
@@ -191,6 +204,19 @@ export function PerformanceBoard({
               disabled={busy}
               onChange={(e) => {
                 setDate(e.target.value)
+                setLocalError('')
+              }}
+            />
+          </label>
+
+          <label className="field">
+            <span>시작 시간</span>
+            <input
+              type="time"
+              value={startTime}
+              disabled={busy}
+              onChange={(e) => {
+                setStartTime(e.target.value)
                 setLocalError('')
               }}
             />
@@ -308,7 +334,9 @@ export function PerformanceBoard({
                 <article key={item.id} className="performance-card">
                   <div className="performance-card-top">
                     <div>
-                      <p className="performance-card-date">{formatDateLabel(item.date)}</p>
+                      <p className="performance-card-date">
+                        {formatPerformanceWhen(item.date, item.startTime)}
+                      </p>
                       <h3>{item.title}</h3>
                       {item.place ? <p className="performance-card-place">{item.place}</p> : null}
                     </div>

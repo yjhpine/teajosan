@@ -30,6 +30,7 @@ type AppPage = 'calendar' | 'songs' | 'requests' | 'performances' | 'profile'
 type PerformanceDraft = {
   title: string
   date: string
+  startTime: string
   place: string
   note: string
   songIds: string[]

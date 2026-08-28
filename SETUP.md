@@ -32,6 +32,7 @@
 22. `supabase/migrations/20260827_performances.sql` — 공연 탭
 23. `supabase/migrations/20260828_maintenance_mode.sql` — **점검(유지보수) 모드**
 24. `supabase/migrations/20260828_admin_maintenance_bypass.sql` — **관리자 점검 우회** (46기 양정환)
+25. `supabase/migrations/20260828_performance_start_time.sql` — 공연 시작 시간
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 
