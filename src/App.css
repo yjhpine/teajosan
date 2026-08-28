@@ -1456,7 +1456,6 @@
 .song-list-card-actions {
   display: flex;
   align-items: center;
-  gap: 0.1rem;
   flex: 0 0 auto;
 }
 
@@ -2366,16 +2365,6 @@
 
   .song-request-card {
     padding: 0.35rem;
-  }
-
-  .song-list-card-actions .song-order-btns {
-    gap: 0;
-  }
-
-  .song-list-card-actions .song-order-btn {
-    min-width: 1.6rem;
-    padding: 0.2rem 0.25rem;
-    font-size: 0.75rem;
   }
 
   .song-request-meta-row {

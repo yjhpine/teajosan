@@ -61,7 +61,6 @@ type Props = {
   onUpdateSong: (id: string, draft: Partial<SongDraft>) => void
   onCreateSong: (draft: Partial<SongDraft> & { youtubeUrl?: string }) => void
   onDeleteSong: (id: string) => void
-  onReorderSongs: (ids: string[]) => void
   onCreateRequest: (
     title: string,
     neededSlots: SongRequestSlot[],
@@ -102,7 +101,6 @@ export function MobileApp({
   onUpdateSong,
   onCreateSong,
   onDeleteSong,
-  onReorderSongs,
   onCreateRequest,
   onClaimRequest,
   onDeleteRequest,
@@ -239,7 +237,6 @@ export function MobileApp({
             onCreate={onCreateSong}
             onUpdate={onUpdateSong}
             onDelete={onDeleteSong}
-            onReorder={onReorderSongs}
           />
         ) : tab === 'requests' ? (
           <SongRequestBoard

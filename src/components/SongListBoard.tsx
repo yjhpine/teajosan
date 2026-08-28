@@ -22,7 +22,6 @@ type Props = {
   onCreate: (draft: Partial<SongDraft> & { youtubeUrl?: string }) => void | Promise<void>
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
-  onReorder: (ids: string[]) => void | Promise<void>
 }
 
 const SESSION_FIELDS: {
@@ -90,41 +89,6 @@ function MemberSelect({
   )
 }
 
-function OrderButtons({
-  index,
-  total,
-  busy,
-  onMove,
-}: {
-  index: number
-  total: number
-  busy: boolean
-  onMove: (from: number, to: number) => void
-}) {
-  return (
-    <div className="song-order-btns">
-      <button
-        type="button"
-        className="btn-ghost song-order-btn"
-        aria-label="위로"
-        disabled={busy || index <= 0}
-        onClick={() => onMove(index, index - 1)}
-      >
-        ↑
-      </button>
-      <button
-        type="button"
-        className="btn-ghost song-order-btn"
-        aria-label="아래로"
-        disabled={busy || index >= total - 1}
-        onClick={() => onMove(index, index + 1)}
-      >
-        ↓
-      </button>
-    </div>
-  )
-}
-
 function ListSlot({
   slot,
   label,
@@ -175,26 +139,20 @@ function ListSlot({
 
 function SongListCard({
   song,
-  index,
-  total,
   rosters,
   busy,
   playing,
   onTogglePlay,
   onUpdate,
   onDelete,
-  onMove,
 }: {
   song: Song
-  index: number
-  total: number
   rosters: Rosters
   busy: boolean
   playing: boolean
   onTogglePlay: (playing: boolean) => void
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
-  onMove: (from: number, to: number) => void
 }) {
   const filled = filledCount(song)
   const videoId = parseYoutubeId(song.youtubeUrl)
@@ -209,7 +167,6 @@ function SongListCard({
           </span>
         </p>
         <div className="song-list-card-actions">
-          <OrderButtons index={index} total={total} busy={busy} onMove={onMove} />
           <button
             type="button"
             className="btn-ghost song-delete song-delete--inline song-request-delete"
@@ -278,7 +235,6 @@ export function SongListBoard({
   onCreate,
   onUpdate,
   onDelete,
-  onReorder,
 }: Props) {
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -382,20 +338,6 @@ export function SongListBoard({
       youtubeUrl: youtubeWatchUrl(videoId),
     })
     closeCompose()
-  }
-
-  function moveSong(from: number, to: number) {
-    if (to < 0 || to >= visibleSongs.length || from === to) return
-    const fromId = visibleSongs[from]?.id
-    const toId = visibleSongs[to]?.id
-    if (!fromId || !toId) return
-    const fromIdx = songs.findIndex((song) => song.id === fromId)
-    const toIdx = songs.findIndex((song) => song.id === toId)
-    if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return
-    const ids = songs.map((song) => song.id)
-    const [moved] = ids.splice(fromIdx, 1)
-    ids.splice(toIdx, 0, moved)
-    void onReorder(ids)
   }
 
   const emptyLabel =
@@ -502,19 +444,16 @@ export function SongListBoard({
             {visibleSongs.length === 0 ? (
               <p className="song-request-empty">{emptyLabel}</p>
             ) : (
-              visibleSongs.map((song, index) => (
+              visibleSongs.map((song) => (
                 <SongListCard
                   key={song.id}
                   song={song}
-                  index={index}
-                  total={visibleSongs.length}
                   rosters={rosters}
                   busy={busy}
                   playing={playingId === song.id}
                   onTogglePlay={(next) => setPlayingId(next ? song.id : null)}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
-                  onMove={moveSong}
                 />
               ))
             )}

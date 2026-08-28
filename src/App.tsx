@@ -33,7 +33,6 @@ import {
   getMyProfile,
   loadSession,
   loginMember,
-  reorderSongs,
   resumeSession,
   setMySessions,
   changeMyPin,
@@ -556,7 +555,6 @@ function App() {
         void runSongAction(() => updateSong(member, id, draft))
       }
       onDelete={(id) => void runSongAction(() => deleteSong(member, id))}
-      onReorder={(ids) => void runSongAction(() => reorderSongs(member, ids))}
     />
   )
 
@@ -642,7 +640,6 @@ function App() {
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
           onCreateSong={(draft) => void runSongAction(() => createSong(member, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
-          onReorderSongs={(ids) => void runSongAction(() => reorderSongs(member, ids))}
           onCreateRequest={(title, needed, mine, youtubeUrl) =>
             void runRequestAction(() =>
               createSongRequest(member, title, needed, mine, youtubeUrl),
