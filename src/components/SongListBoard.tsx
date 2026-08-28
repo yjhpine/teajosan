@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { fetchYoutubeTitle, parseYoutubeId, youtubeWatchUrl } from '../lib/youtube'
 import { SongYoutubeMedia } from './SongYoutubeMedia'
 import { type InstrumentSession, type MemberProfile, type Session, type Song, type SongDraft } from '../types'
 
@@ -9,6 +10,7 @@ type Props = {
   songs: Song[]
   profiles: MemberProfile[]
   busy?: boolean
+  onCreate: (draft: Partial<SongDraft> & { youtubeUrl?: string }) => void | Promise<void>
   onUpdate: (id: string, draft: Partial<SongDraft>) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
   onReorder: (ids: string[]) => void | Promise<void>
@@ -298,12 +300,27 @@ export function SongListBoard({
   songs,
   profiles,
   busy = false,
+  onCreate,
   onUpdate,
   onDelete,
   onReorder,
 }: Props) {
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [composing, setComposing] = useState(false)
+  const [title, setTitle] = useState('')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [draft, setDraft] = useState<SongDraft>({
+    title: '',
+    vocal: '',
+    guitar1: '',
+    guitar2: '',
+    bass: '',
+    drums: '',
+    keyboard: '',
+  })
+  const [localError, setLocalError] = useState('')
+  const [previewPlaying, setPreviewPlaying] = useState(false)
 
   const rosters = useMemo<Rosters>(
     () => ({
@@ -335,6 +352,69 @@ export function SongListBoard({
     })
   }, [songs, searchQuery])
 
+  const previewId = parseYoutubeId(youtubeUrl)
+
+  function resetCompose() {
+    setTitle('')
+    setYoutubeUrl('')
+    setDraft({
+      title: '',
+      vocal: '',
+      guitar1: '',
+      guitar2: '',
+      bass: '',
+      drums: '',
+      keyboard: '',
+    })
+    setLocalError('')
+    setPreviewPlaying(false)
+  }
+
+  function openCompose() {
+    resetCompose()
+    setComposing(true)
+  }
+
+  function closeCompose() {
+    resetCompose()
+    setComposing(false)
+  }
+
+  function setDraftField(key: SessionKey, value: string) {
+    setDraft((prev) => ({ ...prev, [key]: value }))
+    setLocalError('')
+  }
+
+  async function handleCreate() {
+    const manualTitle = title.trim()
+    const nextYoutube = youtubeUrl.trim()
+    const videoId = parseYoutubeId(nextYoutube)
+    let nextTitle = manualTitle
+
+    if (videoId && !nextTitle) {
+      const fetched = await fetchYoutubeTitle(videoId)
+      nextTitle = fetched || '유튜브 곡'
+    }
+
+    if (!nextTitle) {
+      setLocalError('곡 제목을 입력하거나 유튜브 링크를 넣어 주세요.')
+      return
+    }
+
+    setLocalError('')
+    await onCreate({
+      title: nextTitle,
+      vocal: draft.vocal,
+      guitar1: draft.guitar1,
+      guitar2: draft.guitar2,
+      bass: draft.bass,
+      drums: draft.drums,
+      keyboard: draft.keyboard,
+      youtubeUrl: videoId ? youtubeWatchUrl(videoId) : '',
+    })
+    closeCompose()
+  }
+
   function moveSong(from: number, to: number) {
     if (to < 0 || to >= visibleSongs.length || from === to) return
     const fromId = visibleSongs[from]?.id
@@ -351,7 +431,7 @@ export function SongListBoard({
 
   const emptyLabel =
     songs.length === 0
-      ? '아직 곡이 없습니다. 곡 신청에서 팀을 모으면 여기에 추가됩니다.'
+      ? '아직 곡이 없습니다. + 버튼으로 팀을 만들거나, 곡 신청에서 팀을 모으면 여기에 추가됩니다.'
       : '검색 결과가 없습니다.'
 
   return (
@@ -359,10 +439,101 @@ export function SongListBoard({
       <header className="song-board-header">
         <div>
           <p className="section-kicker">Setlist</p>
-          <h2>곡 리스트</h2>
+          <h2>{composing ? '팀 만들기' : '곡 리스트'}</h2>
+          {composing ? (
+            <p className="panel-lead">구두로 정한 팀도 바로 곡 리스트에 추가할 수 있습니다.</p>
+          ) : null}
         </div>
+        {!composing ? (
+          <button
+            type="button"
+            className="song-board-add"
+            aria-label="팀 만들기"
+            disabled={busy}
+            onClick={openCompose}
+          >
+            +
+          </button>
+        ) : null}
       </header>
 
+      {composing ? (
+        <div className="song-list-compose">
+          <div className="song-list-compose-toolbar">
+            <button type="button" className="btn-ghost" disabled={busy} onClick={closeCompose}>
+              ← 목록으로
+            </button>
+          </div>
+
+          <label className="field">
+            <span>곡 제목</span>
+            <input
+              type="text"
+              value={title}
+              disabled={busy}
+              maxLength={120}
+              placeholder="예: Spring Day"
+              onChange={(e) => {
+                setTitle(e.target.value)
+                setLocalError('')
+              }}
+            />
+          </label>
+
+          <label className="field">
+            <span>유튜브 링크 (선택)</span>
+            <input
+              type="url"
+              value={youtubeUrl}
+              disabled={busy}
+              placeholder="https://youtu.be/…"
+              maxLength={300}
+              onChange={(e) => {
+                setYoutubeUrl(e.target.value)
+                setPreviewPlaying(false)
+                setLocalError('')
+              }}
+            />
+          </label>
+
+          {previewId ? (
+            <div className="song-list-compose-preview">
+              <SongYoutubeMedia
+                youtubeUrl={youtubeWatchUrl(previewId)}
+                title={title}
+                playing={previewPlaying}
+                onPlay={() => setPreviewPlaying(true)}
+                onClose={() => setPreviewPlaying(false)}
+              />
+            </div>
+          ) : null}
+
+          <div className="song-list-compose-sessions" role="group" aria-label="팀 세션">
+            <span className="song-list-compose-sessions-label">팀 세션</span>
+            <div className="song-list-compose-sessions-grid">
+              {SESSION_FIELDS.map((field) => (
+                <label key={field.key} className="field song-list-compose-session">
+                  <span>{field.label}</span>
+                  <MemberSelect
+                    value={draft[field.key]}
+                    roster={rosters[field.rosterKey]}
+                    disabled={busy}
+                    className={field.className}
+                    onChange={(next) => setDraftField(field.key, next)}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {localError ? <p className="form-error">{localError}</p> : null}
+
+          <button type="button" className="btn-primary" disabled={busy} onClick={() => void handleCreate()}>
+            {busy ? '등록 중…' : '팀 만들기'}
+          </button>
+        </div>
+      ) : (
+        <>
       <label className="field song-list-search">
         <input
           type="search"
@@ -502,6 +673,8 @@ export function SongListBoard({
           onMove={moveSong}
         />
       </div>
+        </>
+      )}
     </section>
   )
 }

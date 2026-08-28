@@ -516,7 +516,10 @@ export async function fetchMemberProfiles(): Promise<MemberProfile[]> {
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
 }
 
-export async function createSong(session: Session, draft: Partial<SongDraft> = {}): Promise<Song[]> {
+export async function createSong(
+  session: Session,
+  draft: Partial<SongDraft> & { youtubeUrl?: string } = {},
+): Promise<Song[]> {
   assertConfigured()
   const token = requireSessionToken(session)
   const { error } = await supabase.rpc('create_song', {
@@ -528,6 +531,7 @@ export async function createSong(session: Session, draft: Partial<SongDraft> = {
     p_bass: draft.bass ?? '',
     p_drums: draft.drums ?? '',
     p_keyboard: draft.keyboard ?? '',
+    p_youtube_url: draft.youtubeUrl ?? '',
   })
   if (error) throw mapRpcError(error, '곡 추가에 실패했습니다.')
   return fetchSongs()

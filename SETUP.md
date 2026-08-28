@@ -33,6 +33,7 @@
 23. `supabase/migrations/20260828_maintenance_mode.sql` — **점검(유지보수) 모드**
 24. `supabase/migrations/20260828_admin_maintenance_bypass.sql` — **관리자 점검 우회** (46기 양정환)
 25. `supabase/migrations/20260828_performance_start_time.sql` — 공연 시작 시간
+26. `supabase/migrations/20260828_create_song_youtube.sql` — 곡 리스트 직접 추가 시 유튜브 URL
 
 적용 확인: `supabase/ops/verify_applied.sql` 실행 → 각 컬럼이 `true`인지 확인.
 

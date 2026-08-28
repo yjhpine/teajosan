@@ -1,0 +1,10 @@
+작업일: 2026-08-28
+주제: 곡 리스트 + 버튼으로 팀 바로 만들기
+
+## 변경
+- 곡 리스트 헤더 우측 + 버튼 → 팀 만들기 폼
+- 곡 제목, 유튜브(선택), 세션 멤버 배정 후 곡 리스트에 바로 등록
+- create_song RPC에 youtube_url 파라미터 추가
+
+## SQL
+supabase/migrations/20260828_create_song_youtube.sql
