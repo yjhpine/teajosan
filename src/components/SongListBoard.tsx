@@ -308,7 +308,6 @@ export function SongListBoard({
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [composing, setComposing] = useState(false)
-  const [title, setTitle] = useState('')
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [draft, setDraft] = useState<SongDraft>({
     title: '',
@@ -355,7 +354,6 @@ export function SongListBoard({
   const previewId = parseYoutubeId(youtubeUrl)
 
   function resetCompose() {
-    setTitle('')
     setYoutubeUrl('')
     setDraft({
       title: '',
@@ -386,22 +384,16 @@ export function SongListBoard({
   }
 
   async function handleCreate() {
-    const manualTitle = title.trim()
     const nextYoutube = youtubeUrl.trim()
     const videoId = parseYoutubeId(nextYoutube)
-    let nextTitle = manualTitle
-
-    if (videoId && !nextTitle) {
-      const fetched = await fetchYoutubeTitle(videoId)
-      nextTitle = fetched || '유튜브 곡'
-    }
-
-    if (!nextTitle) {
-      setLocalError('곡 제목을 입력하거나 유튜브 링크를 넣어 주세요.')
+    if (!videoId) {
+      setLocalError('유튜브 링크를 입력해 주세요.')
       return
     }
 
     setLocalError('')
+    const fetched = await fetchYoutubeTitle(videoId)
+    const nextTitle = fetched || '유튜브 곡'
     await onCreate({
       title: nextTitle,
       vocal: draft.vocal,
@@ -466,27 +458,12 @@ export function SongListBoard({
           </div>
 
           <label className="field">
-            <span>곡 제목</span>
-            <input
-              type="text"
-              value={title}
-              disabled={busy}
-              maxLength={120}
-              placeholder="예: Spring Day"
-              onChange={(e) => {
-                setTitle(e.target.value)
-                setLocalError('')
-              }}
-            />
-          </label>
-
-          <label className="field">
-            <span>유튜브 링크 (선택)</span>
+            <span>유튜브 링크</span>
             <input
               type="url"
               value={youtubeUrl}
               disabled={busy}
-              placeholder="https://youtu.be/…"
+              placeholder="https://youtu.be/… 또는 youtube.com/watch?v=…"
               maxLength={300}
               onChange={(e) => {
                 setYoutubeUrl(e.target.value)
@@ -500,11 +477,12 @@ export function SongListBoard({
             <div className="song-list-compose-preview">
               <SongYoutubeMedia
                 youtubeUrl={youtubeWatchUrl(previewId)}
-                title={title}
+                title=""
                 playing={previewPlaying}
                 onPlay={() => setPreviewPlaying(true)}
                 onClose={() => setPreviewPlaying(false)}
               />
+              <p className="song-request-preview-hint">썸네일을 누르면 바로 재생됩니다. 곡 제목은 유튜브에서 가져옵니다.</p>
             </div>
           ) : null}
 
