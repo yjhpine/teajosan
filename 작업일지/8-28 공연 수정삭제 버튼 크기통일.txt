@@ -1,0 +1,6 @@
+작업일: 2026-08-28
+주제: 공연 탭 수정·삭제 버튼 크기 통일
+
+## 변경
+- PerformanceBoard: 삭제 버튼의 song-delete 클래스 제거, performance-card-btn 공통 클래스 적용
+- App.css: performance-card-btn / --danger 스타일 추가 (min-width, padding, font-size 통일)

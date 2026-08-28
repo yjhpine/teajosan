@@ -343,7 +343,7 @@ export function PerformanceBoard({
                     <div className="performance-card-actions">
                       <button
                         type="button"
-                        className="btn-ghost"
+                        className="btn-ghost performance-card-btn"
                         disabled={busy}
                         onClick={() => openEdit(item)}
                       >
@@ -351,7 +351,7 @@ export function PerformanceBoard({
                       </button>
                       <button
                         type="button"
-                        className="btn-ghost song-delete"
+                        className="btn-ghost performance-card-btn performance-card-btn--danger"
                         disabled={busy}
                         onClick={() => {
                           if (!window.confirm(`「${item.title}」 공연을 삭제할까요?`)) return
