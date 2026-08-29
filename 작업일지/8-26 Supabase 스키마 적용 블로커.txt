@@ -1,0 +1,14 @@
+8/26 Supabase 스키마 적용 시도 및 블로커
+
+[진행]
+- 클라우드 워크스페이스에서 Supabase MCP는 needsAuth 상태
+- Interactive MCP OAuth는 Cursor desktop IDE에서만 가능해서 이 환경에서는 인증 불가
+- 브라우저 대시보드 GitHub 로그인도 수동 자격증명 필요
+- anon key REST 조회로 public.devices / rehearsals / activity_logs 아직 없음(PGRST205) 확인
+- 로컬 .env.local에는 기존에 받은 URL/anon key 저장 완료
+- npm install 완료
+
+[필요]
+- 사용자가 Supabase SQL Editor에서 schema.sql 실행
+  또는 SUPABASE_ACCESS_TOKEN / SUPABASE_DB_PASSWORD 제공
+- 그 다음 테이블 확인 + 웹앱 로그인/합주 등록 DB 반영 검증 이어감
