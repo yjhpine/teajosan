@@ -1,0 +1,15 @@
+작업일: 2026-08-29
+주제: 가입 오류 assert_maintenance_open is not unique 수정
+
+## 원인
+- 점검 모드 ON/OFF와 무관
+- maintenance_mode.sql: assert_maintenance_open() (인자 0개)
+- admin_maintenance_bypass.sql: assert_maintenance_open(text, text default) (인자 2개)
+- signup이 인자 없이 호출 → PostgreSQL "is not unique" 오류
+
+## 수정
+- migrations/20260829_fix_assert_maintenance_open_unique.sql
+- ops/fix_assert_maintenance_open_unique.sql (즉시 실행용, 점검 모드 OFF 포함)
+
+## DB 적용 (Supabase SQL Editor)
+supabase/ops/fix_assert_maintenance_open_unique.sql 실행

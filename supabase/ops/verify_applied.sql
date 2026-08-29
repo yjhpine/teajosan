@@ -142,4 +142,10 @@ select
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'assert_valid_session'
       and pg_get_functiondef(p.oid) like '%assert_maintenance_open%'
-  ) as session_checks_maintenance;
+  ) as session_checks_maintenance,
+  (
+    select count(*)::int
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'assert_maintenance_open'
+  ) as assert_maintenance_open_overload_count;
