@@ -640,9 +640,9 @@ function App() {
           onUpdateSong={(id, draft) => void runSongAction(() => updateSong(member, id, draft))}
           onCreateSong={(draft) => void runSongAction(() => createSong(member, draft))}
           onDeleteSong={(id) => void runSongAction(() => deleteSong(member, id))}
-          onCreateRequest={(title, needed, mine, youtubeUrl) =>
+          onCreateRequest={(title, needed, mine, youtubeUrl, memo, extraSlots) =>
             void runRequestAction(() =>
-              createSongRequest(member, title, needed, mine, youtubeUrl),
+              createSongRequest(member, title, needed, mine, youtubeUrl, memo, extraSlots),
             )
           }
           onClaimRequest={(id, slot) =>
@@ -736,9 +736,9 @@ function App() {
             session={member}
             requests={songRequests}
             busy={busy}
-            onCreate={(title, needed, mine, youtubeUrl) =>
+            onCreate={(title, needed, mine, youtubeUrl, memo, extraSlots) =>
               void runRequestAction(() =>
-                createSongRequest(member, title, needed, mine, youtubeUrl),
+                createSongRequest(member, title, needed, mine, youtubeUrl, memo, extraSlots),
               )
             }
             onClaim={(id, slot) =>

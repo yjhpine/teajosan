@@ -71,6 +71,12 @@ export type AppStatus = {
   maintenanceMessage: string
 }
 
+export type SongExtraSlot = {
+  id: string
+  label: string
+  name: string
+}
+
 export type Song = {
   id: string
   title: string
@@ -81,6 +87,8 @@ export type Song = {
   drums: string
   keyboard: string
   youtubeUrl: string
+  memo: string
+  extraSlots: SongExtraSlot[]
   sortOrder: number
   createdBy: Member
   createdAt: string
@@ -95,6 +103,8 @@ export type SongDraft = {
   bass: string
   drums: string
   keyboard: string
+  memo?: string
+  extraSlots?: SongExtraSlot[]
 }
 
 export type SongRequestSlot =
@@ -114,6 +124,17 @@ export const SONG_REQUEST_SLOTS: { id: SongRequestSlot; label: string }[] = [
   { id: 'keyboard', label: '키보드' },
 ]
 
+export function isFixedSongRequestSlot(slot: string): slot is SongRequestSlot {
+  return SONG_REQUEST_SLOTS.some((item) => item.id === slot)
+}
+
+export function makeExtraSlotId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return `x_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`
+  }
+  return `x_${Date.now().toString(36)}`
+}
+
 export type SongRequest = {
   id: string
   title: string
@@ -124,6 +145,8 @@ export type SongRequest = {
   drums: string
   keyboard: string
   youtubeUrl: string
+  memo: string
+  extraSlots: SongExtraSlot[]
   neededSlots: SongRequestSlot[]
   createdBy: Member
   createdAt: string

@@ -17,6 +17,7 @@ import type {
   Session,
   Song,
   SongDraft,
+  SongExtraSlot,
   SongRequest,
   SongRequestSlot,
   AppStatus,
@@ -386,11 +387,30 @@ type SongRow = {
   drums: string
   keyboard: string
   youtube_url?: string | null
+  memo?: string | null
+  extra_slots?: unknown
   sort_order: number
   created_by_cohort: string
   created_by_name: string
   created_at: string
   updated_at: string | null
+}
+
+function mapExtraSlots(raw: unknown): SongExtraSlot[] {
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<string>()
+  const next: SongExtraSlot[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as Record<string, unknown>
+    const id = String(row.id ?? '').trim().slice(0, 40)
+    const label = String(row.label ?? '').trim().slice(0, 20)
+    const name = String(row.name ?? '').trim().slice(0, 40)
+    if (!id || !label || seen.has(id)) continue
+    seen.add(id)
+    next.push({ id, label, name })
+  }
+  return next
 }
 
 function mapSong(row: SongRow): Song {
@@ -404,6 +424,8 @@ function mapSong(row: SongRow): Song {
     drums: row.drums ?? '',
     keyboard: row.keyboard ?? '',
     youtubeUrl: row.youtube_url ?? '',
+    memo: row.memo ?? '',
+    extraSlots: mapExtraSlots(row.extra_slots),
     sortOrder: row.sort_order,
     createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
     createdAt: row.created_at,
@@ -554,6 +576,8 @@ export async function updateSong(
     p_bass: draft.bass ?? null,
     p_drums: draft.drums ?? null,
     p_keyboard: draft.keyboard ?? null,
+    p_memo: draft.memo ?? null,
+    p_extra_slots: draft.extraSlots ?? null,
   })
   if (error) throw mapRpcError(error, '곡 수정에 실패했습니다.')
   return fetchSongs()
@@ -591,6 +615,8 @@ type SongRequestRow = {
   drums: string
   keyboard: string
   youtube_url?: string | null
+  memo?: string | null
+  extra_slots?: unknown
   needed_slots: string[] | null
   created_by_cohort: string
   created_by_name: string
@@ -632,6 +658,8 @@ function mapSongRequest(row: SongRequestRow): SongRequest {
     drums: row.drums ?? '',
     keyboard: row.keyboard ?? '',
     youtubeUrl: row.youtube_url ?? '',
+    memo: row.memo ?? '',
+    extraSlots: mapExtraSlots(row.extra_slots),
     neededSlots: mapNeededSlots(row.needed_slots),
     createdBy: { cohort: row.created_by_cohort, name: row.created_by_name },
     createdAt: row.created_at,
@@ -655,6 +683,8 @@ export async function createSongRequest(
   neededSlots: SongRequestSlot[],
   mySlots: SongRequestSlot[] = [],
   youtubeUrl = '',
+  memo = '',
+  extraSlots: SongExtraSlot[] = [],
 ): Promise<SongRequest[]> {
   assertConfigured()
   const token = requireSessionToken(session)
@@ -664,6 +694,8 @@ export async function createSongRequest(
     p_needed_slots: neededSlots,
     p_my_slots: mySlots,
     p_youtube_url: youtubeUrl,
+    p_memo: memo,
+    p_extra_slots: extraSlots,
   })
   if (error) throw mapRpcError(error, '곡 신청에 실패했습니다.')
   return fetchSongRequests()
@@ -672,7 +704,7 @@ export async function createSongRequest(
 export async function claimSongRequestSlot(
   session: Session,
   id: string,
-  slot: SongRequestSlot,
+  slot: string,
 ): Promise<SongRequest[]> {
   assertConfigured()
   const token = requireSessionToken(session)

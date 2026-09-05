@@ -1,0 +1,14 @@
+작업일: 2026-09-05
+주제: 곡 신청 커스텀 세션(+) + 메모
+
+## 변경
+- song_requests / songs: memo, extra_slots(jsonb) 컬럼 추가
+- create/claim/promote/update RPC에 커스텀 세션·메모 반영
+- 새 곡 신청 UI: 필요한 세션에 + 버튼, 이름 입력으로 커스텀 세션 추가
+- 내가 할 세션에서도 커스텀 세션 선택 가능
+- 신청 폼에 메모(선택) 추가
+- 신청 카드·곡 리스트에 커스텀 세션·메모 표시
+
+## DB 적용
+Supabase SQL Editor에서 실행:
+supabase/ops/apply_song_request_extra_slots_memo.sql

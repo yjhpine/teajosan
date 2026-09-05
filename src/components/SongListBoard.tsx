@@ -12,7 +12,7 @@ import {
   type SongRequestSlot,
 } from '../types'
 
-type SessionKey = keyof Omit<SongDraft, 'title'>
+type SessionKey = Exclude<keyof SongDraft, 'title' | 'memo' | 'extraSlots'>
 
 type Props = {
   session: Session
@@ -55,7 +55,17 @@ function rosterForSlot(slot: SongRequestSlot, rosters: Rosters): string[] {
 }
 
 function filledCount(song: Song): number {
-  return SONG_REQUEST_SLOTS.filter((slot) => Boolean(song[slot.id]?.trim())).length
+  const fixed = SONG_REQUEST_SLOTS.filter((slot) => Boolean(song[slot.id]?.trim())).length
+  const extra = song.extraSlots.filter((slot) => Boolean(slot.name.trim())).length
+  return fixed + extra
+}
+
+function slotTotal(song: Song): number {
+  return 6 + song.extraSlots.length
+}
+
+function allMemberNames(rosters: Rosters): string[] {
+  return [...new Set(Object.values(rosters).flat())].sort((a, b) => a.localeCompare(b, 'ko'))
 }
 
 function MemberSelect({
@@ -163,7 +173,7 @@ function SongListCard({
         <p className="song-request-meta">
           <span className="song-request-meta-title">{song.title || '제목 없음'}</span>
           <span className="song-request-meta-rest">
-            · {memberLabel(song.createdBy)} · {filled}/6
+            · {memberLabel(song.createdBy)} · {filled}/{slotTotal(song)}
           </span>
         </p>
         <div className="song-list-card-actions">
@@ -180,6 +190,8 @@ function SongListCard({
           </button>
         </div>
       </div>
+
+      {song.memo.trim() ? <p className="song-request-memo">{song.memo}</p> : null}
 
       <div className="song-request-card-row">
         <SongYoutubeMedia
@@ -203,6 +215,23 @@ function SongListCard({
               roster={rosterForSlot(slot.id, rosters)}
               disabled={busy}
               onChange={(next) => void onUpdate(song.id, { [slot.id]: next })}
+            />
+          ))}
+          {song.extraSlots.map((slot) => (
+            <ListSlot
+              key={slot.id}
+              slot="vocal"
+              label={slot.label}
+              value={slot.name}
+              roster={allMemberNames(rosters)}
+              disabled={busy}
+              onChange={(next) =>
+                void onUpdate(song.id, {
+                  extraSlots: song.extraSlots.map((item) =>
+                    item.id === slot.id ? { ...item, name: next } : item,
+                  ),
+                })
+              }
             />
           ))}
         </div>
@@ -269,6 +298,7 @@ export function SongListBoard({
     return songs.filter((song) => {
       const haystack = [
         song.title,
+        song.memo,
         memberLabel(song.createdBy),
         song.createdBy.name,
         song.vocal,
@@ -277,6 +307,7 @@ export function SongListBoard({
         song.bass,
         song.drums,
         song.keyboard,
+        ...song.extraSlots.flatMap((slot) => [slot.label, slot.name]),
       ]
         .join(' ')
         .toLocaleLowerCase('ko-KR')
