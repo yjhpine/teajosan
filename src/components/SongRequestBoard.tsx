@@ -4,9 +4,11 @@ import { SongYoutubeMedia } from './SongYoutubeMedia'
 import {
   SONG_REQUEST_SLOTS,
   isSameMember,
+  makeExtraSlotId,
   memberLabel,
   type Member,
   type Session,
+  type SongExtraSlot,
   type SongRequest,
   type SongRequestSlot,
 } from '../types'
@@ -20,8 +22,10 @@ type Props = {
     neededSlots: SongRequestSlot[],
     mySlots: SongRequestSlot[],
     youtubeUrl: string,
+    memo: string,
+    extraSlots: SongExtraSlot[],
   ) => void | Promise<void>
-  onClaim: (id: string, slot: SongRequestSlot) => void | Promise<void>
+  onClaim: (id: string, slot: string) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
 }
 
@@ -30,7 +34,19 @@ function slotValue(request: SongRequest, slot: SongRequestSlot): string {
 }
 
 function isComplete(request: SongRequest): boolean {
-  return request.neededSlots.every((slot) => Boolean(slotValue(request, slot).trim()))
+  const fixedOk = request.neededSlots.every((slot) => Boolean(slotValue(request, slot).trim()))
+  const extraOk = request.extraSlots.every((slot) => Boolean(slot.name.trim()))
+  return fixedOk && extraOk && (request.neededSlots.length > 0 || request.extraSlots.length > 0)
+}
+
+function totalNeeded(request: SongRequest): number {
+  return request.neededSlots.length + request.extraSlots.length
+}
+
+function totalFilled(request: SongRequest): number {
+  const fixed = request.neededSlots.filter((slot) => Boolean(slotValue(request, slot).trim())).length
+  const extra = request.extraSlots.filter((slot) => Boolean(slot.name.trim())).length
+  return fixed + extra
 }
 
 export function SongRequestBoard({
@@ -51,6 +67,11 @@ export function SongRequestBoard({
     'drums',
   ])
   const [mySlots, setMySlots] = useState<SongRequestSlot[]>([])
+  const [extraSlots, setExtraSlots] = useState<SongExtraSlot[]>([])
+  const [myExtraIds, setMyExtraIds] = useState<string[]>([])
+  const [memo, setMemo] = useState('')
+  const [addingCustom, setAddingCustom] = useState(false)
+  const [customLabel, setCustomLabel] = useState('')
   const [localError, setLocalError] = useState('')
   const [previewPlaying, setPreviewPlaying] = useState(false)
 
@@ -58,6 +79,11 @@ export function SongRequestBoard({
     setYoutubeUrl('')
     setNeededSlots(['vocal', 'guitar1', 'bass', 'drums'])
     setMySlots([])
+    setExtraSlots([])
+    setMyExtraIds([])
+    setMemo('')
+    setAddingCustom(false)
+    setCustomLabel('')
     setLocalError('')
     setPreviewPlaying(false)
   }
@@ -83,10 +109,12 @@ export function SongRequestBoard({
       ? requests.filter((request) => {
           const haystack = [
             request.title,
+            request.memo,
             memberLabel(request.createdBy),
             request.createdBy.name,
             request.createdBy.cohort,
             ...request.neededSlots.map((slot) => slotValue(request, slot)),
+            ...request.extraSlots.flatMap((slot) => [slot.label, slot.name]),
           ]
             .join(' ')
             .toLocaleLowerCase('ko-KR')
@@ -115,6 +143,38 @@ export function SongRequestBoard({
     setLocalError('')
   }
 
+  function addCustomSlot() {
+    const label = customLabel.trim().slice(0, 20)
+    if (!label) {
+      setLocalError('커스텀 세션 이름을 입력해 주세요.')
+      return
+    }
+    if (
+      SONG_REQUEST_SLOTS.some((slot) => slot.label === label) ||
+      extraSlots.some((slot) => slot.label === label)
+    ) {
+      setLocalError('이미 있는 세션 이름입니다.')
+      return
+    }
+    setExtraSlots((prev) => [...prev, { id: makeExtraSlotId(), label, name: '' }])
+    setCustomLabel('')
+    setAddingCustom(false)
+    setLocalError('')
+  }
+
+  function removeCustomSlot(id: string) {
+    setExtraSlots((prev) => prev.filter((slot) => slot.id !== id))
+    setMyExtraIds((prev) => prev.filter((item) => item !== id))
+    setLocalError('')
+  }
+
+  function toggleMyExtra(id: string) {
+    setMyExtraIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    )
+    setLocalError('')
+  }
+
   async function handleCreate() {
     const nextYoutube = youtubeUrl.trim()
     const videoId = parseYoutubeId(nextYoutube)
@@ -122,18 +182,24 @@ export function SongRequestBoard({
       setLocalError('유튜브 링크를 입력해 주세요.')
       return
     }
-    if (neededSlots.length === 0) {
+    if (neededSlots.length === 0 && extraSlots.length === 0) {
       setLocalError('필요한 세션을 하나 이상 선택해 주세요.')
       return
     }
     setLocalError('')
     const fetched = await fetchYoutubeTitle(videoId)
     const nextTitle = fetched || '유튜브 곡'
+    const nextExtras = extraSlots.map((slot) => ({
+      ...slot,
+      name: myExtraIds.includes(slot.id) ? session.name : '',
+    }))
     await onCreate(
       nextTitle,
       sortedNeeded,
       mySlots.filter((slot) => neededSlots.includes(slot)),
       youtubeWatchUrl(videoId),
+      memo.trim().slice(0, 300),
+      nextExtras,
     )
     closeCompose()
   }
@@ -145,8 +211,8 @@ export function SongRequestBoard({
         <h2>{composing ? '새 곡 신청' : '곡 신청'}</h2>
         <p className="panel-lead">
           {composing
-            ? '유튜브 링크와 필요한 세션을 고르면 신청이 올라갑니다. 완성되면 곡 리스트로 옮겨집니다.'
-            : '올라온 신청에서 세션 칸을 채워 팀을 완성하세요. 완성되면 곡 리스트로 옮겨지고 하단에는 흐리게 남습니다. 곡 리스트에서 세션을 비우면 다시 모집할 수 있습니다.'}
+            ? '유튜브 링크와 필요한 세션을 고르면 신청이 올라갑니다. +로 커스텀 세션도 추가할 수 있어요.'
+            : '올라온 신청에서 세션 칸을 채워 팀을 완성하세요. 완성되면 곡 리스트로 옮겨지고 하단에는 흐리게 남습니다.'}
         </p>
       </header>
 
@@ -209,7 +275,66 @@ export function SongRequestBoard({
                   </label>
                 )
               })}
+              {extraSlots.map((slot) => (
+                <div key={slot.id} className="song-request-pick is-checked is-custom">
+                  <span>{slot.label}</span>
+                  <button
+                    type="button"
+                    className="song-request-pick-remove"
+                    disabled={busy}
+                    aria-label={`${slot.label} 삭제`}
+                    onClick={() => removeCustomSlot(slot.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="song-request-pick song-request-pick-add"
+                disabled={busy}
+                onClick={() => {
+                  setAddingCustom(true)
+                  setLocalError('')
+                }}
+              >
+                <span aria-hidden="true">+</span>
+                <span className="sr-only">세션 추가</span>
+              </button>
             </div>
+            {addingCustom ? (
+              <div className="song-request-custom-add">
+                <input
+                  type="text"
+                  value={customLabel}
+                  disabled={busy}
+                  maxLength={20}
+                  placeholder="예: 퍼커션, 코러스"
+                  aria-label="커스텀 세션 이름"
+                  onChange={(e) => setCustomLabel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addCustomSlot()
+                    }
+                  }}
+                />
+                <button type="button" className="btn-ghost" disabled={busy} onClick={addCustomSlot}>
+                  추가
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setAddingCustom(false)
+                    setCustomLabel('')
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <div className="song-request-slot-picks" role="group" aria-label="내가 할 세션">
@@ -239,8 +364,37 @@ export function SongRequestBoard({
                   </label>
                 )
               })}
+              {extraSlots.map((slot) => {
+                const checked = myExtraIds.includes(slot.id)
+                return (
+                  <label
+                    key={slot.id}
+                    className={['song-request-pick', checked ? 'is-checked' : ''].filter(Boolean).join(' ')}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={busy}
+                      onChange={() => toggleMyExtra(slot.id)}
+                    />
+                    <span>{slot.label}</span>
+                  </label>
+                )
+              })}
             </div>
           </div>
+
+          <label className="field">
+            <span>메모 (선택)</span>
+            <textarea
+              value={memo}
+              disabled={busy}
+              rows={2}
+              maxLength={300}
+              placeholder="연습 포인트, 참고 사항 등"
+              onChange={(e) => setMemo(e.target.value)}
+            />
+          </label>
 
           {localError ? <p className="form-error">{localError}</p> : null}
 
@@ -302,13 +456,14 @@ function RequestCard({
   request: SongRequest
   me: Member
   busy: boolean
-  onClaim: (id: string, slot: SongRequestSlot) => void | Promise<void>
+  onClaim: (id: string, slot: string) => void | Promise<void>
   onDelete: (id: string) => void | Promise<void>
 }) {
   const [playing, setPlaying] = useState(false)
   const mine = isSameMember(me, request.createdBy)
   const complete = isComplete(request)
-  const filled = request.neededSlots.filter((slot) => Boolean(slotValue(request, slot).trim())).length
+  const filled = totalFilled(request)
+  const needed = totalNeeded(request)
   const visibleSlots = SONG_REQUEST_SLOTS.filter((slot) => request.neededSlots.includes(slot.id))
   const videoId = parseYoutubeId(request.youtubeUrl)
 
@@ -321,7 +476,7 @@ function RequestCard({
         <p className="song-request-meta">
           <span className="song-request-meta-title">{request.title || '유튜브 곡'}</span>
           <span className="song-request-meta-rest">
-            · {memberLabel(request.createdBy)} · {filled}/{request.neededSlots.length}
+            · {memberLabel(request.createdBy)} · {filled}/{needed}
             {complete ? ' · 완성' : ''}
           </span>
         </p>
@@ -339,6 +494,8 @@ function RequestCard({
           </button>
         ) : null}
       </div>
+
+      {request.memo.trim() ? <p className="song-request-memo">{request.memo}</p> : null}
 
       <div className="song-request-card-row">
         <SongYoutubeMedia
@@ -367,6 +524,39 @@ function RequestCard({
                 className={[
                   'song-request-slot',
                   `is-${slot.id}`,
+                  value ? 'is-filled' : 'is-open',
+                  isMine ? 'is-mine' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                disabled={busy || taken || complete}
+                title={
+                  complete
+                    ? '완성된 신청'
+                    : taken
+                      ? `${slot.label}: ${value}`
+                      : isMine
+                        ? '다시 누르면 신청 취소'
+                        : `${slot.label} 신청`
+                }
+                onClick={() => void onClaim(request.id, slot.id)}
+              >
+                <span className="song-request-slot-label">{slot.label}</span>
+                <span className="song-request-slot-name">{value || '신청'}</span>
+              </button>
+            )
+          })}
+          {request.extraSlots.map((slot) => {
+            const value = slot.name
+            const isMine = value === me.name
+            const taken = Boolean(value) && !isMine
+            return (
+              <button
+                key={slot.id}
+                type="button"
+                className={[
+                  'song-request-slot',
+                  'is-custom',
                   value ? 'is-filled' : 'is-open',
                   isMine ? 'is-mine' : '',
                 ]

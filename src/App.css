@@ -2172,6 +2172,69 @@
   cursor: not-allowed;
 }
 
+.song-request-pick.is-custom {
+  justify-content: space-between;
+}
+
+.song-request-pick-add {
+  justify-content: center;
+  border-style: dashed;
+  color: var(--accent);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.song-request-pick-remove {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.1rem;
+}
+
+.song-request-custom-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.song-request-custom-add input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffdf9;
+}
+
+.song-request-memo {
+  margin: 0.35rem 0 0.15rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.song-request-slot.is-custom {
+  border-style: dashed;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .song-request-card.is-complete {
   opacity: 0.48;
   pointer-events: none;

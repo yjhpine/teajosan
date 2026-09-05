@@ -16,6 +16,7 @@ import type {
   Session,
   Song,
   SongDraft,
+  SongExtraSlot,
   SongRequest,
   SongRequestSlot,
 } from '../../types'
@@ -66,8 +67,10 @@ type Props = {
     neededSlots: SongRequestSlot[],
     mySlots: SongRequestSlot[],
     youtubeUrl: string,
+    memo: string,
+    extraSlots: SongExtraSlot[],
   ) => void
-  onClaimRequest: (id: string, slot: SongRequestSlot) => void
+  onClaimRequest: (id: string, slot: string) => void
   onDeleteRequest: (id: string) => void
   onCreatePerformance: (draft: PerformanceDraft) => void
   onUpdatePerformance: (id: string, draft: PerformanceDraft) => void
