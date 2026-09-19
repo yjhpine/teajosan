@@ -1,0 +1,5 @@
+# Edge Functions — JWT 검증은 anon key로 호출 가능하도록 유지
+# (실제 권한은 service_role + RPC revoke로 강제)
+
+[functions.gateway]
+verify_jwt = true

@@ -5,6 +5,7 @@ import {
   loadPersistedSession,
   persistSession,
 } from './lib/device'
+import { gatewayRpc } from './lib/gateway'
 import { supabase, supabaseConfigured } from './lib/supabase'
 import type {
   ActivityLog,
@@ -89,7 +90,7 @@ function mapLog(row: LogRow): ActivityLog {
   }
 }
 
-function mapRpcError(error: { message?: string; code?: string }, fallback: string) {
+function mapRpcError(error: { message?: string; code?: string | null }, fallback: string) {
   const message = error.message ?? fallback
   if (error.code === '23P01' || /overlap|rehearsals_no_overlap/i.test(message)) {
     return new Error('같은 시간대에 이미 다른 합주가 있어 등록할 수 없습니다.')
@@ -111,7 +112,7 @@ export function loadSession(): Session | null {
 export async function clearSession() {
   const saved = loadPersistedSession()
   if (saved?.token && supabaseConfigured) {
-    await supabase.rpc('logout', { p_token: saved.token })
+    await gatewayRpc('logout', { p_token: saved.token })
   }
   clearPersistedSession()
 }
@@ -238,7 +239,7 @@ export async function loginMember(name: string, pin: string): Promise<AppData> {
   const clientIp = await fetchClientIp()
   const nextName = name.trim()
 
-  const { data, error } = await supabase.rpc('login', {
+  const { data, error } = await gatewayRpc('login', {
     p_name: nextName,
     p_pin: pin,
     p_device_id: deviceId,
@@ -270,7 +271,7 @@ export async function signupMember(
   const deviceId = getOrCreateDeviceId()
   const clientIp = await fetchClientIp()
 
-  const { data, error } = await supabase.rpc('signup', {
+  const { data, error } = await gatewayRpc('signup', {
     p_cohort: member.cohort,
     p_name: member.name,
     p_pin: pin,
@@ -297,7 +298,7 @@ export async function resumeSession(session: Session): Promise<AppData> {
   assertConfigured()
   const token = requireSessionToken(session)
 
-  const { data, error } = await supabase.rpc('validate_session', { p_token: token })
+  const { data, error } = await gatewayRpc('validate_session', { p_token: token })
   if (error) throw mapRpcError(error, '세션이 만료되었습니다. 다시 로그인해 주세요.')
 
   const row = Array.isArray(data) ? data[0] : data
@@ -314,7 +315,7 @@ export async function resumeSession(session: Session): Promise<AppData> {
   persistSession(nextSession)
 
   const clientIp = await fetchClientIp()
-  const { error: touchError } = await supabase.rpc('touch_device', {
+  const { error: touchError } = await gatewayRpc('touch_device', {
     p_token: token,
     p_client_ip: clientIp,
     p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
@@ -331,7 +332,7 @@ export async function createRehearsal(
   assertConfigured()
   const token = requireSessionToken(session)
 
-  const { error } = await supabase.rpc('create_rehearsal', {
+  const { error } = await gatewayRpc('create_rehearsal', {
     p_session_token: token,
     p_date: input.date,
     p_start_time: input.startTime,
@@ -351,7 +352,7 @@ export async function updateRehearsal(
   assertConfigured()
   const token = requireSessionToken(session)
 
-  const { error } = await supabase.rpc('update_rehearsal', {
+  const { error } = await gatewayRpc('update_rehearsal', {
     p_session_token: token,
     p_id: id,
     p_date: input.date,
@@ -368,7 +369,7 @@ export async function deleteRehearsal(session: Session, id: string): Promise<App
   assertConfigured()
   const token = requireSessionToken(session)
 
-  const { error } = await supabase.rpc('delete_rehearsal', {
+  const { error } = await gatewayRpc('delete_rehearsal', {
     p_session_token: token,
     p_id: id,
   })
@@ -472,7 +473,7 @@ function mapSessions(raw: unknown): InstrumentSession[] {
 export async function getMyProfile(session: Session): Promise<MemberProfile> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { data, error } = await supabase.rpc('get_my_profile', { p_token: token })
+  const { data, error } = await gatewayRpc('get_my_profile', { p_token: token })
   if (error) throw mapRpcError(error, '프로필을 불러오지 못했습니다.')
   const row = Array.isArray(data) ? data[0] : data
   if (!row?.cohort || !row?.name) {
@@ -492,7 +493,7 @@ export async function setMySessions(
 ): Promise<MemberProfile> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { data, error } = await supabase.rpc('set_my_sessions', {
+  const { data, error } = await gatewayRpc('set_my_sessions', {
     p_token: token,
     p_sessions: sessions,
   })
@@ -515,7 +516,7 @@ export async function changeMyPin(
 ): Promise<void> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('change_my_pin', {
+  const { error } = await gatewayRpc('change_my_pin', {
     p_token: token,
     p_old_pin: oldPin,
     p_new_pin: newPin,
@@ -544,7 +545,7 @@ export async function createSong(
 ): Promise<Song[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('create_song', {
+  const { error } = await gatewayRpc('create_song', {
     p_session_token: token,
     p_title: draft.title ?? '',
     p_vocal: draft.vocal ?? '',
@@ -566,7 +567,7 @@ export async function updateSong(
 ): Promise<Song[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('update_song', {
+  const { error } = await gatewayRpc('update_song', {
     p_session_token: token,
     p_id: id,
     p_title: draft.title ?? null,
@@ -586,7 +587,7 @@ export async function updateSong(
 export async function deleteSong(session: Session, id: string): Promise<Song[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('delete_song', {
+  const { error } = await gatewayRpc('delete_song', {
     p_session_token: token,
     p_id: id,
   })
@@ -597,7 +598,7 @@ export async function deleteSong(session: Session, id: string): Promise<Song[]> 
 export async function reorderSongs(session: Session, ids: string[]): Promise<Song[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('reorder_songs', {
+  const { error } = await gatewayRpc('reorder_songs', {
     p_session_token: token,
     p_ids: ids,
   })
@@ -688,7 +689,7 @@ export async function createSongRequest(
 ): Promise<SongRequest[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('create_song_request', {
+  const { error } = await gatewayRpc('create_song_request', {
     p_session_token: token,
     p_title: title,
     p_needed_slots: neededSlots,
@@ -708,7 +709,7 @@ export async function claimSongRequestSlot(
 ): Promise<SongRequest[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('claim_song_request_slot', {
+  const { error } = await gatewayRpc('claim_song_request_slot', {
     p_session_token: token,
     p_id: id,
     p_slot: slot,
@@ -723,7 +724,7 @@ export async function promoteSongRequest(
 ): Promise<{ songs: Song[]; requests: SongRequest[] }> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('promote_song_request', {
+  const { error } = await gatewayRpc('promote_song_request', {
     p_session_token: token,
     p_id: id,
   })
@@ -735,7 +736,7 @@ export async function promoteSongRequest(
 export async function deleteSongRequest(session: Session, id: string): Promise<SongRequest[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('delete_song_request', {
+  const { error } = await gatewayRpc('delete_song_request', {
     p_session_token: token,
     p_id: id,
   })
@@ -813,7 +814,7 @@ export async function createPerformance(
 ): Promise<Performance[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('create_performance', {
+  const { error } = await gatewayRpc('create_performance', {
     p_session_token: token,
     p_title: draft.title,
     p_performance_date: draft.date,
@@ -840,7 +841,7 @@ export async function updatePerformance(
 ): Promise<Performance[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('update_performance', {
+  const { error } = await gatewayRpc('update_performance', {
     p_session_token: token,
     p_id: id,
     p_title: draft.title,
@@ -857,7 +858,7 @@ export async function updatePerformance(
 export async function deletePerformance(session: Session, id: string): Promise<Performance[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('delete_performance', {
+  const { error } = await gatewayRpc('delete_performance', {
     p_session_token: token,
     p_id: id,
   })
@@ -868,7 +869,7 @@ export async function deletePerformance(session: Session, id: string): Promise<P
 export async function addRosterMember(session: Session, name: string): Promise<string[]> {
   assertConfigured()
   const token = requireSessionToken(session)
-  const { error } = await supabase.rpc('add_roster_member', {
+  const { error } = await gatewayRpc('add_roster_member', {
     p_session_token: token,
     p_name: name,
   })

@@ -1,0 +1,16 @@
+작업일: 2026-09-19
+주제: Edge gateway 미들웨어 + 민감 RPC anon 차단
+
+## 변경
+- supabase/functions/gateway: 로그인·세션·쓰기 RPC 프록시
+  - Origin 화이트리스트, IP rate limit, client IP 강제
+  - service_role로만 RPC 호출
+- src/lib/gateway.ts + storage.ts: 민감 호출을 gateway 경유로 전환
+- migrations/ops: anon·authenticated EXECUTE revoke, service_role grant
+- 공개 읽기(get_app_status, list_member_profiles, SELECT, Realtime)는 유지
+- verify-security / SETUP 문서 갱신
+
+## 배포 순서 (필수)
+1) npx supabase functions deploy gateway
+2) SQL: supabase/ops/apply_gateway_rpc_lockdown.sql
+3) 프론트(main) 배포

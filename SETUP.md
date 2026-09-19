@@ -83,7 +83,35 @@ VITE_SUPABASE_ANON_KEY=...
 `npm install && npm run dev`
 
 검증(선택): `node scripts/verify-security.mjs`  
-(사전: `SELECT admin_set_member_pin('99','테스트','test1234');`)
+(사전: gateway 배포 + lockdown SQL + `SELECT admin_set_member_pin('99','테스트','test1234');`)
+
+## 4-1) API 게이트웨이 (미들웨어)
+
+쓰기·로그인 RPC는 브라우저가 직접 호출하지 않고 **Supabase Edge Function `gateway`** 를 경유합니다.
+
+```bash
+# 1회: CLI 로그인·프로젝트 연결
+npx supabase login
+npx supabase link --project-ref <PROJECT_REF>
+
+# 함수 배포 (service_role은 플랫폼이 주입)
+npx supabase functions deploy gateway
+```
+
+그다음 SQL Editor에서 잠금 적용:
+
+`supabase/ops/apply_gateway_rpc_lockdown.sql`
+
+**순서 중요:** gateway 배포 → lockdown SQL → 프론트 배포  
+(lockdown만 먼저 하면 앱 로그인이 깨집니다.)
+
+게이트웨이가 하는 일:
+- Origin 화이트리스트 (`yjhpine.github.io`, localhost)
+- IP 기반 rate limit (로그인/가입·쓰기)
+- `p_client_ip`를 클라이언트 값이 아닌 요청 IP로 덮어씀
+- `service_role`로만 민감 RPC 호출 (anon EXECUTE revoke)
+
+공개 SELECT / Realtime / `get_app_status` / `list_member_profiles` 는 기존처럼 anon 직행입니다.
 
 ## 5) GitHub Pages / CI
 Secrets: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`  
@@ -96,3 +124,4 @@ PR/main: `.github/workflows/ci.yml` 에서 `lint` + `build` (live DB verify는 C
 - 합주·곡·멤버·활동로그는 Realtime으로 자동 동기화
 - 마이페이지에서 PIN 변경, 곡 리스트 ↑↓로 순서 변경
 - 곡 신청: 새 곡 제목 + 유튜브 링크 + 필요 세션 칸 → 멤버가 자리 신청 → 팀 완성 시 곡 리스트로 이관 (리스트에서 재생)
+- 로그인·합주/곡/신청/공연 쓰기는 Edge gateway 경유

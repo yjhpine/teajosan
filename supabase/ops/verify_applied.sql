@@ -164,4 +164,16 @@ select
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname = 'assert_maintenance_open'
-  ) as assert_maintenance_open_overload_count;
+  ) as assert_maintenance_open_overload_count,
+  coalesce((
+    select bool_and(not has_function_privilege('anon', p.oid, 'execute'))
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'login'
+  ), false) as anon_login_locked,
+  coalesce((
+    select bool_and(has_function_privilege('service_role', p.oid, 'execute'))
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'login'
+  ), false) as service_login_ok;
