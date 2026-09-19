@@ -1,0 +1,13 @@
+8/26 Supabase 스키마 적용 및 웹앱 DB 검증 완료
+
+[결과]
+1. schema.sql 적용됨 (대시보드 SQL 실행)
+2. 테이블 확인: devices / rehearsals / activity_logs 모두 REST 200
+3. 웹앱 검증 성공
+   - 로그인: 7기 UI검증 → devices + activity_logs(login) 기록
+   - 합주 등록: 장소 강당, 메모 UI DB 검증 → rehearsals + activity_logs(create) 기록
+   - 기기 IP/last_seen 갱신 확인
+
+[참고]
+- 이 클라우드 환경에서는 Supabase MCP OAuth 인증이 불가해 DDL은 대시보드 SQL로 적용
+- 로컬 .env.local에 URL/anon key 사용 (gitignore)
