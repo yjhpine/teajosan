@@ -1,98 +1,7 @@
--- 관리자: 점검 모드에서도 접속·작업 가능
--- Supabase SQL Editor에서 실행 (maintenance_mode.sql 적용 후)
+-- admin_maintenance_bypass.sql 이 validate_session 에서 실패한 경우
+-- (42P13: cannot change return type) 이 파일만 실행해도 됩니다.
+-- maintenance_mode.sql + admin_maintenance_bypass.sql 앞부분(테이블·is_admin_member 등)은 이미 적용된 상태를 가정합니다.
 
-alter table members
-  add column if not exists is_admin boolean not null default false;
-
-update members
-set is_admin = true
-where cohort = '46' and name = '양정환';
-
-create or replace function public.is_admin_member(p_cohort text, p_name text)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select coalesce(
-    (
-      select m.is_admin
-      from members m
-      where m.cohort = trim(p_cohort)
-        and m.name = trim(p_name)
-    ),
-    false
-  );
-$$;
-
-create or replace function public.assert_maintenance_open(
-  p_cohort text default null,
-  p_name text default null
-)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_enabled boolean;
-  v_message text;
-begin
-  if p_cohort is not null
-    and p_name is not null
-    and public.is_admin_member(p_cohort, p_name)
-  then
-    return;
-  end if;
-
-  select maintenance_enabled, maintenance_message
-  into v_enabled, v_message
-  from app_settings
-  where id = 'default';
-
-  if coalesce(v_enabled, false) then
-    raise exception '%', coalesce(nullif(trim(v_message), ''), '지금은 점검 중입니다. 잠시 후 다시 접속해 주세요.');
-  end if;
-end;
-$$;
-
-create or replace function public.assert_valid_session(p_token uuid)
-returns table (cohort text, name text, device_id text)
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_cohort text;
-  v_name text;
-  v_device_id text;
-begin
-  if p_token is null then
-    raise exception '세션이 없습니다. 다시 로그인해 주세요.';
-  end if;
-
-  update sessions s
-  set expires_at = now() + interval '90 days'
-  where s.token = p_token
-    and s.expires_at > now()
-  returning s.cohort, s.name, s.device_id
-  into v_cohort, v_name, v_device_id;
-
-  if v_cohort is null then
-    raise exception '세션이 만료되었습니다. 다시 로그인해 주세요.';
-  end if;
-
-  perform public.assert_maintenance_open(v_cohort, v_name);
-
-  cohort := v_cohort;
-  name := v_name;
-  device_id := v_device_id;
-  return next;
-end;
-$$;
-
--- 반환 타입(컬럼) 변경 시 CREATE OR REPLACE 불가 → DROP 후 재생성
 drop function if exists public.validate_session(uuid);
 
 create or replace function public.validate_session(p_token uuid)
@@ -233,4 +142,10 @@ begin
 end;
 $$;
 
-grant execute on function public.is_admin_member(text, text) to anon, authenticated;
+grant execute on function public.login(text, text, text, text) to anon, authenticated;
+
+update members
+set is_admin = true
+where cohort = '46' and name = '양정환';
+
+select cohort, name, is_admin from members where name = '양정환';
